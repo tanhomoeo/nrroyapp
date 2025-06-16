@@ -1,6 +1,7 @@
 
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,7 +22,11 @@ import { format as formatDateFns, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
+
+const CreatePaymentSlipModal = dynamic(() =>
+  import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
+  { ssr: false }
+);
 
 const dropsOptions = Array.from({ length: 10 }, (_, i) => (i + 1).toLocaleString('bn-BD'));
 const shakesOptions = Array.from({ length: 10 }, (_, i) => (i + 1).toLocaleString('bn-BD'));
@@ -181,16 +186,10 @@ export default function MedicineInstructionsClientLogic() {
   const handlePaymentModalClose = (slipCreated: boolean = false) => {
     setIsPaymentModalOpen(false);
     if (slipCreated) {
-      setPaymentCompleted(true); // Mark payment as completed
-      window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components if needed
+      setPaymentCompleted(true); 
+      window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
     }
   };
-
-  // const handleSlipCreated = (slip: PaymentSlip) => { // No longer directly used here, logic moved to handlePaymentModalClose
-  //   setIsPaymentModalOpen(false);
-  //   setPaymentCompleted(true);
-  //   window.dispatchEvent(new CustomEvent('firestoreDataChange'));
-  // };
 
   const handleFinishAndGoToDashboard = () => {
     router.push(ROUTES.DASHBOARD);
@@ -553,17 +552,16 @@ export default function MedicineInstructionsClientLogic() {
             </div>
         </div>
       </div>
-
-      {isPaymentModalOpen && selectedPatient && form.getValues('visitId') && (
-        <CreatePaymentSlipModal
-          patient={selectedPatient}
-          isOpen={isPaymentModalOpen}
-          onClose={handlePaymentModalClose}
-          // onSlipCreated={handleSlipCreated} // This prop is removed, logic is in onClose
-          visitId={form.getValues('visitId')!}
-        />
-      )}
-
+      <Suspense fallback={<div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div>}>
+        {isPaymentModalOpen && selectedPatient && form.getValues('visitId') && (
+          <CreatePaymentSlipModal
+            patient={selectedPatient}
+            isOpen={isPaymentModalOpen}
+            onClose={handlePaymentModalClose}
+            visitId={form.getValues('visitId')!}
+          />
+        )}
+      </Suspense>
 
       <style jsx global>{`
         .print-only-block { display: none; }
@@ -624,3 +622,4 @@ export default function MedicineInstructionsClientLogic() {
     </div>
   );
 }
+

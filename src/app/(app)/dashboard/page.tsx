@@ -1,6 +1,7 @@
 
 'use client';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,9 +18,12 @@ import { useRouter } from 'next/navigation';
 import { ROUTES, APP_NAME } from '@/lib/constants';
 import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
-// import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // MicrophoneButton removed
-import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const CreatePaymentSlipModal = dynamic(() =>
+  import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
+  { ssr: false }
+);
 
 interface QuickActionCardProps {
   title: string;
@@ -162,7 +166,6 @@ export default function DashboardPage() {
     const uniqueTodayPatients = new Set(todayVisits.map(v => v.patientId));
 
     const monthVisits = allVisits.filter(v => isThisMonth(v.visitDate));
-    // const uniqueMonthPatients = new Set(monthVisits.map(v => v.patientId)); // Not directly used in current stats
 
     const todayRevenue = allSlips
       .filter(s => isToday(s.date))
@@ -177,13 +180,13 @@ export default function DashboardPage() {
     setStats({
       totalPatients: allPatients.length,
       todayPatientCount: uniqueTodayPatients.size,
-      monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size, // Recalculate for monthly
+      monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size, 
       todayRevenue: todayRevenue,
       monthlyIncome: monthlyIncome,
       dailyActivePatients: uniqueTodayPatients.size,
       dailyOtherRegistered: allPatients.filter(p => p.registrationDate && !uniqueTodayPatients.has(p.id) && isToday(p.registrationDate)).length,
       monthlyNewPatients: patientsCreatedThisMonth.length,
-      monthlyTotalRegistered: allPatients.length, // This seems to be total patients, not just monthly registered
+      monthlyTotalRegistered: allPatients.length, 
     });
 
     await loadAppointments();
@@ -192,13 +195,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData();
-    // Consider how to handle external data changes with Firestore;
-    // For now, a manual refresh or re-fetch on navigation might be needed
-    // or implement Firestore real-time listeners for more complex scenarios.
     const handleExternalDataChange = () => {
         loadDashboardData();
     };
-    window.addEventListener('firestoreDataChange', handleExternalDataChange); // Custom event for Firestore updates
+    window.addEventListener('firestoreDataChange', handleExternalDataChange); 
     return () => {
         window.removeEventListener('firestoreDataChange', handleExternalDataChange);
     };
@@ -222,10 +222,6 @@ export default function DashboardPage() {
     }
   };
 
-  // const handleVoiceSearch = (text: string) => { // MicrophoneButton removed
-  //   setDashboardSearchTerm(text);
-  // };
-
   const handleStartWorkflow = (patientId: string, visitId: string) => {
     router.push(`${ROUTES.PRESCRIPTION}/${patientId}?visitId=${visitId}`);
   };
@@ -241,8 +237,8 @@ export default function DashboardPage() {
     setSelectedPatientForPaymentModal(null);
     setCurrentVisitIdForPaymentModal(null);
     if (slipCreated) {
-        await loadAppointments(); // Refresh appointments
-        window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components if needed
+        await loadAppointments(); 
+        window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
     }
   };
 
@@ -324,7 +320,6 @@ export default function DashboardPage() {
                 <X className="h-4 w-4" />
               </Button>
             )}
-            {/* MicrophoneButton removed */}
             <Button
               variant="default"
               className="rounded-none h-full px-5 text-base"
@@ -468,16 +463,18 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
-
-      {selectedPatientForPaymentModal && currentVisitIdForPaymentModal && (
-        <CreatePaymentSlipModal
-          patient={selectedPatientForPaymentModal}
-          visitId={currentVisitIdForPaymentModal}
-          isOpen={isPaymentModalOpen}
-          onClose={(slipCreated) => handlePaymentModalClose(slipCreated)}
-        />
-      )}
+      <Suspense fallback={<div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div>}>
+        {selectedPatientForPaymentModal && currentVisitIdForPaymentModal && (
+          <CreatePaymentSlipModal
+            patient={selectedPatientForPaymentModal}
+            visitId={currentVisitIdForPaymentModal}
+            isOpen={isPaymentModalOpen}
+            onClose={(slipCreated) => handlePaymentModalClose(slipCreated)}
+          />
+        )}
+      </Suspense>
     </div>
     </TooltipProvider>
   );
 }
+
