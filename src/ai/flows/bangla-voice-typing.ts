@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit'; // Changed import path for Zod
+import { z } from 'genkit'; // Corrected import from 'genkit'
 
 export const BanglaVoiceInputSchema = z.object({
   voiceInput: z.string().min(1, { message: "বাংলা টেক্সট আবশ্যক।" }).describe('ভয়েস থেকে প্রাপ্ত বাংলা টেক্সট অথবা পরিমার্জন করার জন্য টেক্সট'),
@@ -54,6 +54,7 @@ const banglaVoiceTypingFlow = ai.defineFlow(
     if (!output) {
       // Fallback or error handling if output is null/undefined
       console.error("Bangla correction prompt did not return output.");
+      // Consider throwing an error or returning a more specific error object
       return { correctedText: input.voiceInput }; // Return original input as fallback
     }
     return output;

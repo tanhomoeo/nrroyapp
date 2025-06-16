@@ -2,21 +2,15 @@
 'use server';
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-// import { nextPlugin } from '@genkit-ai/next'; // Removed nextPlugin import
 
-// Make sure GOOGLE_GENAI_API_KEY is set in your .env or .env.local file
-// Example: GOOGLE_GENAI_API_KEY=your_api_key_here
+// Note: @genkit-ai/next plugin was removed due to previous installation/compatibility issues.
+// The current Genkit flow (bangla-voice-typing) is a server action and should work without it
+// when called from client components.
 
 export const ai = genkit({
   plugins: [
     googleAI(),
-    // nextPlugin(), // Removed nextPlugin usage
   ],
-  enableTracingAndMetrics: true, 
-  logLevel: 'debug', 
+  enableTracingAndMetrics: true, // Recommended for production, can be false for local dev if preferred
+  logLevel: 'debug', // Or 'info', 'warn', 'error' for less verbosity
 });
-
-// To run the Genkit Developer UI (optional):
-// 1. Ensure you have `genkit-cli` installed (`npm install -g genkit-cli` or add to devDependencies)
-// 2. Run `genkit start` in your terminal (ensure port is not conflicting, default is 4000, or use --port XXXX)
-// 3. Open http://localhost:4000 (or your specified port) in your browser

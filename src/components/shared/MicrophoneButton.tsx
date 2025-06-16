@@ -2,7 +2,7 @@
 'use client';
 import React, { useState }from 'react';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { Mic, Loader2, AlertCircle } from 'lucide-react'; // Using Mic
+import { Mic, Loader2 } from 'lucide-react'; // AlertCircle removed as it's not directly used for error icon
 import { cn } from '@/lib/utils';
 import { banglaVoiceTyping, type BanglaVoiceOutput } from '@/ai/flows/bangla-voice-typing';
 import { useToast } from '@/hooks/use-toast';
@@ -29,13 +29,25 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       toast({
         title: "খালি ইনপুট",
         description: "অনুগ্রহ করে পরিমার্জন করার জন্য কিছু টেক্সট লিখুন।",
-        variant: "default",
+        variant: "default", // Changed from "destructive" as it's more of a notice
       });
       return;
     }
 
     setIsProcessing(true);
     try {
+      // Ensure GOOGLE_GENAI_API_KEY is set in .env file
+      if (!process.env.NEXT_PUBLIC_GOOGLE_GENAI_API_KEY && !process.env.GOOGLE_GENAI_API_KEY) {
+          console.error("GOOGLE_GENAI_API_KEY is not set in the environment variables.");
+          toast({
+            title: "API কী সেট করা নেই",
+            description: "AI ফিচারটি ব্যবহার করার জন্য GOOGLE_GENAI_API_KEY সেট করা প্রয়োজন।",
+            variant: "destructive",
+          });
+          setIsProcessing(false);
+          return;
+      }
+
       const result: BanglaVoiceOutput = await banglaVoiceTyping({ voiceInput: inputElement.value });
       onTranscription(result.correctedText);
       toast({
