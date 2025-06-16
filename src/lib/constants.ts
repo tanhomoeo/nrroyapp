@@ -19,11 +19,11 @@ export const ROUTES = {
   APP_SETTINGS: '/settings',
   AI_SUMMARY: '/ai-summary',
   MEDICINE_INSTRUCTIONS: '/medicine-instructions',
-  STORE_MANAGEMENT: '/store-management', // Updated route
-  PERSONAL_EXPENSES: '/personal-expenses', // Updated route
+  STORE_MANAGEMENT: '/store-management',
+  PERSONAL_EXPENSES: '/personal-expenses',
 };
 
-export const APP_NAME = 'ত্রি ফুল আরোগ্য নিকেতন';
+export const APP_NAME = 'ত্রিফুল আরোগ্য নিকেতন'; // Corrected: Removed extra space
 export const APP_VERSION = '1.1.1';
 
 export const BENGALI_ALPHABET_FULL = [

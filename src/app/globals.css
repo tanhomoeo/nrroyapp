@@ -36,7 +36,7 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar specific colors - Light Theme */
-    --sidebar-background: 220 45% 96%; /* Gradient start for light theme (e.g., #F2F5FA) */
+    --sidebar-background: 217 90% 94%; /* New light blue start */
     --sidebar-foreground: 220 25% 30%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
@@ -44,7 +44,7 @@ body {
     --sidebar-accent-foreground: hsl(var(--primary));
     --sidebar-border: 220 20% 88%;
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-light: 215 55% 90%; /* Gradient end for light theme (e.g., #DCE6F0) */
+    --sidebar-gradient-end-light: 217 95% 97%; /* New light blue end */
   }
 
   .dark {
@@ -75,7 +75,7 @@ body {
     --chart-5: 320 75% 60%;
 
     /* Sidebar specific colors for dark mode */
-    --sidebar-background: 220 22% 15%; /* Gradient start for dark theme (e.g., #1F2530) */
+    --sidebar-background: 217 30% 18%; /* New dark blue-gray start */
     --sidebar-foreground: 210 20% 85%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
@@ -83,7 +83,7 @@ body {
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 15% 20%;
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-dark: 220 28% 10%; /* Gradient end for dark theme (e.g., #121720) */
+    --sidebar-gradient-end-dark: 217 25% 14%; /* New dark blue-gray end */
   }
 
   /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
