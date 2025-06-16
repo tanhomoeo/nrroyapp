@@ -24,6 +24,11 @@ const pt_sans = PT_Sans({
 export const metadata: Metadata = {
   title: APP_NAME,
   description: `Patient Management System for ${APP_NAME}`,
+  icons: {
+    icon: '/icons/favicon.ico', // Default path, change if your icon has a different name/format
+    // apple: '/icons/apple-touch-icon.png', // Optional: for Apple devices
+    // shortcut: '/icons/favicon.ico', // Optional: for shortcut icon
+  },
 };
 
 export default function RootLayout({
@@ -34,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="bn" className={`${poppins.variable} ${pt_sans.variable}`} suppressHydrationWarning>
       <head>
-        {/* Google Font links removed, now handled by next/font */}
+        {/* Favicon link is now handled by the metadata object above for Next.js App Router */}
       </head>
       <body className="font-body antialiased">
         <ThemeProvider
