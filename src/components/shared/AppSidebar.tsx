@@ -58,7 +58,7 @@ interface CollapsibleSidebarSectionProps {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
-  headerClassName?: string; // New prop for custom header styling
+  headerClassName?: string;
 }
 
 const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ title, children, defaultOpen = false, headerClassName }) => {
@@ -75,9 +75,9 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
           "transition-colors duration-150",
           isSidebarIconOnly && "hidden",
           isOpen && !isSidebarIconOnly && "bg-sidebar-accent/60",
-          !isOpen && headerClassName, // Apply custom class when closed
-          isOpen ? "hover:bg-sidebar-accent/70" : (headerClassName ? "" : "hover:bg-sidebar-accent"), // Conditional hover based on headerClassName
-          headerClassName // Always apply for default background
+          !isOpen && headerClassName, 
+          isOpen ? "hover:bg-sidebar-accent/70" : (headerClassName ? "" : "hover:bg-sidebar-accent"), 
+          headerClassName 
         )}
         aria-expanded={isOpen}
         aria-controls={`section-content-${title.replace(/\s+/g, '-').toLowerCase()}`}
@@ -114,9 +114,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="icon">
-      <SidebarHeader className="p-4">
-        <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 group">
-          <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center p-1">
+      <SidebarHeader className="p-4 flex items-center justify-center group-data-[collapsible=expanded]:justify-start">
+        <Link href={ROUTES.DASHBOARD} className="flex items-center">
+          <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary/20 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/50">
             <Image
               src="/icons/app-logo.svg"
               alt="App Logo"
@@ -126,9 +126,6 @@ export function AppSidebar() {
               data-ai-hint="clinic health logo"
             />
           </Avatar>
-          <span className="font-headline text-xl font-bold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            {APP_NAME}
-          </span>
         </Link>
       </SidebarHeader>
       <SidebarContent className="flex-grow px-2 space-y-1">
