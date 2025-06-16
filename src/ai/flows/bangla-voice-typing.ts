@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit/zod'; // Use z from genkit/zod
+import { z } from 'genkit'; // Changed import path for Zod
 
 export const BanglaVoiceInputSchema = z.object({
   voiceInput: z.string().min(1, { message: "বাংলা টেক্সট আবশ্যক।" }).describe('ভয়েস থেকে প্রাপ্ত বাংলা টেক্সট অথবা পরিমার্জন করার জন্য টেক্সট'),
