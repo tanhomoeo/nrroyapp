@@ -19,8 +19,8 @@ export const ROUTES = {
   APP_SETTINGS: '/settings',
   AI_SUMMARY: '/ai-summary',
   MEDICINE_INSTRUCTIONS: '/medicine-instructions',
-  STORE_MANAGEMENT: '/#coming-soon-store',
-  PERSONAL_EXPENSES: '/#coming-soon-expenses',
+  STORE_MANAGEMENT: '/store-management', // Updated route
+  PERSONAL_EXPENSES: '/personal-expenses', // Updated route
 };
 
 export const APP_NAME = 'ত্রি ফুল আরোগ্য নিকেতন';
@@ -47,4 +47,3 @@ export const BENGALI_CONSONANTS_FOR_FILTER = [
   'য', 'র', 'ল', 'শ', 'ষ', 'স', 'হ',
   'ড়', 'ঢ়', 'য়'
 ];
-

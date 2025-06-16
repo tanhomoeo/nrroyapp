@@ -36,7 +36,7 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar specific colors - Light Theme */
-    --sidebar-background: 220 35% 98%; /* Base and gradient start for sidebar */
+    --sidebar-background: 220 45% 96%; /* Gradient start for light theme (e.g., #F2F5FA) */
     --sidebar-foreground: 220 25% 30%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
@@ -44,7 +44,7 @@ body {
     --sidebar-accent-foreground: hsl(var(--primary));
     --sidebar-border: 220 20% 88%;
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-light: 220 30% 92%; /* Gradient end for light theme */
+    --sidebar-gradient-end-light: 215 55% 90%; /* Gradient end for light theme (e.g., #DCE6F0) */
   }
 
   .dark {
@@ -75,7 +75,7 @@ body {
     --chart-5: 320 75% 60%;
 
     /* Sidebar specific colors for dark mode */
-    --sidebar-background: 220 18% 20%; /* Base and gradient start for sidebar */
+    --sidebar-background: 220 22% 15%; /* Gradient start for dark theme (e.g., #1F2530) */
     --sidebar-foreground: 210 20% 85%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
@@ -83,12 +83,10 @@ body {
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 15% 20%;
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-dark: 220 15% 10%; /* Gradient end for dark theme */
+    --sidebar-gradient-end-dark: 220 28% 10%; /* Gradient end for dark theme (e.g., #121720) */
   }
 
   /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
-  /* The [data-sidebar="sidebar"] element gets bg-sidebar from Tailwind, which uses --sidebar-background */
-  /* This background-image rule layers the gradient on top for the specific variant. */
   [data-variant="sidebar"] [data-sidebar="sidebar"] {
     background-image: linear-gradient(to bottom, hsl(var(--sidebar-background)), hsl(var(--sidebar-gradient-end-light)));
   }
@@ -166,4 +164,3 @@ body {
   size: A4 portrait;
   margin: 15mm;
 }
-    
