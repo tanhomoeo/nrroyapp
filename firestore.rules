@@ -2,16 +2,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: This rule allows all reads and writes to all collections.
-    // This is insecure and should ONLY be used for initial development and testing.
-    // TODO: Secure these rules before deploying to a live production environment.
-    // Replace with more specific rules that grant access based on user authentication
-    // and application logic.
-    // For example:
-    // match /patients/{patientId} {
-    //   allow read: if request.auth != null; // Allow authenticated users to read
-    //   allow write: if request.auth != null; // Allow authenticated users to write (further restrict by user ID if needed)
-    // }
+    // Allow all reads and writes for development and testing.
+    // WARNING: Secure these rules before deploying to production!
     match /{document=**} {
       allow read, write: if true;
     }
