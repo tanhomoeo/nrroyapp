@@ -1,15 +1,24 @@
 
 'use client';
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { getPaymentSlips, getPatients, formatDate, formatCurrency, PAYMENT_METHOD_LABELS, getPaymentMethodLabel } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getPaymentSlips, getPatients, formatDate, formatCurrency, PAYMENT_METHOD_LABELS, getPaymentMethodLabel } from '@/lib/firestoreService';
 import type { PaymentSlip, Patient, PaymentMethod } from '@/lib/types';
-import { PaymentSlipModal } from '@/components/slip/PaymentSlipModal';
+// import { PaymentSlipModal } from '@/components/slip/PaymentSlipModal'; // Static import removed
 import { Eye, Loader2, SearchIcon as SearchIconLucide, Filter } from 'lucide-react';
+
+const PaymentSlipModal = dynamic(() =>
+  import('@/components/slip/PaymentSlipModal').then((mod) => mod.PaymentSlipModal),
+  {
+    ssr: false, // Modal is likely client-side only
+    loading: () => <p>Loading modal...</p>, // Optional loading state
+  }
+);
 
 interface EnrichedSlip extends PaymentSlip {
   patientName?: string;
@@ -18,7 +27,7 @@ interface EnrichedSlip extends PaymentSlip {
 const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string }[] = [
   { value: 'all', label: 'সকল মাধ্যম' },
   ...Object.entries(PAYMENT_METHOD_LABELS)
-    .filter(([key]) => key !== '') 
+    .filter(([key]) => key !== '')
     .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, ''>, label }))
 ];
 
@@ -46,7 +55,6 @@ export default function SlipSearchPage() {
       }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       setAllSlips(enrichedSlipsData);
-      // setFilteredSlips(enrichedSlipsData); // Initial filter will be applied in the next useEffect
       setIsLoading(false);
     };
     fetchData();
@@ -164,7 +172,7 @@ export default function SlipSearchPage() {
         </div>
       )}
 
-      {selectedSlip && (
+      {isModalOpen && selectedSlip && (
         <PaymentSlipModal
           slip={selectedSlip}
           isOpen={isModalOpen}
