@@ -1,10 +1,10 @@
 
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'; // DialogDescription removed as it's not used here
 import { Button } from '@/components/ui/button';
 import type { PaymentSlip, ClinicSettings, PaymentMethod } from '@/lib/types';
-import { formatDate, formatCurrency, getClinicSettings, getPaymentMethodLabel } from '@/lib/localStorage';
+import { formatDate, formatCurrency, getClinicSettings, getPaymentMethodLabel } from '@/lib/firestoreService'; // UPDATED IMPORT
 import { Printer } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 
@@ -19,7 +19,11 @@ export function PaymentSlipModal({ slip, isOpen, onClose }: PaymentSlipModalProp
 
   useEffect(() => {
     if (isOpen) {
-      setClinicSettings(getClinicSettings());
+      const fetchSettings = async () => {
+        const settings = await getClinicSettings();
+        setClinicSettings(settings);
+      };
+      fetchSettings();
     }
   }, [isOpen]);
 
@@ -30,7 +34,7 @@ export function PaymentSlipModal({ slip, isOpen, onClose }: PaymentSlipModalProp
       const printArea = document.getElementById('slip-print-area-content');
       if (printArea && clinicSettings) {
         const paymentMethodDisplay = getPaymentMethodLabel(slip.paymentMethod);
-        const contentToPrint = printArea.innerHTML;
+        // const contentToPrint = printArea.innerHTML; // Not needed directly with iframe method
 
         const iframe = document.createElement('iframe');
         iframe.style.visibility = 'hidden';
@@ -95,7 +99,7 @@ export function PaymentSlipModal({ slip, isOpen, onClose }: PaymentSlipModalProp
                 <div class="slip-details">
                   <div><strong>Slip No:</strong> <span class="value">${slip.slipNumber}</span></div>
                   <div><strong>Date:</strong> <span class="value">${formatDate(slip.date)}</span></div>
-                  <div><strong>Patient ID:</strong> <span class="value">${slip.patientId.substring(0,8)}...</span></div>
+                  <div><strong>Patient ID:</strong> <span class="value">${slip.patientId ? slip.patientId.substring(0,8) + '...' : 'N/A'}</span></div>
                   <div><strong>Patient Name:</strong> <span class="value">${slip.patientName || 'N/A'}</span></div>
                   <div><strong>Purpose:</strong> <span class="value">${slip.purpose}</span></div>
                   <div><strong>Paid Via:</strong> <span class="value">${paymentMethodDisplay}</span></div>

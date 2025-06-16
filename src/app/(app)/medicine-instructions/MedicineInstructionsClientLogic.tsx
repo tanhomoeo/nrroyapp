@@ -13,11 +13,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getClinicSettings, getPatientById, generateId } from '@/lib/localStorage';
+import { getClinicSettings, getPatientById } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { ClinicSettings, Patient, PaymentSlip } from '@/lib/types';
 import { APP_NAME, ROUTES } from '@/lib/constants';
-import { Printer, CalendarIcon, Info, ClipboardList, User, CreditCard, CheckCircle } from 'lucide-react';
-import { format as formatDateFns } from 'date-fns';
+import { Printer, CalendarIcon, Info, ClipboardList, User, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
+import { format as formatDateFns, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -76,6 +76,7 @@ export default function MedicineInstructionsClientLogic() {
   const [generatedSlipNumber, setGeneratedSlipNumber] = useState<string>('');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [isLoadingPageData, setIsLoadingPageData] = useState(true);
 
   const form = useForm<InstructionsFormValues>({
     resolver: zodResolver(instructionsFormSchema),
@@ -101,41 +102,46 @@ export default function MedicineInstructionsClientLogic() {
   const currentTemplate = form.watch('instructionTemplate');
 
   useEffect(() => {
-    const settings = getClinicSettings();
-    setClinicSettings(settings);
-    form.setValue('serialNumber', `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`);
+    const fetchData = async () => {
+      setIsLoadingPageData(true);
+      const settings = await getClinicSettings();
+      setClinicSettings(settings);
+      form.setValue('serialNumber', `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`);
 
-    const patientIdFromQuery = searchParams.get('patientId');
-    const patientNameFromQuery = searchParams.get('name');
-    const visitIdFromQuery = searchParams.get('visitId');
+      const patientIdFromQuery = searchParams.get('patientId');
+      const patientNameFromQuery = searchParams.get('name');
+      const visitIdFromQuery = searchParams.get('visitId');
 
-    if (visitIdFromQuery) {
-      form.setValue('visitId', visitIdFromQuery);
-    }
-
-    if (patientIdFromQuery) {
-      const patient = getPatientById(patientIdFromQuery);
-      if (patient) {
-        setSelectedPatient(patient);
-        form.setValue('patientName', patient.name);
-        form.setValue('patientActualId', patient.id);
-        const diaryNumberDisplayString = patient.diaryNumber ? `ডায়েরি নং: ${patient.diaryNumber.toLocaleString('bn-BD')}` : '';
-        const patientIdShortDisplay = patient.id ? `আইডি: ${patient.id}` : 'আইডি উপলব্ধ নেই';
-        form.setValue('patientIdDisplay', `${diaryNumberDisplayString}${diaryNumberDisplayString && patient.id ? ' / ' : ''}${patient.id ? patientIdShortDisplay : ''}`);
-      } else if (patientNameFromQuery) {
-         form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
-         form.setValue('patientIdDisplay', 'আইডি উপলব্ধ নেই');
-         setSelectedPatient(null);
+      if (visitIdFromQuery) {
+        form.setValue('visitId', visitIdFromQuery);
       }
-    } else if (patientNameFromQuery) {
-      form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
-      form.setValue('patientIdDisplay', 'আইডি উপলব্ধ নেই');
-      setSelectedPatient(null);
-    } else {
-      setSelectedPatient(null);
-      form.setValue('patientIdDisplay', '');
-    }
-    setPaymentCompleted(false);
+
+      if (patientIdFromQuery) {
+        const patient = await getPatientById(patientIdFromQuery);
+        if (patient) {
+          setSelectedPatient(patient);
+          form.setValue('patientName', patient.name);
+          form.setValue('patientActualId', patient.id);
+          const diaryNumberDisplayString = patient.diaryNumber ? `ডায়েরি নং: ${patient.diaryNumber.toLocaleString('bn-BD')}` : '';
+          const patientIdShortDisplay = patient.id ? `আইডি: ${patient.id}` : 'আইডি উপলব্ধ নেই';
+          form.setValue('patientIdDisplay', `${diaryNumberDisplayString}${diaryNumberDisplayString && patient.id ? ' / ' : ''}${patient.id ? patientIdShortDisplay : ''}`);
+        } else if (patientNameFromQuery) {
+           form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
+           form.setValue('patientIdDisplay', 'আইডি উপলব্ধ নেই');
+           setSelectedPatient(null);
+        }
+      } else if (patientNameFromQuery) {
+        form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
+        form.setValue('patientIdDisplay', 'আইডি উপলব্ধ নেই');
+        setSelectedPatient(null);
+      } else {
+        setSelectedPatient(null);
+        form.setValue('patientIdDisplay', '');
+      }
+      setPaymentCompleted(false);
+      setIsLoadingPageData(false);
+    };
+    fetchData();
   }, [form, searchParams]);
 
   const generateInstructionText = (data: InstructionsFormValues): string => {
@@ -172,15 +178,19 @@ export default function MedicineInstructionsClientLogic() {
     }
   };
 
-  const handlePaymentModalClose = () => {
+  const handlePaymentModalClose = (slipCreated: boolean = false) => {
     setIsPaymentModalOpen(false);
+    if (slipCreated) {
+      setPaymentCompleted(true); // Mark payment as completed
+      window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components if needed
+    }
   };
 
-  const handleSlipCreated = (slip: PaymentSlip) => {
-    setIsPaymentModalOpen(false);
-    setPaymentCompleted(true);
-    window.dispatchEvent(new CustomEvent('externalDataChange'));
-  };
+  // const handleSlipCreated = (slip: PaymentSlip) => { // No longer directly used here, logic moved to handlePaymentModalClose
+  //   setIsPaymentModalOpen(false);
+  //   setPaymentCompleted(true);
+  //   window.dispatchEvent(new CustomEvent('firestoreDataChange'));
+  // };
 
   const handleFinishAndGoToDashboard = () => {
     router.push(ROUTES.DASHBOARD);
@@ -195,6 +205,15 @@ export default function MedicineInstructionsClientLogic() {
   const previewInstructionText = generateInstructionText(currentValues);
   const previewSlipNumber = currentValues.serialNumber || generatedSlipNumber || `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`;
   const isPatientNamePrefilled = !!searchParams.get('name') || !!selectedPatient;
+
+  if (isLoadingPageData) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-3">ঔষধের নিয়মাবলী পাতাটি লোড হচ্ছে...</p>
+        </div>
+      );
+  }
 
   return (
     <div className="space-y-6">
@@ -285,7 +304,7 @@ export default function MedicineInstructionsClientLogic() {
                                     )}
                                 >
                                 <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
-                                {field.value ? formatDateFns(field.value, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
+                                {field.value && isValid(field.value) ? formatDateFns(field.value, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -454,7 +473,7 @@ export default function MedicineInstructionsClientLogic() {
 
               <div className="flex justify-between text-xs mb-1">
                 <span>ক্রমিক নং: {previewSlipNumber}</span>
-                <span>তারিখ: {formatDateFns(currentValues.instructionDate || new Date(), "dd/MM/yyyy", {locale: bn})}</span>
+                <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : formatDateFns(new Date(), "dd/MM/yyyy", {locale: bn})}</span>
               </div>
               <div className="text-xs mb-1">নামঃ {currentValues.patientName || "রোগীর নাম"}</div>
               {currentValues.patientIdDisplay &&
@@ -498,7 +517,7 @@ export default function MedicineInstructionsClientLogic() {
 
         <div className="meta-info">
           <span>ক্রমিক নং: {generatedSlipNumber || currentValues.serialNumber || `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`}</span>
-          <span>তারিখ: {formatDateFns(currentValues.instructionDate || new Date(), "dd MMMM, yyyy", { locale: bn })}</span>
+          <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : formatDateFns(new Date(), "dd MMMM, yyyy", { locale: bn })}</span>
         </div>
         <div className="patient-name">নামঃ {currentValues.patientName}</div>
          {currentValues.patientIdDisplay &&
@@ -540,7 +559,7 @@ export default function MedicineInstructionsClientLogic() {
           patient={selectedPatient}
           isOpen={isPaymentModalOpen}
           onClose={handlePaymentModalClose}
-          onSlipCreated={handleSlipCreated}
+          // onSlipCreated={handleSlipCreated} // This prop is removed, logic is in onClose
           visitId={form.getValues('visitId')!}
         />
       )}

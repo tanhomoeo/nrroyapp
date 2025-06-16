@@ -10,15 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { Patient, PaymentSlip, PaymentMethod } from '@/lib/types';
-import { addPaymentSlip, formatCurrency } from '@/lib/localStorage';
-import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
+import { addPaymentSlip, formatCurrency } from '@/lib/firestoreService'; // UPDATED IMPORT
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Receipt } from 'lucide-react';
 
 interface CreatePaymentSlipModalProps {
   patient: Patient;
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (slipCreated?: boolean) => void; // Modified to indicate if a slip was created
   onSlipCreated?: (slip: PaymentSlip) => void; 
   visitId?: string; 
 }
@@ -35,7 +34,7 @@ const paymentMethodOptions: { value: Exclude<PaymentMethod, ''>; label: string }
 const paymentSlipSchema = z.object({
   purpose: z.string().min(1, "Purpose is required."),
   amount: z.coerce.number().nonnegative("Amount must be a non-negative number."),
-  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other']).optional(),
+  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other', '']).optional(),
   receivedBy: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.amount > 0 && !data.paymentMethod) {
@@ -56,35 +55,39 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
     defaultValues: {
       purpose: '',
       amount: 0,
-      paymentMethod: 'cash', // Default to cash
+      paymentMethod: 'cash', 
       receivedBy: '',
     },
   });
 
-  const onSubmit: SubmitHandler<PaymentSlipFormValues> = (data) => {
+  const onSubmit: SubmitHandler<PaymentSlipFormValues> = async (data) => {
     try {
-      const newSlip: PaymentSlip = {
-        id: generateId(),
+      const newSlipData: Omit<PaymentSlip, 'id' | 'createdAt'> = {
         patientId: patient.id,
         visitId: visitId, 
         slipNumber: `SLIP-${Date.now().toString().slice(-6)}`, 
         date: new Date().toISOString(),
         amount: data.amount,
         purpose: data.purpose,
-        paymentMethod: data.amount > 0 ? data.paymentMethod : undefined, // Store method only if amount > 0
+        paymentMethod: data.amount > 0 ? data.paymentMethod as Exclude<PaymentMethod, ''> : undefined, 
         receivedBy: data.receivedBy,
-        createdAt: new Date().toISOString(),
       };
-      addPaymentSlip(newSlip);
+      const slipId = await addPaymentSlip(newSlipData);
+      if (!slipId) {
+        throw new Error("Failed to save payment slip to Firestore.");
+      }
+      const createdSlip = { ...newSlipData, id: slipId, createdAt: new Date().toISOString() };
+      
       toast({
         title: 'Payment Slip Created',
-        description: `Slip ${newSlip.slipNumber} for ${formatCurrency(newSlip.amount)} successfully created.`,
+        description: `Slip ${createdSlip.slipNumber} for ${formatCurrency(createdSlip.amount)} successfully created.`,
       });
       if (onSlipCreated) {
-        onSlipCreated(newSlip);
+        onSlipCreated(createdSlip);
       }
       form.reset({ purpose: '', amount: 0, paymentMethod: 'cash', receivedBy: '' });
-      onClose();
+      onClose(true); // Indicate slip was created
+      window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components
     } catch (error) {
       console.error("Failed to create payment slip:", error);
       toast({
@@ -92,6 +95,7 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
         description: 'Failed to create payment slip.',
         variant: 'destructive',
       });
+      onClose(false);
     }
   };
 
@@ -152,7 +156,7 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
                   <FormLabel>Payment Method</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value} 
+                    value={field.value || ''}
                     defaultValue="cash"
                   >
                     <FormControl>
@@ -187,7 +191,7 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
             />
             <DialogFooter className="pt-4">
               <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => onClose(false)}>Cancel</Button>
               </DialogClose>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? (
@@ -204,4 +208,3 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
     </Dialog>
   );
 }
-

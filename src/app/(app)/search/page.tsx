@@ -1,12 +1,12 @@
 
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getPatients, formatDate, addVisit, generateId } from '@/lib/localStorage';
-import type { Patient, Visit } from '@/lib/types';
+import { getPatients } from '@/lib/firestoreService'; // UPDATED IMPORT
+import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { 
   UserCircle, 
@@ -39,20 +39,24 @@ export default function SearchPatientsPage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const patientsData = getPatients();
-    setAllPatients(patientsData);
-    setIsLoading(false);
+    const fetchPatients = async () => {
+      setIsLoading(true);
+      const patientsData = await getPatients();
+      setAllPatients(patientsData);
+      setIsLoading(false);
 
-    const querySearchTerm = searchParams.get('q');
-    const queryPhone = searchParams.get('phone');
+      const querySearchTerm = searchParams.get('q');
+      const queryPhone = searchParams.get('phone');
 
-    if (querySearchTerm) {
-      setSearchTerm(querySearchTerm);
-    } else if (queryPhone) {
-      setSearchTerm(queryPhone);
-    } else {
-      setFilteredPatients([]); 
-    }
+      if (querySearchTerm) {
+        setSearchTerm(querySearchTerm);
+      } else if (queryPhone) {
+        setSearchTerm(queryPhone);
+      } else {
+        setFilteredPatients([]); 
+      }
+    };
+    fetchPatients();
   }, [searchParams]); 
 
   useEffect(() => {
@@ -89,6 +93,29 @@ export default function SearchPatientsPage() {
 
   const handleOpenMedicineInstructions = (patient: Patient) => {
     router.push(`${ROUTES.MEDICINE_INSTRUCTIONS}?patientId=${patient.id}&name=${encodeURIComponent(patient.name)}`);
+  };
+  
+  const handlePatientUpdatedInModal = (updatedPatient: Patient) => {
+    setAllPatients(prevAllPatients => 
+      prevAllPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p)
+    );
+    // Optionally re-filter if search term is active
+    if (searchTerm.trim()) {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        const results = allPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p).filter(patient => {
+            const diaryNumString = (patient.diaryNumber || '').toString().toLowerCase();
+            return (
+                patient.name.toLowerCase().includes(lowerSearchTerm) ||
+                patient.id.toLowerCase().includes(lowerSearchTerm) ||
+                patient.phone.toLowerCase().includes(lowerSearchTerm) || 
+                diaryNumString.includes(lowerSearchTerm) ||
+                (patient.villageUnion || '').toLowerCase().includes(lowerSearchTerm) ||
+                (patient.district || '').toLowerCase().includes(lowerSearchTerm) ||
+                (patient.guardianName || '').toLowerCase().includes(lowerSearchTerm)
+            );
+        });
+        setFilteredPatients(results);
+    }
   };
 
   return (
@@ -184,11 +211,7 @@ export default function SearchPatientsPage() {
           isOpen={isDetailsModalOpen}
           onClose={() => setIsDetailsModalOpen(false)}
           defaultTab={activeModalTab}
-          onPatientUpdate={(updatedPatient) => {
-            setAllPatients(prevAllPatients => 
-              prevAllPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p)
-            );
-          }}
+          onPatientUpdate={handlePatientUpdatedInModal}
         />
       )}
       {selectedPatientForModal && (
@@ -196,6 +219,7 @@ export default function SearchPatientsPage() {
           patient={selectedPatientForModal}
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
+          onSlipCreated={() => { /* Optionally refresh data if needed */ }}
         />
       )}
     </div>

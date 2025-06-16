@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { getVisits, getPatients, getPaymentSlips, formatDate, formatCurrency, getClinicSettings, PAYMENT_METHOD_LABELS, getPaymentMethodLabel, getWeekRange, getMonthRange } from '@/lib/localStorage';
+import { getVisits, getPatients, getPaymentSlips, formatDate, formatCurrency, getClinicSettings, PAYMENT_METHOD_LABELS, getPaymentMethodLabel, getWeekRange, getMonthRange } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { Visit, Patient, PaymentSlip, ClinicSettings, PaymentMethod } from '@/lib/types';
 import { CalendarIcon, Printer, Loader2, Filter } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isValid } from 'date-fns';
@@ -42,7 +42,7 @@ const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string 
 
 export default function EnhancedReportPage() {
   const [reportType, setReportType] = useState<ReportType>('daily');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Used for date picker anchor
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethod | 'all'>('all');
@@ -54,14 +54,21 @@ export default function EnhancedReportPage() {
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
 
   useEffect(() => {
-    setClinicSettings(getClinicSettings());
+    const fetchSettings = async () => {
+      const settings = await getClinicSettings();
+      setClinicSettings(settings);
+    };
+    fetchSettings();
   }, []);
 
-  const generateReport = useCallback(() => {
+  const generateReport = useCallback(async () => {
     setIsLoading(true);
-    const allVisits = getVisits();
-    const allPatients = getPatients();
-    const allSlips = getPaymentSlips();
+    
+    const [allVisits, allPatients, allSlips] = await Promise.all([
+        getVisits(),
+        getPatients(),
+        getPaymentSlips()
+    ]);
 
     let dateFilteredVisits: Visit[] = [];
     let currentReportStartDate: Date = new Date();
@@ -69,47 +76,35 @@ export default function EnhancedReportPage() {
     currentReportStartDate.setHours(0, 0, 0, 0); 
     currentReportEndDate.setHours(23, 59, 59, 999); 
 
-
     if (reportType === 'daily' && startDate) {
       currentReportStartDate = new Date(startDate);
       currentReportStartDate.setHours(0,0,0,0);
       currentReportEndDate = new Date(startDate);
       currentReportEndDate.setHours(23,59,59,999);
-      dateFilteredVisits = allVisits.filter(visit => {
-        const visitDate = new Date(visit.visitDate);
-        return visitDate >= currentReportStartDate && visitDate <= currentReportEndDate;
-      });
     } else if (reportType === 'weekly' && startDate) {
       const { start, end } = getWeekRange(startDate);
       currentReportStartDate = start;
       currentReportEndDate = end;
-      dateFilteredVisits = allVisits.filter(visit => {
-        const visitDate = new Date(visit.visitDate);
-        return visitDate >= start && visitDate <= end;
-      });
     } else if (reportType === 'monthly' && startDate) {
       const { start, end } = getMonthRange(startDate);
       currentReportStartDate = start;
       currentReportEndDate = end;
-      dateFilteredVisits = allVisits.filter(visit => {
-        const visitDate = new Date(visit.visitDate);
-        return visitDate >= start && visitDate <= end;
-      });
     } else if (reportType === 'custom' && startDate && endDate && startDate <= endDate) {
       currentReportStartDate = new Date(startDate);
       currentReportStartDate.setHours(0,0,0,0);
       currentReportEndDate = new Date(endDate);
       currentReportEndDate.setHours(23,59,59,999);
-      dateFilteredVisits = allVisits.filter(visit => {
-        const visitDate = new Date(visit.visitDate);
-        return visitDate >= currentReportStartDate && visitDate <= currentReportEndDate;
-      });
     } else {
         setReportData([]);
         setSummary({ totalVisits: 0, totalRevenue: 0 });
         setIsLoading(false);
         return;
     }
+    
+    dateFilteredVisits = allVisits.filter(visit => {
+        const visitDate = new Date(visit.visitDate);
+        return visitDate >= currentReportStartDate && visitDate <= currentReportEndDate;
+    });
 
     let processedVisits = dateFilteredVisits;
 
@@ -121,7 +116,7 @@ export default function EnhancedReportPage() {
       const patient = allPatients.find(p => p.id === visit.patientId);
       let visitSlips = allSlips.filter(s =>
         s.visitId === visit.id &&
-        new Date(s.date) >= currentReportStartDate &&
+        new Date(s.date) >= currentReportStartDate && // Also filter slips by the report date range
         new Date(s.date) <= currentReportEndDate
       );
 
@@ -132,11 +127,11 @@ export default function EnhancedReportPage() {
       const totalAmountFromSlips = visitSlips.reduce((acc, slip) => acc + slip.amount, 0);
 
       return { visit, patient, slips: visitSlips, totalAmountFromSlips };
-    }).filter(item => {
+    }).filter(item => { // Ensure items are filtered out if no slips match paymentMethodFilter
         if (paymentMethodFilter !== 'all') {
-            return item.slips.length > 0;
+            return item.slips.length > 0; // Only include if there are slips matching the filter
         }
-        return true; 
+        return true; // Include all items if filter is 'all'
     });
     
     setReportData(data.sort((a,b) => new Date(a.visit.visitDate).getTime() - new Date(b.visit.visitDate).getTime() || (a.patient?.name || '').localeCompare(b.patient?.name || '', 'bn')));
@@ -163,7 +158,7 @@ export default function EnhancedReportPage() {
         if (!startDate) setStartDate(today);
         if (!endDate) setEndDate(today);
     }
-  }, [reportType, selectedDate]); 
+  }, [reportType, selectedDate, startDate, endDate]); // Added startDate, endDate dependencies for custom
 
 
   useEffect(() => {
@@ -229,7 +224,7 @@ export default function EnhancedReportPage() {
                 <PopoverTrigger asChild>
                   <Button id="dailyDate" variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
+                    {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date); setSelectedDate(date || new Date());}} initialFocus locale={bn} /></PopoverContent>
@@ -243,7 +238,7 @@ export default function EnhancedReportPage() {
                 <PopoverTrigger asChild>
                   <Button id="weeklyDate" variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
+                    {selectedDate && isValid(selectedDate) ? format(selectedDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={selectedDate} onSelect={(date) => setSelectedDate(date || new Date())} initialFocus locale={bn} /></PopoverContent>
@@ -257,11 +252,11 @@ export default function EnhancedReportPage() {
                 <PopoverTrigger asChild>
                   <Button id="monthlyDate" variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "MMMM yyyy", { locale: bn }) : <span>একটি মাস নির্বাচন করুন</span>}
+                    {selectedDate && isValid(selectedDate) ? format(selectedDate, "MMMM yyyy", { locale: bn }) : <span>একটি মাস নির্বাচন করুন</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => setSelectedDate(date || new Date())} initialFocus locale={bn}
+                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => setSelectedDate(date || new Date())} initialFocus locale={bn} captionLayout="dropdown-buttons" fromYear={2020} toYear={new Date().getFullYear() + 5}
                   />
                 </PopoverContent>
               </Popover>
@@ -275,7 +270,7 @@ export default function EnhancedReportPage() {
                   <PopoverTrigger asChild>
                     <Button id="startDateCustom" variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP", { locale: bn }) : <span>শুরুর তারিখ</span>}
+                      {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>শুরুর তারিখ</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus locale={bn} /></PopoverContent>
@@ -287,7 +282,7 @@ export default function EnhancedReportPage() {
                   <PopoverTrigger asChild>
                     <Button id="endDateCustom" variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "PPP", { locale: bn }) : <span>শেষ তারিখ</span>}
+                      {endDate && isValid(endDate) ? format(endDate, "PPP", { locale: bn }) : <span>শেষ তারিখ</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus locale={bn} disabled={(date) => startDate ? date < startDate : false} /></PopoverContent>
@@ -408,7 +403,7 @@ export default function EnhancedReportPage() {
                   reportData.map((item, index) => (
                     <TableRow key={item.visit.id}>
                       <TableCell className="text-center">{index + 1}</TableCell>
-                      <TableCell>{format(new Date(item.visit.visitDate), "dd/MM/yy", { locale: bn })}</TableCell>
+                      <TableCell>{formatDate(item.visit.visitDate)}</TableCell>
                       <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
                       <TableCell>{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
                       <TableCell>{item.patient?.phone || 'N/A'}</TableCell>

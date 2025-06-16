@@ -10,7 +10,7 @@ import {
     Users, UserPlus, FileText, BarChart3, TrendingUp, Search as SearchIcon, Printer, CalendarDays, X, Loader2,
     MessageSquareText, PlayCircle, CreditCard, ClipboardList, FilePlus2
 } from 'lucide-react';
-import { getPatients, getVisits, getPaymentSlips, formatCurrency, isToday, isThisMonth, getPatientById, getPaymentMethodLabel } from '@/lib/localStorage';
+import { getPatients, getVisits, getPaymentSlips, formatCurrency, isToday, isThisMonth, getPatientById, getPaymentMethodLabel } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/lib/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -115,15 +115,16 @@ export default function DashboardPage() {
   const [selectedPatientForPaymentModal, setSelectedPatientForPaymentModal] = useState<Patient | null>(null);
   const [currentVisitIdForPaymentModal, setCurrentVisitIdForPaymentModal] = useState<string | null>(null);
 
-  const loadAppointments = useCallback(() => {
-    const allVisits = getVisits();
-    const allSlips = getPaymentSlips();
+  const loadAppointments = useCallback(async () => {
+    const allVisits = await getVisits();
+    const allSlips = await getPaymentSlips();
+    const allPatients = await getPatients(); // Fetch all patients once
 
     const todayVisits = allVisits.filter(v => isToday(v.visitDate));
 
-    const appointmentsData: AppointmentDisplayItem[] = todayVisits
-      .map(visit => {
-        const patient = getPatientById(visit.patientId);
+    const appointmentsDataPromises: Promise<AppointmentDisplayItem | null>[] = todayVisits
+      .map(async visit => {
+        const patient = allPatients.find(p => p.id === visit.patientId); // Use cached patients
         if (!patient) return null;
 
         const paymentSlipForVisit = allSlips.find(s => s.visitId === visit.id && s.amount > 0);
@@ -142,24 +143,26 @@ export default function DashboardPage() {
           paymentAmount: paymentSlipForVisit ? formatCurrency(paymentSlipForVisit.amount) : 'N/A',
           createdAt: visit.createdAt,
         };
-      })
-      .filter(Boolean) as AppointmentDisplayItem[];
-
-    setTodaysAppointments(appointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+      });
+    
+    const resolvedAppointmentsData = (await Promise.all(appointmentsDataPromises)).filter(Boolean) as AppointmentDisplayItem[];
+    setTodaysAppointments(resolvedAppointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
   }, []);
 
 
-  const loadDashboardData = useCallback(() => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true);
-    const allPatients = getPatients();
-    const allSlips = getPaymentSlips();
-    const allVisits = getVisits();
+    const [allPatients, allSlips, allVisits] = await Promise.all([
+        getPatients(),
+        getPaymentSlips(),
+        getVisits()
+    ]);
 
     const todayVisits = allVisits.filter(v => isToday(v.visitDate));
     const uniqueTodayPatients = new Set(todayVisits.map(v => v.patientId));
 
     const monthVisits = allVisits.filter(v => isThisMonth(v.visitDate));
-    const uniqueMonthPatients = new Set(monthVisits.map(v => v.patientId));
+    // const uniqueMonthPatients = new Set(monthVisits.map(v => v.patientId)); // Not directly used in current stats
 
     const todayRevenue = allSlips
       .filter(s => isToday(s.date))
@@ -169,32 +172,35 @@ export default function DashboardPage() {
         .filter(s => isThisMonth(s.date))
         .reduce((sum, s) => sum + s.amount, 0);
 
-    const patientsCreatedThisMonth = allPatients.filter(p => isThisMonth(p.createdAt));
+    const patientsCreatedThisMonth = allPatients.filter(p => p.createdAt && isThisMonth(p.createdAt));
 
     setStats({
       totalPatients: allPatients.length,
       todayPatientCount: uniqueTodayPatients.size,
-      monthlyPatientCount: uniqueMonthPatients.size,
+      monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size, // Recalculate for monthly
       todayRevenue: todayRevenue,
       monthlyIncome: monthlyIncome,
       dailyActivePatients: uniqueTodayPatients.size,
-      dailyOtherRegistered: allPatients.filter(p => !uniqueTodayPatients.has(p.id) && isToday(p.registrationDate)).length,
+      dailyOtherRegistered: allPatients.filter(p => p.registrationDate && !uniqueTodayPatients.has(p.id) && isToday(p.registrationDate)).length,
       monthlyNewPatients: patientsCreatedThisMonth.length,
-      monthlyTotalRegistered: allPatients.length,
+      monthlyTotalRegistered: allPatients.length, // This seems to be total patients, not just monthly registered
     });
 
-    loadAppointments();
+    await loadAppointments();
     setLoading(false);
   }, [loadAppointments]);
 
   useEffect(() => {
     loadDashboardData();
+    // Consider how to handle external data changes with Firestore;
+    // For now, a manual refresh or re-fetch on navigation might be needed
+    // or implement Firestore real-time listeners for more complex scenarios.
     const handleExternalDataChange = () => {
         loadDashboardData();
     };
-    window.addEventListener('externalDataChange', handleExternalDataChange);
+    window.addEventListener('firestoreDataChange', handleExternalDataChange); // Custom event for Firestore updates
     return () => {
-        window.removeEventListener('externalDataChange', handleExternalDataChange);
+        window.removeEventListener('firestoreDataChange', handleExternalDataChange);
     };
   }, [loadDashboardData]);
 
@@ -230,17 +236,17 @@ export default function DashboardPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const handleGoToMedicineInstructions = (patient: Patient, visitId: string) => {
-    router.push(`${ROUTES.MEDICINE_INSTRUCTIONS}?patientId=${patient.id}&name=${encodeURIComponent(patient.name)}&visitId=${visitId}`);
-  };
+  // const handleGoToMedicineInstructions = (patient: Patient, visitId: string) => {
+  //   router.push(`${ROUTES.MEDICINE_INSTRUCTIONS}?patientId=${patient.id}&name=${encodeURIComponent(patient.name)}&visitId=${visitId}`);
+  // };
 
-  const handlePaymentModalClose = (slipCreated: boolean = false) => {
+  const handlePaymentModalClose = async (slipCreated: boolean = false) => {
     setIsPaymentModalOpen(false);
     setSelectedPatientForPaymentModal(null);
     setCurrentVisitIdForPaymentModal(null);
     if (slipCreated) {
-        loadAppointments();
-        window.dispatchEvent(new CustomEvent('externalDataChange'));
+        await loadAppointments(); // Refresh appointments
+        window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components if needed
     }
   };
 

@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Patient, Visit, Prescription, EnrichedVisit, PaymentMethod, PaymentSlip } from '@/lib/types';
-import { getVisitsByPatientId, addVisit, formatDate, updatePatient, getPrescriptionsByPatientId, addPaymentSlip } from '@/lib/localStorage';
-import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
+import { getVisitsByPatientId, addVisit, formatDate, updatePatient, getPrescriptionsByPatientId, addPaymentSlip } from '@/lib/firestoreService'; // UPDATED IMPORT
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; 
 import { cn } from '@/lib/utils';
+import { isValid, format as formatDateFns } from 'date-fns';
 
 interface PatientDetailsModalProps {
   patient: Patient;
@@ -45,7 +45,7 @@ const patientInfoSchema = z.object({
   guardianRelation: z.enum(['father', 'husband', '']).optional(),
   guardianName: z.string().optional(),
   thanaUpazila: z.string().optional(),
-  registrationDate: z.string().optional(),
+  registrationDate: z.string().refine(val => isValid(new Date(val)), { message: "নিবন্ধনের তারিখ আবশ্যক।"}),
 });
 type PatientInfoValues = z.infer<typeof patientInfoSchema>;
 
@@ -67,7 +67,7 @@ const visitAndPaymentFormSchema = z.object({
   visitDate: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "অবৈধ তারিখ" }),
   symptoms: z.string().min(3, "উপসর্গ/উদ্দেশ্য আবশ্যক"),
   amount: z.coerce.number().nonnegative("টাকার পরিমাণ অবশ্যই একটি অ-ঋণাত্মক সংখ্যা হতে হবে।"),
-  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other']).optional(),
+  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other', '']).optional(),
   medicineDeliveryMethod: z.enum(['direct', 'courier'], { required_error: "ঔষধ প্রদানের মাধ্যম নির্বাচন করুন।" }),
   receivedBy: z.string().optional(),
 }).superRefine((data, ctx) => {
@@ -119,6 +119,32 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       receivedBy: '',
     },
   });
+  
+  const fetchVisitsAndPrescriptions = useCallback(async (patientId: string) => {
+      setIsLoadingVisits(true);
+      try {
+        const [patientVisits, patientPrescriptions] = await Promise.all([
+            getVisitsByPatientId(patientId),
+            getPrescriptionsByPatientId(patientId)
+        ]);
+
+        const enrichedVisitsData = patientVisits.map(v => {
+          const visitPrescriptions = patientPrescriptions
+            .filter(p => p.visitId === v.id)
+            .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+          return { ...v, prescription: visitPrescriptions.length > 0 ? visitPrescriptions[0] : null };
+        }).sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime());
+
+        setVisits(enrichedVisitsData);
+      } catch (error) {
+        console.error("Error fetching visits/prescriptions:", error);
+        toast({ title: "ত্রুটি", description: "ভিজিটের তথ্য আনতে সমস্যা হয়েছে।", variant: "destructive" });
+      } finally {
+        setIsLoadingVisits(false);
+      }
+  }, [toast]);
+
 
   useEffect(() => {
     if (isOpen && patient) {
@@ -133,7 +159,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         guardianRelation: patient.guardianRelation || '',
         guardianName: patient.guardianName || '',
         thanaUpazila: patient.thanaUpazila || '',
-        registrationDate: patient.registrationDate || new Date().toISOString(),
+        registrationDate: patient.registrationDate ? formatDateFns(new Date(patient.registrationDate), 'yyyy-MM-dd') : formatDateFns(new Date(), 'yyyy-MM-dd'),
       });
       visitAndPaymentForm.reset({
         visitDate: new Date().toISOString().split('T')[0],
@@ -144,74 +170,87 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         receivedBy: '',
       });
       setIsEditingInfo(false);
-      setIsLoadingVisits(true);
-
-      setTimeout(() => {
-        const patientVisits = getVisitsByPatientId(patient.id);
-        const patientPrescriptions = getPrescriptionsByPatientId(patient.id);
-
-        const enrichedVisitsData = patientVisits.map(v => {
-          const visitPrescriptions = patientPrescriptions
-            .filter(p => p.visitId === v.id)
-            .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-          return { ...v, prescription: visitPrescriptions.length > 0 ? visitPrescriptions[0] : null };
-        }).sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime());
-
-        setVisits(enrichedVisitsData);
-        setIsLoadingVisits(false);
-      }, 300);
+      
+      if (currentTab === 'history' || defaultTab === 'history') {
+        fetchVisitsAndPrescriptions(patient.id);
+      }
     }
-  }, [isOpen, patient, patientInfoForm, visitAndPaymentForm, defaultTab]);
+  }, [isOpen, patient, patientInfoForm, visitAndPaymentForm, defaultTab, currentTab, fetchVisitsAndPrescriptions]);
+  
+  useEffect(() => {
+    if (isOpen && patient && currentTab === 'history' && visits.length === 0 && !isLoadingVisits) {
+        fetchVisitsAndPrescriptions(patient.id);
+    }
+  }, [isOpen, patient, currentTab, visits.length, isLoadingVisits, fetchVisitsAndPrescriptions]);
 
-  const handlePatientInfoSubmit: SubmitHandler<PatientInfoValues> = (data) => {
+
+  const handlePatientInfoSubmit: SubmitHandler<PatientInfoValues> = async (data) => {
     try {
-      const updatedPatientData: Patient = {
-        ...patient,
-        ...data,
+      const updatedPatientData: Partial<Omit<Patient, 'id' | 'createdAt'>> = {
+        name: data.name,
+        phone: data.phone,
+        villageUnion: data.villageUnion,
+        district: data.district,
         diaryNumber: data.diaryNumber,
-        updatedAt: new Date().toISOString(),
+        age: data.age,
+        gender: data.gender,
+        occupation: data.occupation,
+        guardianRelation: data.guardianRelation,
+        guardianName: data.guardianName,
+        thanaUpazila: data.thanaUpazila,
+        registrationDate: new Date(data.registrationDate).toISOString(), // Store as ISO string
       };
-      delete updatedPatientData.diaryPrefix; // Ensure diaryPrefix is not carried over if it existed
-      updatePatient(updatedPatientData);
-      onPatientUpdate(updatedPatientData);
-      toast({ title: "রোগীর তথ্য আপডেট হয়েছে", description: `${data.name}-এর বিবরণ সংরক্ষণ করা হয়েছে।` });
-      setIsEditingInfo(false);
+      
+      const success = await updatePatient(patient.id, updatedPatientData);
+      if (success) {
+        onPatientUpdate({ ...patient, ...updatedPatientData, updatedAt: new Date().toISOString() });
+        toast({ title: "রোগীর তথ্য আপডেট হয়েছে", description: `${data.name}-এর বিবরণ সংরক্ষণ করা হয়েছে।` });
+        setIsEditingInfo(false);
+         window.dispatchEvent(new CustomEvent('firestoreDataChange'));
+      } else {
+        throw new Error("Firestore update failed");
+      }
     } catch (error) {
+      console.error("Error updating patient:", error);
       toast({ title: "ত্রুটি", description: "রোগীর তথ্য আপডেট করতে ব্যর্থ হয়েছে।", variant: "destructive" });
     }
   };
 
-  const handleAddVisitAndPaymentSubmit: SubmitHandler<VisitAndPaymentFormValues> = (data) => {
-    const newVisit: Visit = {
-        id: generateId(),
+  const handleAddVisitAndPaymentSubmit: SubmitHandler<VisitAndPaymentFormValues> = async (data) => {
+    const newVisitData: Omit<Visit, 'id' | 'createdAt'> = {
         patientId: patient.id,
         visitDate: new Date(data.visitDate).toISOString(),
         symptoms: data.symptoms, 
         medicineDeliveryMethod: data.medicineDeliveryMethod, 
-        createdAt: new Date().toISOString(),
     };
-    addVisit(newVisit);
+    const visitId = await addVisit(newVisitData);
+
+    if (!visitId) {
+        toast({ title: 'ত্রুটি', description: 'ভিজিট যুক্ত করতে সমস্যা হয়েছে।', variant: 'destructive' });
+        return;
+    }
     toast({ title: 'ভিজিট লগ হয়েছে', description: `রোগী: ${patient.name} এর জন্য ভিজিট যুক্ত করা হয়েছে।` });
 
-    if (data.amount > 0) { 
-      const newSlip: PaymentSlip = {
-        id: generateId(),
+    if (data.amount > 0 && data.paymentMethod) { 
+      const newSlipData: Omit<PaymentSlip, 'id' | 'createdAt'> = {
         patientId: patient.id,
-        visitId: newVisit.id,
+        visitId: visitId,
         slipNumber: `SLIP-${Date.now().toString().slice(-6)}`, 
         date: new Date(data.visitDate).toISOString(), 
         amount: data.amount,
         purpose: data.symptoms, 
-        paymentMethod: data.paymentMethod, 
+        paymentMethod: data.paymentMethod as Exclude<PaymentMethod, ''>, 
         receivedBy: data.receivedBy,
-        createdAt: new Date().toISOString(),
       };
-      addPaymentSlip(newSlip);
-      toast({
-        title: 'পেমেন্ট স্লিপ তৈরি হয়েছে',
-        description: `স্লিপ ${newSlip.slipNumber} ভিজিট ${newVisit.id} এর সাথে যুক্ত করা হয়েছে।`,
-      });
+      const slipId = await addPaymentSlip(newSlipData);
+       if (slipId) {
+            toast({
+                title: 'পেমেন্ট স্লিপ তৈরি হয়েছে',
+                description: `স্লিপ ${newSlipData.slipNumber} ভিজিট ${visitId} এর সাথে যুক্ত করা হয়েছে।`,
+            });
+        } else {
+            toast({ title: 'ত্রুটি', description: 'পেমেন্ট স্লিপ তৈরি করতে সমস্যা হয়েছে।', variant: 'warning' });
+        }
     }
     
     visitAndPaymentForm.reset({
@@ -223,17 +262,11 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       receivedBy: '',
     });
     
-    const patientVisits = getVisitsByPatientId(patient.id);
-    const patientPrescriptions = getPrescriptionsByPatientId(patient.id);
-    const enrichedVisitsData = patientVisits.map(v => {
-        const visitPrescriptions = patientPrescriptions
-        .filter(p => p.visitId === v.id)
-        .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        return { ...v, prescription: visitPrescriptions.length > 0 ? visitPrescriptions[0] : null };
-    }).sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime());
-    setVisits(enrichedVisitsData);
-    onClose(); 
-    router.push(`${ROUTES.DASHBOARD}`); // Navigate to dashboard
+    await fetchVisitsAndPrescriptions(patient.id); // Refresh visit history
+    window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components
+    // onClose(); // Keep modal open or close based on UX preference, currently keeps open
+    setCurrentTab('history'); // Switch to history tab after adding
+    router.push(`${ROUTES.PRESCRIPTION}/${patient.id}?visitId=${visitId}`);
   };
 
   const getModalTitle = () => {
@@ -284,7 +317,42 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
             <TabsContent value="info">
               <Form {...patientInfoForm}>
                 <form onSubmit={patientInfoForm.handleSubmit(handlePatientInfoSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={patientInfoForm.control}
+                    name="registrationDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="registrationDateModal">নিবন্ধনের তারিখ</FormLabel>
+                        <div className={inputWrapperClass}>
+                          <FormControl>
+                            <Input id="registrationDateModal" type="date" {...field} value={field.value ? formatDateFns(new Date(field.value), 'yyyy-MM-dd') : ''} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                      control={patientInfoForm.control}
+                      name="diaryNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="diaryNumberModal">ডায়েরি নম্বর</FormLabel>
+                          <div className={inputWrapperClass}>
+                            <FormControl>
+                              <Input id="diaryNumberModal" type="number" {...field} 
+                                onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                                value={field.value ?? ''}
+                                readOnly={!isEditingInfo} 
+                                className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} 
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={patientInfoForm.control}
                       name="name"
@@ -294,81 +362,6 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <div className={inputWrapperClass}>
                             <FormControl>
                               <Input id="nameModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={patientInfoForm.control}
-                      name="guardianName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="guardianNameModal">অভিভাবকের নাম</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
-                              <Input id="guardianNameModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={patientInfoForm.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="phoneModal">ফোন</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
-                              <Input id="phoneModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={patientInfoForm.control}
-                      name="villageUnion"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="villageUnionModal">গ্রাম/ইউনিয়ন</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
-                              <Input id="villageUnionModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={patientInfoForm.control}
-                      name="district"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="districtModal">জেলা</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
-                              <Input id="districtModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={patientInfoForm.control}
-                      name="thanaUpazila"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="thanaUpazilaModal">থানা/উপজেলা</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
-                              <Input id="thanaUpazilaModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
                           </div>
                           <FormMessage />
@@ -390,20 +383,146 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                         </FormItem>
                       )}
                     />
-                    <FormField
+                     <FormField
                       control={patientInfoForm.control}
-                      name="diaryNumber"
+                      name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="diaryNumberModal">ডায়েরি নম্বর</FormLabel>
+                          <FormLabel>লিঙ্গ</FormLabel>
+                           <Select onValueChange={field.onChange} value={field.value || ''} disabled={!isEditingInfo}>
+                            <FormControl>
+                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                                <SelectValue placeholder="লিঙ্গ নির্বাচন করুন" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="male">পুরুষ</SelectItem>
+                              <SelectItem value="female">মহিলা</SelectItem>
+                              <SelectItem value="other">অন্যান্য</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={patientInfoForm.control}
+                      name="occupation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>রোগীর পেশা</FormLabel>
+                           <Select onValueChange={field.onChange} value={field.value || ''} disabled={!isEditingInfo}>
+                            <FormControl>
+                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                                <SelectValue placeholder="পেশা নির্বাচন করুন" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="student">ছাত্র/ছাত্রী</SelectItem>
+                                <SelectItem value="housewife">গৃহিণী</SelectItem>
+                                <SelectItem value="service">চাকুরীজীবী</SelectItem>
+                                <SelectItem value="business">ব্যবসায়ী</SelectItem>
+                                <SelectItem value="farmer">কৃষক</SelectItem>
+                                <SelectItem value="labourer">শ্রমিক</SelectItem>
+                                <SelectItem value="unemployed">বেকার</SelectItem>
+                                <SelectItem value="retired">অবসরপ্রাপ্ত</SelectItem>
+                                <SelectItem value="other">অন্যান্য</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={patientInfoForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="phoneModal">ফোন</FormLabel>
                           <div className={inputWrapperClass}>
                             <FormControl>
-                              <Input id="diaryNumberModal" type="number" {...field} 
-                                onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-                                value={field.value ?? ''}
-                                readOnly={!isEditingInfo} 
-                                className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} 
-                              />
+                              <Input id="phoneModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={patientInfoForm.control}
+                      name="guardianName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="guardianNameModal">অভিভাবকের নাম</FormLabel>
+                          <div className={inputWrapperClass}>
+                            <FormControl>
+                              <Input id="guardianNameModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={patientInfoForm.control}
+                      name="guardianRelation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>অভিভাবকের সম্পর্ক</FormLabel>
+                           <Select onValueChange={field.onChange} value={field.value || ''} disabled={!isEditingInfo}>
+                            <FormControl>
+                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                                <SelectValue placeholder="সম্পর্ক নির্বাচন করুন" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="father">পিতা</SelectItem>
+                              <SelectItem value="husband">স্বামী</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={patientInfoForm.control}
+                      name="villageUnion"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="villageUnionModal">গ্রাম/ইউনিয়ন</FormLabel>
+                          <div className={inputWrapperClass}>
+                            <FormControl>
+                              <Input id="villageUnionModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={patientInfoForm.control}
+                      name="thanaUpazila"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="thanaUpazilaModal">থানা/উপজেলা</FormLabel>
+                          <div className={inputWrapperClass}>
+                            <FormControl>
+                              <Input id="thanaUpazilaModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={patientInfoForm.control}
+                      name="district"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="districtModal">জেলা</FormLabel>
+                          <div className={inputWrapperClass}>
+                            <FormControl>
+                              <Input id="districtModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
                           </div>
                           <FormMessage />
@@ -538,7 +657,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <FormLabel htmlFor="paymentMethodModal">পেমেন্ট মাধ্যম</FormLabel>
                           <Select 
                             onValueChange={field.onChange} 
-                            value={field.value} 
+                            value={field.value || ''}
                             defaultValue="cash"
                            >
                             <FormControl>

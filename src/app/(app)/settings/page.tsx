@@ -8,11 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { Settings as SettingsIcon, Download, Upload, AlertTriangle, Info } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, AlertTriangle, Info, DatabaseZap, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { getPatients, savePatients, getVisits, saveVisits, getPrescriptions, savePrescriptions, getPaymentSlips, savePaymentSlips, getClinicSettings, saveClinicSettings } from '@/lib/localStorage';
-import { APP_NAME, APP_VERSION, LOCAL_STORAGE_KEYS } from '@/lib/constants';
+import { getPatients, getVisits, getPrescriptions, getPaymentSlips, getClinicSettings, saveClinicSettings, migrateLocalStorageToFirestore, clearAllLocalStorageData } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { APP_NAME, APP_VERSION } from '@/lib/constants';
 import type { Patient, Visit, Prescription, PaymentSlip, ClinicSettings } from '@/lib/types';
 
 interface AllData {
@@ -30,21 +30,20 @@ export default function AppSettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [fileToImport, setFileToImport] = useState<File | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     try {
-      const patients = getPatients().map(p => {
-        const { diaryPrefix, ...rest } = p; 
-        return rest;
-      });
-      const visits = getVisits();
-      const prescriptions = getPrescriptions();
-      const paymentSlips = getPaymentSlips();
-      const clinicSettings = getClinicSettings();
+      // Fetch all data from Firestore
+      const patients = await getPatients();
+      const visits = await getVisits();
+      const prescriptions = await getPrescriptions();
+      const paymentSlips = await getPaymentSlips();
+      const clinicSettings = await getClinicSettings();
 
-      const allData: Omit<AllData, 'patients'> & { patients: Omit<Patient, 'diaryPrefix'>[] } = { 
+      const allData: AllData = { 
         patients,
         visits,
         prescriptions,
@@ -58,12 +57,12 @@ export default function AppSettingsPage() {
       const a = document.createElement('a');
       const dateSuffix = new Date().toISOString().split('T')[0];
       a.href = url;
-      a.download = `${APP_NAME.toLowerCase().replace(/\s+/g, '_')}_data_export_${dateSuffix}.json`;
+      a.download = `${APP_NAME.toLowerCase().replace(/\s+/g, '_')}_firestore_export_${dateSuffix}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast({ title: "ডেটা এক্সপোর্ট সম্পন্ন", description: "সকল অ্যাপ্লিকেশন ডেটা ডাউনলোড করা হয়েছে।" });
+      toast({ title: "ডেটা এক্সপোর্ট সম্পন্ন", description: "Firestore থেকে সকল অ্যাপ্লিকেশন ডেটা ডাউনলোড করা হয়েছে।" });
     } catch (error) {
       console.error("Export error:", error);
       toast({ title: "এক্সপোর্ট ব্যর্থ হয়েছে", description: "ডেটা এক্সপোর্ট করা যায়নি।", variant: "destructive" });
@@ -87,47 +86,51 @@ export default function AppSettingsPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string;
-        const importedData = JSON.parse(text) as AllData; 
+    // This function would need significant rework to import into Firestore.
+    // It involves potentially clearing existing Firestore collections (dangerous)
+    // or carefully merging/updating documents.
+    // For now, this part is highly complex and risky to automate without specific user intent
+    // on how to handle existing Firestore data.
+    // We will keep the structure but acknowledge this is a placeholder for a more complex operation.
+    toast({ title: "ইম্পোর্ট (Firestore)", description: "Firestore-এ ডেটা ইম্পোর্ট করার প্রক্রিয়া জটিল এবং বর্তমানে এই ডেমো অ্যাপে স্বয়ংক্রিয়ভাবে সমর্থিত নয়। ডেটা মাইগ্রেশনের জন্য বিশেষ স্ক্রিপ্ট প্রয়োজন।", variant: "default" });
 
-        if (
-          !importedData ||
-          !Array.isArray(importedData.patients) ||
-          !Array.isArray(importedData.visits) ||
-          !Array.isArray(importedData.prescriptions) ||
-          !Array.isArray(importedData.paymentSlips) ||
-          typeof importedData.clinicSettings !== 'object' 
-        ) {
-          throw new Error("অবৈধ ফাইলের ফর্ম্যাট অথবা ডেটা অনুপস্থিত।");
-        }
-        
-        const cleanedPatients = importedData.patients.map(p => {
-            const { diaryPrefix, ...rest } = p;
-            return rest as Patient; 
-        });
-
-        savePatients(cleanedPatients);
-        saveVisits(importedData.visits);
-        savePrescriptions(importedData.prescriptions);
-        savePaymentSlips(importedData.paymentSlips);
-        saveClinicSettings(importedData.clinicSettings);
-
-
-        toast({ title: "ইম্পোর্ট সফল", description: "ডেটা সফলভাবে ইম্পোর্ট এবং প্রতিস্থাপন করা হয়েছে।" });
-        setSelectedFileName(null);
-        setFileToImport(null);
-        if (fileInputRef.current) fileInputRef.current.value = ""; 
-        setTimeout(() => window.location.reload(), 1000); 
-      } catch (error: any) {
-        console.error("Import error:", error);
-        toast({ title: "ইম্পোর্ট ব্যর্থ হয়েছে", description: `ডেটা ইম্পোর্ট করার সময় ত্রুটি: ${error.message || 'অবৈধ JSON ফাইল.'}`, variant: "destructive" });
-      }
-    };
-    reader.readAsText(fileToImport);
+    // Placeholder for actual Firestore import logic (highly complex)
+    // const reader = new FileReader();
+    // reader.onload = async (e) => {
+    //   try {
+    //     const text = e.target?.result as string;
+    //     const importedData = JSON.parse(text) as AllData;
+    //     // TODO: Implement Firestore batch writes for each collection
+    //     // This would involve:
+    //     // 1. Clearing existing collections (DANGEROUS) or merging.
+    //     // 2. Iterating through importedData.patients and adding them.
+    //     // 3. Same for visits, prescriptions, paymentSlips, clinicSettings.
+    //     // This is a complex operation and needs careful implementation.
+    //     await saveClinicSettings(importedData.clinicSettings); // Example
+    //     // ... and so on for other collections
+    //     toast({ title: "ইম্পোর্ট সফল (ধারণা)", description: "ডেটা সফলভাবে Firestore-এ ইম্পোর্ট করার ধারণা।" });
+    //   } catch (error: any) {
+    //     toast({ title: "ইম্পোর্ট ব্যর্থ হয়েছে", description: `ডেটা ইম্পোর্ট করার সময় ত্রুটি: ${error.message || 'অবৈধ JSON ফাইল.'}`, variant: "destructive" });
+    //   }
+    // };
+    // reader.readAsText(fileToImport);
+    setSelectedFileName(null);
+    setFileToImport(null);
+    if (fileInputRef.current) fileInputRef.current.value = ""; 
   };
+
+  const handleMigrateData = async () => {
+    setIsMigrating(true);
+    await migrateLocalStorageToFirestore();
+    setIsMigrating(false);
+    // Toast is handled within migrateLocalStorageToFirestore
+  };
+  
+  const handleClearLocalStorage = () => {
+    clearAllLocalStorageData();
+    // Toast and reload is handled within clearAllLocalStorageData
+  };
+
 
   if (!mounted) return (
     <div className="space-y-6 animate-pulse">
@@ -166,22 +169,22 @@ export default function AppSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-lg">ডেটা ম্যানেজমেন্ট</CardTitle>
-          <CardDescription>আপনার অ্যাপ্লিকেশন ডেটা এক্সপোর্ট বা ইম্পোর্ট করুন। ডেটা ইম্পোর্ট করলে বিদ্যমান রেকর্ড মুছে যাবে।</CardDescription>
+          <CardTitle className="font-headline text-lg">ডেটা ম্যানেজমেন্ট (Firestore)</CardTitle>
+          <CardDescription>আপনার অ্যাপ্লিকেশন ডেটা এক্সপোর্ট বা ইম্পোর্ট করুন। ইম্পোর্ট করার আগে সতর্কতা অবলম্বন করুন।</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-semibold mb-1">ডেটা এক্সপোর্ট</h3>
+            <h3 className="font-semibold mb-1">ডেটা এক্সপোর্ট (Firestore থেকে)</h3>
             <p className="text-sm text-muted-foreground mb-2">আপনার সকল রোগী, ভিজিট, প্রেসক্রিপশন, এবং স্লিপ ডেটা একটি JSON ফাইল হিসেবে ডাউনলোড করুন।</p>
             <Button onClick={handleExportData} variant="outline">
               <Download className="mr-2 h-4 w-4" /> সকল ডেটা এক্সপোর্ট করুন
             </Button>
           </div>
           <div className="border-t pt-6">
-            <h3 className="font-semibold mb-1">ডেটা ইম্পোর্ট</h3>
+            <h3 className="font-semibold mb-1">ডেটা ইম্পোর্ট (Firestore-এ)</h3>
             <p className="text-sm text-muted-foreground mb-2">
               পূর্বে এক্সপোর্ট করা JSON ফাইল থেকে ডেটা ইম্পোর্ট করুন। 
-              <strong className="text-destructive"> এটি সকল বিদ্যমান ডেটা মুছে ফেলবে।</strong>
+              <strong className="text-destructive"> এটি Firestore-এ বিদ্যমান ডেটা পরিবর্তন বা মুছে ফেলতে পারে। এই ফিচারটি সতর্কতার সাথে ব্যবহার করুন।</strong>
             </p>
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="shrink-0">
@@ -203,7 +206,7 @@ export default function AppSettingsPage() {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="mt-3">
-                    <Upload className="mr-2 h-4 w-4" /> নির্বাচিত ফাইল ইম্পোর্ট করুন
+                    <Upload className="mr-2 h-4 w-4" /> নির্বাচিত ফাইল ইম্পোর্ট করুন (Placeholder)
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -212,20 +215,81 @@ export default function AppSettingsPage() {
                         <AlertTriangle className="mr-2 h-5 w-5 text-destructive"/> ডেটা ইম্পোর্ট নিশ্চিত করুন
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      আপনি কি "{selectedFileName}" থেকে ডেটা ইম্পোর্ট করতে নিশ্চিত? 
-                      এই কাজটি আর ফেরানো যাবে না এবং এটি অ্যাপ্লিকেশনের <strong className="text-destructive">সকল বর্তমান রোগী, ভিজিট, প্রেসক্রিপশন, পেমেন্ট স্লিপ এবং ক্লিনিকের তথ্য স্থায়ীভাবে মুছে ফেলবে</strong>।
+                       আপনি কি "{selectedFileName}" থেকে ডেটা Firestore-এ ইম্পোর্ট করতে চান? এই প্রক্রিয়াটি জটিল এবং বর্তমানে এই ডেমো অ্যাপে সম্পূর্ণ স্বয়ংক্রিয়ভাবে সমর্থিত নয়। এটি শুধুমাত্র একটি প্লেসহোল্ডার।
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>বাতিল</AlertDialogCancel>
                     <AlertDialogAction onClick={handleImportData} className="bg-destructive hover:bg-destructive/90">
-                      হ্যাঁ, মুছে ফেলুন এবং ইম্পোর্ট করুন
+                      হ্যাঁ, ইম্পোর্ট করুন (Placeholder)
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             )}
           </div>
+          
+          <div className="border-t pt-6 space-y-3">
+            <h3 className="font-semibold">localStorage থেকে Firestore-এ ডেটা মাইগ্রেশন</h3>
+            <p className="text-sm text-muted-foreground">
+              যদি আপনার ব্রাউজারের localStorage-এ আগের ডেটা থাকে, তাহলে সেগুলোকে একবারের জন্য Firestore-এ কপি করতে এই বাটনটি ব্যবহার করুন।
+              <strong className="text-destructive"> এই কাজটি করার আগে নিশ্চিত করুন আপনার Firestore ডেটাবেস খালি আছে অথবা আপনি ডেটা মার্জ করতে প্রস্তুত।</strong>
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="default" className="bg-orange-500 hover:bg-orange-600" disabled={isMigrating}>
+                  {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DatabaseZap className="mr-2 h-4 w-4" />}
+                  localStorage থেকে Firestore-এ মাইগ্রেট করুন
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>মাইগ্রেশন নিশ্চিত করুন</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    আপনি কি localStorage-এর সকল ডেটা Firestore-এ কপি করতে চান? যদি Firestore-এ একই আইডি সহ ডেটা থাকে, সেগুলো আপডেট হতে পারে। এই কাজটি করার আগে Firestore ব্যাকআপ নেওয়ার পরামর্শ দেওয়া হচ্ছে।
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isMigrating}>বাতিল</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleMigrateData} disabled={isMigrating} className="bg-orange-500 hover:bg-orange-600">
+                    {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "হ্যাঁ, মাইগ্রেট করুন"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+
+          <div className="border-t pt-6 space-y-3">
+            <h3 className="font-semibold text-destructive">localStorage ডেটা মুছে ফেলুন</h3>
+            <p className="text-sm text-muted-foreground">
+              সতর্কতা: এই কাজটি আপনার ব্রাউজারের localStorage থেকে অ্যাপ্লিকেশনের সকল ডেটা (রোগী, ভিজিট, প্রেসক্রিপশন ইত্যাদি) স্থায়ীভাবে মুছে ফেলবে।
+              <strong className="text-destructive"> যদি ডেটা Firestore-এ সফলভাবে মাইগ্রেট হয়ে থাকে, শুধুমাত্র তখনই এটি ব্যবহার করুন।</strong>
+            </p>
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> localStorage ডেটা মুছুন
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center">
+                            <AlertTriangle className="mr-2 h-5 w-5 text-destructive"/> আপনি কি নিশ্চিত?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            এই কাজটি আপনার ব্রাউজারের লোকাল স্টোরেজ থেকে <strong className="text-destructive">সকল অ্যাপ্লিকেশনের ডেটা স্থায়ীভাবে মুছে ফেলবে</strong>। এই ডেটা আর পুনরুদ্ধার করা যাবে না। আপনি যদি ইতিমধ্যে ডেটা Firestore-এ মাইগ্রেট করে থাকেন, তবেই এটি করুন।
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>বাতিল</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleClearLocalStorage} className="bg-destructive hover:bg-destructive/90">
+                            হ্যাঁ, সকল লোকাল ডেটা মুছুন
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+          </div>
+
         </CardContent>
       </Card>
 

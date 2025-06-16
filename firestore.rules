@@ -1,9 +1,25 @@
-rules_version = '2';
 
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+    // WARNING: These rules are permissive and allow anyone to read/write to your database.
+    // For production, you MUST secure these rules.
+    // Example: allow read, write: if request.auth != null; (for authenticated users)
+    match /patients/{patientId} {
+      allow read, write: if true;
     }
+    match /visits/{visitId} {
+      allow read, write: if true;
+    }
+    match /prescriptions/{prescriptionId} {
+      allow read, write: if true;
+    }
+    match /paymentSlips/{slipId} {
+      allow read, write: if true;
+    }
+    match /settings/clinic { // Storing clinic settings as a single document
+      allow read, write: if true;
+    }
+    // Add rules for other collections if needed
   }
 }

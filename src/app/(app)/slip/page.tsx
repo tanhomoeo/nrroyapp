@@ -1,13 +1,12 @@
 
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { getPaymentSlips, getPatients, formatDate, formatCurrency, PAYMENT_METHOD_LABELS, getPaymentMethodLabel } from '@/lib/localStorage';
+import { getPaymentSlips, getPatients, formatDate, formatCurrency, PAYMENT_METHOD_LABELS, getPaymentMethodLabel } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { PaymentSlip, Patient, PaymentMethod } from '@/lib/types';
 import { PaymentSlipModal } from '@/components/slip/PaymentSlipModal';
 import { Eye, Loader2, SearchIcon as SearchIconLucide, Filter } from 'lucide-react';
@@ -19,7 +18,7 @@ interface EnrichedSlip extends PaymentSlip {
 const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string }[] = [
   { value: 'all', label: 'সকল মাধ্যম' },
   ...Object.entries(PAYMENT_METHOD_LABELS)
-    .filter(([key]) => key !== '') // Exclude the empty key if it exists for type completeness
+    .filter(([key]) => key !== '') 
     .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, ''>, label }))
 ];
 
@@ -34,17 +33,23 @@ export default function SlipSearchPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const slipsData = getPaymentSlips();
-    const patientsData = getPatients();
+    const fetchData = async () => {
+      setIsLoading(true);
+      const [slipsData, patientsData] = await Promise.all([
+        getPaymentSlips(),
+        getPatients()
+      ]);
 
-    const enrichedSlipsData = slipsData.map(slip => {
-      const patient = patientsData.find(p => p.id === slip.patientId);
-      return { ...slip, patientName: patient?.name || 'Unknown Patient' };
-    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const enrichedSlipsData = slipsData.map(slip => {
+        const patient = patientsData.find(p => p.id === slip.patientId);
+        return { ...slip, patientName: patient?.name || 'Unknown Patient' };
+      }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    setAllSlips(enrichedSlipsData);
-    setFilteredSlips(enrichedSlipsData);
-    setIsLoading(false);
+      setAllSlips(enrichedSlipsData);
+      // setFilteredSlips(enrichedSlipsData); // Initial filter will be applied in the next useEffect
+      setIsLoading(false);
+    };
+    fetchData();
   }, []);
 
   useEffect(() => {

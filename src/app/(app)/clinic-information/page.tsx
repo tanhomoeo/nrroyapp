@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { getClinicSettings, saveClinicSettings } from '@/lib/localStorage';
+import { getClinicSettings, saveClinicSettings } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Loader2, Save, Building } from 'lucide-react';
@@ -21,12 +21,14 @@ const clinicInfoFormSchema = z.object({
   clinicAddress: z.string().min(1, "Clinic address is required."),
   clinicContact: z.string().min(1, "Clinic contact is required."),
   bmRegNo: z.string().optional(),
+  nextDiaryNumber: z.coerce.number().int().nonnegative("ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।").optional(),
 });
 
 type ClinicInfoFormValues = z.infer<typeof clinicInfoFormSchema>;
 
 export default function ClinicInformationPage() {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const form = useForm<ClinicInfoFormValues>({
     resolver: zodResolver(clinicInfoFormSchema),
     defaultValues: {
@@ -35,28 +37,36 @@ export default function ClinicInformationPage() {
       clinicAddress: '',
       clinicContact: '',
       bmRegNo: '',
+      nextDiaryNumber: 1,
     },
   });
 
   useEffect(() => {
-    const currentSettings = getClinicSettings();
-    form.reset({
-      clinicName: currentSettings.clinicName || '',
-      doctorName: currentSettings.doctorName || '',
-      clinicAddress: currentSettings.clinicAddress || '',
-      clinicContact: currentSettings.clinicContact || '',
-      bmRegNo: currentSettings.bmRegNo || '',
-    });
+    const fetchSettings = async () => {
+      setIsLoading(true);
+      const currentSettings = await getClinicSettings();
+      form.reset({
+        clinicName: currentSettings.clinicName || '',
+        doctorName: currentSettings.doctorName || '',
+        clinicAddress: currentSettings.clinicAddress || '',
+        clinicContact: currentSettings.clinicContact || '',
+        bmRegNo: currentSettings.bmRegNo || '',
+        nextDiaryNumber: currentSettings.nextDiaryNumber || 1,
+      });
+      setIsLoading(false);
+    };
+    fetchSettings();
   }, [form]);
 
-  const onSubmit: SubmitHandler<ClinicInfoFormValues> = (data) => {
+  const onSubmit: SubmitHandler<ClinicInfoFormValues> = async (data) => {
     try {
-      const currentSettings = getClinicSettings();
+      const currentSettings = await getClinicSettings(); // Fetch latest before saving
       const updatedSettings: ClinicSettings = {
         ...currentSettings, 
         ...data,
+        nextDiaryNumber: data.nextDiaryNumber || currentSettings.nextDiaryNumber || 1, // Ensure it's always a number
       };
-      saveClinicSettings(updatedSettings);
+      await saveClinicSettings(updatedSettings);
       toast({
         title: 'Clinic Information Saved',
         description: 'Clinic details have been updated successfully.',
@@ -76,6 +86,14 @@ export default function ClinicInformationPage() {
   const textareaWrapperClass = "flex items-start w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary min-h-[80px]";
   const textareaFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-y";
 
+  if (isLoading) {
+      return (
+          <div className="flex h-screen items-center justify-center">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+               <p className="ml-3">ক্লিনিকের তথ্য লোড হচ্ছে...</p>
+          </div>
+      );
+  }
 
   return (
     <div className="space-y-6">
@@ -163,6 +181,22 @@ export default function ClinicInformationPage() {
                         <Input placeholder="e.g., 12345" {...field} className={inputFieldClass} />
                       </FormControl>
                     </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="nextDiaryNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>পরবর্তী ডায়েরি নম্বর</FormLabel>
+                    <div className={inputWrapperClass}>
+                      <FormControl>
+                        <Input type="number" placeholder="1" {...field} className={inputFieldClass} />
+                      </FormControl>
+                    </div>
+                    <FormDescription className="text-xs">রোগী নিবন্ধনের সময় এই নম্বরটি প্রস্তাবিত হবে।</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

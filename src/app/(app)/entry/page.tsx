@@ -1,17 +1,15 @@
 
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { addPatient, getClinicSettings, saveClinicSettings } from '@/lib/localStorage';
-import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
+import { addPatient, getClinicSettings, saveClinicSettings } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
@@ -22,12 +20,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const patientFormSchema = z.object({
   registrationDate: z.date({ required_error: "নিবন্ধনের তারিখ আবশ্যক।" }),
-  diaryNumberInput: z.string().optional(), // Changed from diaryPrefix and added separate diaryNumber field
+  diaryNumberInput: z.string().optional(),
   name: z.string().min(1, { message: "পুরো নাম আবশ্যক।" }),
   age: z.string().optional(),
   gender: z.enum(['male', 'female', 'other', ''], { errorMap: () => ({ message: "লিঙ্গ নির্বাচন করুন।" }) }).optional(),
@@ -46,6 +44,7 @@ export default function PatientEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [currentNextDiaryNumber, setCurrentNextDiaryNumber] = useState<number | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(patientFormSchema),
@@ -66,12 +65,17 @@ export default function PatientEntryPage() {
   });
 
   useEffect(() => {
-    const settings = getClinicSettings();
-    setCurrentNextDiaryNumber(settings.nextDiaryNumber);
-    form.setValue('diaryNumberInput', settings.nextDiaryNumber.toString());
+    const fetchSettings = async () => {
+      setIsLoadingSettings(true);
+      const settings = await getClinicSettings();
+      setCurrentNextDiaryNumber(settings.nextDiaryNumber);
+      form.setValue('diaryNumberInput', settings.nextDiaryNumber.toString());
+      setIsLoadingSettings(false);
+    };
+    fetchSettings();
   }, [form]);
 
-  const onSubmit: SubmitHandler<PatientFormValues> = (data) => {
+  const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
       const parsedDiaryNumber = data.diaryNumberInput ? parseInt(data.diaryNumberInput, 10) : undefined;
       
@@ -84,8 +88,7 @@ export default function PatientEntryPage() {
           return;
       }
 
-      const newPatient: Patient = {
-        id: generateId(),
+      const newPatientData: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'> = {
         name: data.name,
         phone: data.phone,
         registrationDate: data.registrationDate.toISOString(),
@@ -97,16 +100,18 @@ export default function PatientEntryPage() {
         district: data.district,
         thanaUpazila: data.thanaUpazila,
         villageUnion: data.villageUnion,
-        diaryNumber: parsedDiaryNumber, 
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        diaryNumber: parsedDiaryNumber,
       };
-      addPatient(newPatient);
+      const patientId = await addPatient(newPatientData);
 
-      // If the used diary number was the suggested next one, update nextDiaryNumber in settings
+      if (!patientId) {
+        throw new Error("Failed to save patient to Firestore.");
+      }
+
       if (parsedDiaryNumber !== undefined && parsedDiaryNumber === currentNextDiaryNumber) {
         const newNextDiaryNumber = parsedDiaryNumber + 1;
-        saveClinicSettings({ ...getClinicSettings(), nextDiaryNumber: newNextDiaryNumber });
+        const currentSettings = await getClinicSettings();
+        await saveClinicSettings({ ...currentSettings, nextDiaryNumber: newNextDiaryNumber });
         setCurrentNextDiaryNumber(newNextDiaryNumber);
       }
 
@@ -114,7 +119,6 @@ export default function PatientEntryPage() {
         title: 'রোগী নিবন্ধিত',
         description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${parsedDiaryNumber || 'N/A'}`,
       });
-      // Reset form, keeping registration date and new next diary number
       form.reset({ 
           registrationDate: new Date(),
           diaryNumberInput: (currentNextDiaryNumber !== null && parsedDiaryNumber === currentNextDiaryNumber) ? (currentNextDiaryNumber + 1).toString() : currentNextDiaryNumber?.toString() || '',
@@ -129,7 +133,7 @@ export default function PatientEntryPage() {
           thanaUpazila: '',
           villageUnion: '',
       }); 
-      router.push(`${ROUTES.PATIENT_SEARCH}?phone=${newPatient.phone}`);
+      router.push(`${ROUTES.PATIENT_SEARCH}?phone=${newPatientData.phone}`);
     } catch (error) {
       console.error('Failed to register patient:', error);
       toast({
@@ -146,6 +150,15 @@ export default function PatientEntryPage() {
 
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
+  
+  if (isLoadingSettings) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-3">সেটিংস লোড হচ্ছে...</p>
+        </div>
+      );
+  }
 
   return (
     <div className="space-y-6">
@@ -175,7 +188,7 @@ export default function PatientEntryPage() {
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
-                          {field.value ? (
+                          {field.value && isValid(field.value) ? (
                             format(field.value, "PPP")
                           ) : (
                             <span>একটি তারিখ নির্বাচন করুন</span>

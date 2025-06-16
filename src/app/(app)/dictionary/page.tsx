@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { getPatients } from '@/lib/localStorage';
+import { getPatients } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { Patient } from '@/lib/types';
 import { BENGALI_VOWELS_FOR_FILTER, BENGALI_CONSONANTS_FOR_FILTER } from '@/lib/constants';
 import { Loader2, Users } from 'lucide-react';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const getFirstChar = (name: string): string => {
   if (!name) return '';
@@ -24,9 +24,13 @@ export default function DictionaryPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const patientsData = getPatients();
-    setAllPatients(patientsData.sort((a, b) => a.name.localeCompare(b.name, 'bn')));
-    setIsLoading(false);
+    const fetchPatients = async () => {
+      setIsLoading(true);
+      const patientsData = await getPatients();
+      setAllPatients(patientsData.sort((a, b) => a.name.localeCompare(b.name, 'bn')));
+      setIsLoading(false);
+    };
+    fetchPatients();
   }, []);
 
   const filteredPatients = useMemo(() => {
