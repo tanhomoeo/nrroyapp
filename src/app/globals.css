@@ -51,17 +51,15 @@ body {
     --sidebar-section-management-bg: 160 50% 93%;
     --sidebar-section-utility-bg: 50 70% 93%;
 
-    /* Submenu Button Styles - Light Theme */
-    --sidebar-button-border: hsl(145 40% 85%); /* Light green border */
-    --sidebar-button-shadow: 0 1px 2px 0 hsla(145, 30%, 50%, 0.1), 0 0 0 1px hsla(145, 30%, 50%, 0.05);
-    --sidebar-button-hover-shadow: 0 2px 4px 0 hsla(145, 30%, 50%, 0.12), 0 0 0 1px hsla(145, 30%, 50%, 0.07);
-    --sidebar-button-active-shadow: inset 0 1px 1px 0 hsla(145, 30%, 50%, 0.1);
-
-    /* New Gradient Variables for Buttons - Light Theme (Greenish) */
-    --sidebar-button-gradient-start-light: hsl(145 55% 94%); /* Lightest Green */
-    --sidebar-button-gradient-end-light: hsl(145 55% 97%); /* Even Lighter Green */
-    --sidebar-button-hover-gradient-start-light: hsl(145 55% 90%); /* Slightly Darker Light Green on Hover */
-    --sidebar-button-hover-gradient-end-light: hsl(145 55% 94%); /* Lighter Green on Hover */
+    /* Submenu Button Styles - Light Theme (Greenish) */
+    --sidebar-button-gradient-start-light: hsl(145 55% 90%); /* Slightly darker light green for top */
+    --sidebar-button-gradient-end-light: hsl(145 55% 95%);   /* Lighter green for bottom */
+    --sidebar-button-hover-gradient-start-light: hsl(145 55% 85%);
+    --sidebar-button-hover-gradient-end-light: hsl(145 55% 92%);
+    --sidebar-button-border: hsl(145 40% 75%); /* Adjusted border for more definition */
+    --sidebar-button-shadow: 0 1px 1px hsla(145, 30%, 50%, 0.15), inset 0 1px 0px hsla(0, 0%, 100%, 0.3);
+    --sidebar-button-hover-shadow: 0 2px 3px hsla(145, 30%, 50%, 0.2), inset 0 1px 0px hsla(0, 0%, 100%, 0.3), 0 0 0 1px hsla(145, 40%, 70%, 0.5);
+    --sidebar-button-active-shadow: inset 0 1px 2px hsla(145, 30%, 50%, 0.2);
   }
 
   .dark {
@@ -107,17 +105,15 @@ body {
     --sidebar-section-management-bg: 160 30% 22%;
     --sidebar-section-utility-bg: 50 35% 22%;
 
-    /* Submenu Button Styles - Dark Theme */
-    --sidebar-button-border: hsl(145 25% 20%); /* Dark green border */
-    --sidebar-button-shadow: 0 1px 1px 0 hsla(145, 20%, 10%, 0.4), 0 1px 0 0 rgba(255,255,255,0.03) inset;
-    --sidebar-button-hover-shadow: 0 2px 3px 0 hsla(145, 20%, 10%, 0.45), 0 1px 0 0 rgba(255,255,255,0.03) inset;
-    --sidebar-button-active-shadow: inset 0 1px 2px 0 hsla(145, 20%, 10%, 0.4);
-
-    /* New Gradient Variables for Buttons - Dark Theme (Greenish) */
-    --sidebar-button-gradient-start-dark: hsl(145 30% 22%); /* Dark Green */
-    --sidebar-button-gradient-end-dark: hsl(145 30% 25%);   /* Slightly Lighter Dark Green */
-    --sidebar-button-hover-gradient-start-dark: hsl(145 30% 25%); /* Darker Green on Hover */
-    --sidebar-button-hover-gradient-end-dark: hsl(145 30% 28%);   /* Lighter Dark Green on Hover */
+    /* Submenu Button Styles - Dark Theme (Greenish) */
+    --sidebar-button-gradient-start-dark: hsl(145 35% 28%);
+    --sidebar-button-gradient-end-dark: hsl(145 35% 32%);
+    --sidebar-button-hover-gradient-start-dark: hsl(145 35% 30%);
+    --sidebar-button-hover-gradient-end-dark: hsl(145 35% 35%);
+    --sidebar-button-border: hsl(145 25% 25%);
+    --sidebar-button-shadow: 0 1px 1px hsla(145, 20%, 8%, 0.5), inset 0 1px 0px hsla(145, 30%, 45%, 0.1);
+    --sidebar-button-hover-shadow: 0 2px 3px hsla(145, 20%, 8%, 0.6), inset 0 1px 0px hsla(145, 30%, 45%, 0.1), 0 0 0 1px hsla(145, 25%, 22%, 0.7);
+    --sidebar-button-active-shadow: inset 0 1px 2px hsla(145, 20%, 8%, 0.5);
   }
 
   /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
@@ -262,6 +258,3 @@ body {
   size: A4 portrait;
   margin: 15mm;
 }
-
-
-
