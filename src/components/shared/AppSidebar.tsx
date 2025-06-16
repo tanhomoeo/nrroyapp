@@ -2,6 +2,7 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Import next/image
 import { usePathname } from 'next/navigation';
 import {
   Sidebar,
@@ -30,7 +31,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { ROUTES, APP_NAME } from '@/lib/constants';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar'; // Avatar might still be used for consistent styling
 import { cn } from '@/lib/utils';
 
 const mainNavItems = [
@@ -110,10 +111,16 @@ export function AppSidebar() {
     <Sidebar side="left" variant="sidebar" collapsible="icon">
       <SidebarHeader className="p-4">
         <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 group">
-          <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-              <path d="M12.378 1.602a.75.75 0 00-.756 0L3.75 6.172V12h16.5V6.172L12.378 1.602zM3.75 13.5V18a.75.75 0 00.75.75h4.5a.75.75 0 00.75-.75v-4.5H3.75zM15 13.5h-3.75v4.5a.75.75 0 00.75.75h4.5a.75.75 0 00.75-.75V13.5H15z"/>
-            </svg>
+          <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center p-1">
+            {/* Replace SVG with next/image */}
+            <Image
+              src="/icons/app-logo.svg"
+              alt="App Logo"
+              width={32} // Adjust width as needed
+              height={32} // Adjust height as needed
+              className="object-contain"
+              data-ai-hint="clinic health logo"
+            />
           </Avatar>
           <span className="font-headline text-xl font-bold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
             {APP_NAME}
