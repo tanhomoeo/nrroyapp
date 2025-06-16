@@ -21,9 +21,10 @@ export const ROUTES = {
   MEDICINE_INSTRUCTIONS: '/medicine-instructions',
   STORE_MANAGEMENT: '/store-management',
   PERSONAL_EXPENSES: '/personal-expenses',
+  LOGIN: '/login', // Added LOGIN route
 };
 
-export const APP_NAME = 'ত্রিফুল আরোগ্য নিকেতন'; // Corrected: Removed extra space
+export const APP_NAME = 'ত্রিফুল আরোগ্য নিকেতন';
 export const APP_VERSION = '1.1.1';
 
 export const BENGALI_ALPHABET_FULL = [
