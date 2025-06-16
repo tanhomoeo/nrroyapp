@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addPatient, getClinicSettings, saveClinicSettings } from '@/lib/firestoreService'; // UPDATED IMPORT
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+// import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // MicrophoneButton removed
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { Loader2, CalendarIcon, UserPlus } from 'lucide-react';
@@ -144,9 +144,9 @@ export default function PatientEntryPage() {
     }
   };
 
-  const handleVoiceInput = (field: keyof PatientFormValues) => (text: string) => {
-    form.setValue(field, text);
-  };
+  // const handleVoiceInput = (field: keyof PatientFormValues) => (text: string) => { // MicrophoneButton removed
+  //   form.setValue(field, text);
+  // };
 
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
@@ -240,7 +240,7 @@ export default function PatientEntryPage() {
                       <FormControl className="flex-1">
                         <Input placeholder="পুরো নাম লিখুন" {...field} id="patientNameEntry" className={inputFieldClass} />
                       </FormControl>
-                      <MicrophoneButton onTranscription={handleVoiceInput('name')} targetInputId="patientNameEntry" className="border-l border-input h-full rounded-none px-2"/>
+                      {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -373,7 +373,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                           <Input placeholder="অভিভাবকের নাম লিখুন" {...field} id="guardianNameEntry" className={inputFieldClass}/>
                         </FormControl>
-                        <MicrophoneButton onTranscription={handleVoiceInput('guardianName')} targetInputId="guardianNameEntry" className="border-l border-input h-full rounded-none px-2"/>
+                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -390,7 +390,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                            <Input placeholder="গ্রাম বা ইউনিয়ন লিখুন" {...field} id="villageUnionEntry" className={inputFieldClass}/>
                         </FormControl>
-                        <MicrophoneButton onTranscription={handleVoiceInput('villageUnion')} targetInputId="villageUnionEntry" className="border-l border-input h-full rounded-none px-2"/>
+                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -406,7 +406,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                            <Input placeholder="থানা বা উপজেলা লিখুন" {...field} id="thanaUpazilaEntry" className={inputFieldClass}/>
                         </FormControl>
-                        <MicrophoneButton onTranscription={handleVoiceInput('thanaUpazila')} targetInputId="thanaUpazilaEntry" className="border-l border-input h-full rounded-none px-2"/>
+                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -422,7 +422,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                            <Input placeholder="জেলা লিখুন" {...field} id="districtEntry" className={inputFieldClass}/>
                         </FormControl>
-                        <MicrophoneButton onTranscription={handleVoiceInput('district')} targetInputId="districtEntry" className="border-l border-input h-full rounded-none px-2"/>
+                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>

@@ -12,12 +12,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { getPatientById, addPrescription, getVisitById, getPrescriptionsByPatientId, getPrescriptionById, updatePrescription, formatDate, getClinicSettings } from '@/lib/localStorage'; 
-import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
+import { getPatientById, addPrescription, getVisitById, getPrescriptionsByPatientId, getPrescriptionById, updatePrescription, formatDate, getClinicSettings } from '@/lib/firestoreService'; // UPDATED IMPORT
+// import { generateSimpleId as generateId } from '@/lib/utils'; // generateId not needed with Firestore auto-IDs for new docs
 import type { Patient, Prescription, Visit, ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { DiagnosisAssistant } from '@/components/ai/DiagnosisAssistant';
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { DiagnosisAssistant } from '@/components/ai/DiagnosisAssistant'; // Still imported, will show placeholder
+// import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // MicrophoneButton removed
 import { PlusCircle, Trash2, Save, Loader2, Printer, ClipboardList } from 'lucide-react'; 
 import { Separator } from '@/components/ui/separator';
 import { APP_NAME, ROUTES } from '@/lib/constants'; 
@@ -76,16 +76,16 @@ export default function PrescriptionPage() {
     name: "items",
   });
 
-  const fetchPrescriptionData = useCallback(() => {
+  const fetchPrescriptionData = useCallback(async () => {
     setIsLoading(true);
-    const fetchedPatient = getPatientById(patientId);
+    const fetchedPatient = await getPatientById(patientId);
     setPatient(fetchedPatient || null);
-    const currentClinicSettings = getClinicSettings();
+    const currentClinicSettings = await getClinicSettings();
     setClinicSettings(currentClinicSettings);
 
     let visitForDiagnosis: Visit | null = null;
     if (visitId) {
-      const visit = getVisitById(visitId); 
+      const visit = await getVisitById(visitId); 
       setCurrentVisit(visit || null);
       visitForDiagnosis = visit;
     }
@@ -95,7 +95,7 @@ export default function PrescriptionPage() {
     setShowInstructionsButton(false); 
 
     if (prescriptionIdQuery) {
-      const prescription = getPrescriptionById(prescriptionIdQuery); 
+      const prescription = await getPrescriptionById(prescriptionIdQuery); 
       if (prescription) {
         setExistingPrescription(prescription);
         initialDiagnosis = prescription.diagnosis || '';
@@ -111,7 +111,7 @@ export default function PrescriptionPage() {
         setShowInstructionsButton(true); 
       }
     } else if (visitId) {
-        const prescriptionsForVisit = getPrescriptionsByPatientId(patientId).filter(p => p.visitId === visitId);
+        const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
         if (prescriptionsForVisit.length > 0) {
             const currentPrescription = prescriptionsForVisit[0]; 
             setExistingPrescription(currentPrescription);
@@ -145,7 +145,6 @@ export default function PrescriptionPage() {
       form.setValue('diagnosis', visitForDiagnosis.diagnosis);
     }
 
-
     setIsLoading(false);
   }, [patientId, visitId, prescriptionIdQuery, form]);
 
@@ -155,7 +154,7 @@ export default function PrescriptionPage() {
   }, [fetchPrescriptionData]);
 
 
-  const onSubmit: SubmitHandler<PrescriptionFormValues> = (data) => {
+  const onSubmit: SubmitHandler<PrescriptionFormValues> = async (data) => {
     if (!patient || !visitId) {
       toast({ title: "Error", description: "Patient or Visit information is missing.", variant: "destructive" });
       return;
@@ -164,32 +163,37 @@ export default function PrescriptionPage() {
     try {
       let currentPrescriptionId = existingPrescription?.id;
       if (existingPrescription) {
-        const updatedPrescriptionData: Prescription = {
-          ...existingPrescription,
-          ...data,
+        const updatedPrescriptionData: Omit<Prescription, 'id' | 'createdAt'> = { // Exclude id and createdAt
           patientId: patient.id,
           visitId: visitId,
           date: new Date().toISOString(), 
+          prescriptionType: data.prescriptionType,
+          items: data.items,
+          followUpDays: data.followUpDays,
+          advice: data.advice,
           diagnosis: data.diagnosis, 
           doctorName: data.doctorName || clinicSettings?.doctorName,
+          serialNumber: existingPrescription.serialNumber, // Preserve existing serial number
         };
-        updatePrescription(updatedPrescriptionData); 
+        await updatePrescription(existingPrescription.id, updatedPrescriptionData); 
         toast({ title: 'প্রেসক্রিপশন আপডেট হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন আপডেট করা হয়েছে।` });
       } else {
-         const newPrescriptionData: Prescription = {
-            id: generateId(),
+         const newPrescriptionData: Omit<Prescription, 'id' | 'createdAt'> = { // Exclude id and createdAt
             serialNumber: `P${Date.now().toString().slice(-6)}`, 
             patientId: patient.id,
             visitId: visitId,
             date: new Date().toISOString(),
-            ...data,
+            prescriptionType: data.prescriptionType,
+            items: data.items,
+            followUpDays: data.followUpDays,
+            advice: data.advice,
             diagnosis: data.diagnosis,
             doctorName: data.doctorName || clinicSettings?.doctorName,
-            createdAt: new Date().toISOString(),
         };
-        addPrescription(newPrescriptionData);
-        currentPrescriptionId = newPrescriptionData.id;
-        setExistingPrescription(newPrescriptionData); 
+        const newId = await addPrescription(newPrescriptionData);
+        if (!newId) throw new Error("Failed to add prescription");
+        currentPrescriptionId = newId;
+        setExistingPrescription({ ...newPrescriptionData, id: newId, createdAt: new Date().toISOString() }); 
         toast({ title: 'প্রেসক্রিপশন সংরক্ষণ করা হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন সংরক্ষণ করা হয়েছে।` });
       }
       setShowInstructionsButton(true); 
@@ -302,7 +306,7 @@ export default function PrescriptionPage() {
                           <FormControl className="flex-1">
                             <Textarea placeholder="রোগ নির্ণয় বা প্রধান অভিযোগ লিখুন" {...field} rows={3} id="diagnosisMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none"/>
                           </FormControl>
-                          <MicrophoneButton onTranscription={(text) => form.setValue('diagnosis', text)} targetInputId="diagnosisMain" className="border-l border-input h-full rounded-none px-2 self-stretch"/>
+                          {/* MicrophoneButton removed */}
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -324,7 +328,7 @@ export default function PrescriptionPage() {
                                 <FormControl className="flex-1">
                                   <Input placeholder="যেমন, নাপা" {...field} id={`medName${index}`} className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-sm placeholder-muted-foreground"/>
                                 </FormControl>
-                                <MicrophoneButton onTranscription={(text) => form.setValue(`items.${index}.medicineName`, text)} targetInputId={`medName${index}`} size="sm" variant="ghost" className="border-l border-input h-full rounded-none px-2"/>
+                                {/* MicrophoneButton removed */}
                               </div>
                               <FormMessage />
                             </FormItem>
@@ -437,7 +441,7 @@ export default function PrescriptionPage() {
                               <FormControl className="flex-1">
                                 <Textarea placeholder="যেমন, পর্যাপ্ত বিশ্রাম নিন, গরম জল পান করুন।" {...field} rows={3} id="adviceMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none"/>
                               </FormControl>
-                               <MicrophoneButton onTranscription={(text) => form.setValue('advice', text)} targetInputId="adviceMain" className="border-l border-input h-full rounded-none px-2 self-stretch"/>
+                               {/* MicrophoneButton removed */}
                              </div>
                             <FormMessage />
                           </FormItem>
@@ -470,8 +474,9 @@ export default function PrescriptionPage() {
             initialSymptoms={currentVisit?.symptoms || currentVisit?.diagnosis || ''} 
             initialPatientHistory={`Age: ${patient.age || 'N/A'}, Gender: ${patient.gender || 'N/A'}. Previous history or family context (if any): ${patient.guardianName ? `Guardian (${patient.guardianRelation}): ${patient.guardianName}` : 'N/A' }`} 
             onSuggestion={(suggestionText) => {
-              const currentDiagnosis = form.getValues("diagnosis");
-              form.setValue("diagnosis", `${currentDiagnosis ? currentDiagnosis + '\\n\\n' : ''}AI পরামর্শ:\\n${suggestionText}`);
+              // This functionality is now disabled as DiagnosisAssistant is a placeholder
+              // const currentDiagnosis = form.getValues("diagnosis");
+              // form.setValue("diagnosis", `${currentDiagnosis ? currentDiagnosis + '\\n\\n' : ''}AI পরামর্শ (বন্ধ):\\n${suggestionText}`);
             }}
           />
            <Card>
@@ -566,7 +571,7 @@ export default function PrescriptionPage() {
         </div>
       </div>
 
-      <style jsx global>{`
+      <style jsx global>{\`
         .print-only-block { display: none; }
         @media print {
           .hide-on-print { display: none !important; }
@@ -643,7 +648,7 @@ export default function PrescriptionPage() {
           size: A4 portrait;
           margin: 15mm; 
         }
-      `}</style>
+      \`}</style>
     </div>
   );
 }

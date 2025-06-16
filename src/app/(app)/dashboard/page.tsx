@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { ROUTES, APP_NAME } from '@/lib/constants';
 import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+// import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // MicrophoneButton removed
 import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -222,9 +222,9 @@ export default function DashboardPage() {
     }
   };
 
-  const handleVoiceSearch = (text: string) => {
-    setDashboardSearchTerm(text);
-  };
+  // const handleVoiceSearch = (text: string) => { // MicrophoneButton removed
+  //   setDashboardSearchTerm(text);
+  // };
 
   const handleStartWorkflow = (patientId: string, visitId: string) => {
     router.push(`${ROUTES.PRESCRIPTION}/${patientId}?visitId=${visitId}`);
@@ -235,10 +235,6 @@ export default function DashboardPage() {
     setCurrentVisitIdForPaymentModal(visitId);
     setIsPaymentModalOpen(true);
   };
-
-  // const handleGoToMedicineInstructions = (patient: Patient, visitId: string) => {
-  //   router.push(`${ROUTES.MEDICINE_INSTRUCTIONS}?patientId=${patient.id}&name=${encodeURIComponent(patient.name)}&visitId=${visitId}`);
-  // };
 
   const handlePaymentModalClose = async (slipCreated: boolean = false) => {
     setIsPaymentModalOpen(false);
@@ -328,12 +324,7 @@ export default function DashboardPage() {
                 <X className="h-4 w-4" />
               </Button>
             )}
-            <MicrophoneButton
-              onTranscription={handleVoiceSearch}
-              targetInputId="dashboardSearchInput"
-              className="h-full w-10 border-l border-input rounded-none px-2"
-              variant="ghost"
-            />
+            {/* MicrophoneButton removed */}
             <Button
               variant="default"
               className="rounded-none h-full px-5 text-base"
