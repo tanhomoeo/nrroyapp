@@ -16,42 +16,30 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  LayoutDashboard,
-  UserPlus,
-  Search,
-  MessageSquareText,
-  FileText,
-  ScrollText,
-  Settings as SettingsIcon,
-  Type,
-  Building,
-  Store,
-  DollarSign,
   ChevronDown,
-  ClipboardList,
-} from 'lucide-react';
+} from 'lucide-react'; // Removed individual Lucide icons, ChevronDown kept for collapse
 import { ROUTES, APP_NAME } from '@/lib/constants';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 const mainNavItems = [
-  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: LayoutDashboard },
-  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: UserPlus },
-  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: Search },
-  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: Type },
-  { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: MessageSquareText },
-  { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: FileText },
-  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText },
+  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: 'dashboard.svg' },
+  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: 'user-plus.svg' },
+  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: 'search.svg' },
+  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: 'list-alt.svg' },
+  { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: 'ai-summary.svg' },
+  { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: 'file-text.svg' },
+  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: 'scroll-text.svg' },
 ];
 
 const managementNavItems = [
-  { href: ROUTES.STORE_MANAGEMENT, label: 'ঔষধ ব্যবস্থাপনা', icon: Store, comingSoon: true },
-  { href: ROUTES.PERSONAL_EXPENSES, label: 'ব্যক্তিগত খরচ', icon: DollarSign, comingSoon: true },
+  { href: ROUTES.STORE_MANAGEMENT, label: 'ঔষধ ব্যবস্থাপনা', icon: 'store.svg', comingSoon: true },
+  { href: ROUTES.PERSONAL_EXPENSES, label: 'ব্যক্তিগত খরচ', icon: 'dollar-sign.svg', comingSoon: true },
 ];
 
 const utilityNavItems = [
-  { href: ROUTES.CLINIC_INFORMATION, label: 'ক্লিনিকের তথ্য', icon: Building },
-  { href: ROUTES.APP_SETTINGS, label: 'অ্যাপ সেটিংস', icon: SettingsIcon },
+  { href: ROUTES.CLINIC_INFORMATION, label: 'ক্লিনিকের তথ্য', icon: 'building.svg' },
+  { href: ROUTES.APP_SETTINGS, label: 'অ্যাপ সেটিংস', icon: 'settings.svg' },
 ];
 
 interface CollapsibleSidebarSectionProps {
@@ -118,9 +106,9 @@ export function AppSidebar() {
         <Link href={ROUTES.DASHBOARD} className="flex items-center">
           <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary/20 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/50">
             <Image
-              src="/icons/app-logo.svg"
-              alt="App Logo"
-              width={32}
+              src="/icons/app-logo.svg" 
+              alt={`${APP_NAME} Logo`}
+              width={32} 
               height={32}
               className="object-contain"
               data-ai-hint="clinic health logo"
@@ -139,7 +127,13 @@ export function AppSidebar() {
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
                 >
                   <Link href={item.href}>
-                    <item.icon className="h-5 w-5" />
+                    <Image 
+                        src={`/icons/${item.icon}`} 
+                        alt={item.label} 
+                        width={20} 
+                        height={20} 
+                        className="h-5 w-5" 
+                    />
                     <span>{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -164,7 +158,13 @@ export function AppSidebar() {
                   }}
                 >
                   <Link href={item.href} >
-                    <item.icon className="h-5 w-5" />
+                    <Image 
+                        src={`/icons/${item.icon}`} 
+                        alt={item.label} 
+                        width={20} 
+                        height={20} 
+                        className="h-5 w-5" 
+                    />
                     <span>
                       {item.label}
                       {item.comingSoon && <span className="text-xs text-sidebar-foreground/70 ml-1 group-data-[collapsible=icon]:hidden">(শীঘ্রই আসছে)</span>}
@@ -188,7 +188,13 @@ export function AppSidebar() {
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
                 >
                   <Link href={item.href}>
-                    <item.icon className="h-5 w-5" />
+                     <Image 
+                        src={`/icons/${item.icon}`} 
+                        alt={item.label} 
+                        width={20} 
+                        height={20} 
+                        className="h-5 w-5" 
+                    />
                     <span>{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -205,3 +211,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
