@@ -2,7 +2,7 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Sidebar,
@@ -31,7 +31,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { ROUTES, APP_NAME } from '@/lib/constants';
-import { Avatar } from '@/components/ui/avatar'; // Avatar might still be used for consistent styling
+import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 const mainNavItems = [
@@ -58,9 +58,10 @@ interface CollapsibleSidebarSectionProps {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  headerClassName?: string; // New prop for custom header styling
 }
 
-const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ title, children, defaultOpen = false }) => {
+const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ title, children, defaultOpen = false, headerClassName }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const { state: sidebarState } = useSidebar();
   const isSidebarIconOnly = sidebarState === 'collapsed';
@@ -70,9 +71,13 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
       <button
         onClick={() => !isSidebarIconOnly && setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center w-full p-2 rounded-md hover:bg-sidebar-accent text-sidebar-foreground text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+          "flex items-center w-full p-2 rounded-md text-sidebar-foreground text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+          "transition-colors duration-150",
           isSidebarIconOnly && "hidden",
-          isOpen && !isSidebarIconOnly && "bg-sidebar-accent/60"
+          isOpen && !isSidebarIconOnly && "bg-sidebar-accent/60",
+          !isOpen && headerClassName, // Apply custom class when closed
+          isOpen ? "hover:bg-sidebar-accent/70" : (headerClassName ? "" : "hover:bg-sidebar-accent"), // Conditional hover based on headerClassName
+          headerClassName // Always apply for default background
         )}
         aria-expanded={isOpen}
         aria-controls={`section-content-${title.replace(/\s+/g, '-').toLowerCase()}`}
@@ -112,12 +117,11 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <Link href={ROUTES.DASHBOARD} className="flex items-center gap-2 group">
           <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center p-1">
-            {/* Replace SVG with next/image */}
             <Image
               src="/icons/app-logo.svg"
               alt="App Logo"
-              width={32} // Adjust width as needed
-              height={32} // Adjust height as needed
+              width={32}
+              height={32}
               className="object-contain"
               data-ai-hint="clinic health logo"
             />
@@ -128,7 +132,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent className="flex-grow px-2 space-y-1">
-        <CollapsibleSidebarSection title="প্রধান মেনু" defaultOpen>
+        <CollapsibleSidebarSection title="প্রধান মেনু" defaultOpen headerClassName="sidebar-section-header-main">
           <SidebarMenu>
             {mainNavItems.map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -149,7 +153,7 @@ export function AppSidebar() {
 
         <SidebarSeparator className={cn("my-2", isSidebarIconOnly && "hidden")} />
 
-        <CollapsibleSidebarSection title="ব্যবস্থাপনা">
+        <CollapsibleSidebarSection title="ব্যবস্থাপনা" headerClassName="sidebar-section-header-management">
           <SidebarMenu>
             {managementNavItems.map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -177,7 +181,7 @@ export function AppSidebar() {
 
         <SidebarSeparator className={cn("my-2", isSidebarIconOnly && "hidden")} />
 
-        <CollapsibleSidebarSection title="ইউটিলিটি">
+        <CollapsibleSidebarSection title="ইউটিলিটি" headerClassName="sidebar-section-header-utility">
           <SidebarMenu>
             {utilityNavItems.map((item) => (
               <SidebarMenuItem key={item.href}>

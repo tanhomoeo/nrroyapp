@@ -45,6 +45,20 @@ body {
     --sidebar-border: 220 20% 88%;
     --sidebar-ring: hsl(var(--primary));
     --sidebar-gradient-end-light: 217 95% 97%; /* New light blue end */
+
+    /* Section Header Backgrounds - Light Theme */
+    --sidebar-section-main-bg: 210 80% 93%; /* Lighter, softer blue */
+    --sidebar-section-management-bg: 160 50% 93%; /* Lighter, softer teal */
+    --sidebar-section-utility-bg: 50 70% 93%; /* Lighter, softer yellow/amber */
+
+    /* Submenu Button Styles - Light Theme */
+    --sidebar-button-bg: hsl(var(--card)); /* White */
+    --sidebar-button-border: hsl(var(--border));
+    --sidebar-button-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0,0,0,0.02); /* Subtle outline and shadow */
+    --sidebar-button-hover-bg: hsl(var(--muted));
+    --sidebar-button-hover-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0,0,0,0.03);
+    --sidebar-button-active-bg: hsl(var(--secondary));
+    --sidebar-button-active-shadow: inset 0 1px 1px 0 rgba(0, 0, 0, 0.05);
   }
 
   .dark {
@@ -84,6 +98,20 @@ body {
     --sidebar-border: 220 15% 20%;
     --sidebar-ring: hsl(var(--primary));
     --sidebar-gradient-end-dark: 217 25% 14%; /* New dark blue-gray end */
+
+    /* Section Header Backgrounds - Dark Theme */
+    --sidebar-section-main-bg: 210 40% 22%; /* Darker, distinct blue */
+    --sidebar-section-management-bg: 160 30% 22%; /* Darker, distinct teal */
+    --sidebar-section-utility-bg: 50 35% 22%; /* Darker, distinct yellow/amber */
+
+    /* Submenu Button Styles - Dark Theme */
+    --sidebar-button-bg: hsl(var(--popover)); /* Slightly lighter dark */
+    --sidebar-button-border: hsl(var(--border));
+    --sidebar-button-shadow: 0 1px 1px 0 rgba(0,0,0,0.4), 0 1px 0 0 rgba(255,255,255,0.03) inset; /* Darker shadow */
+    --sidebar-button-hover-bg: hsl(var(--muted));
+    --sidebar-button-hover-shadow: 0 2px 3px 0 rgba(0,0,0,0.45), 0 1px 0 0 rgba(255,255,255,0.03) inset;
+    --sidebar-button-active-bg: hsl(var(--secondary));
+    --sidebar-button-active-shadow: inset 0 1px 2px 0 rgba(0,0,0,0.4);
   }
 
   /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
@@ -103,6 +131,64 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .sidebar-section-header-main {
+    @apply bg-[hsl(var(--sidebar-section-main-bg))] text-sidebar-foreground;
+  }
+  .sidebar-section-header-main:hover:not([aria-expanded="true"]) { /* Only apply hover if not open */
+    @apply bg-[hsl(var(--sidebar-section-main-bg)/0.9)];
+  }
+
+  .sidebar-section-header-management {
+    @apply bg-[hsl(var(--sidebar-section-management-bg))] text-sidebar-foreground;
+  }
+  .sidebar-section-header-management:hover:not([aria-expanded="true"]) {
+    @apply bg-[hsl(var(--sidebar-section-management-bg)/0.9)];
+  }
+
+  .sidebar-section-header-utility {
+    @apply bg-[hsl(var(--sidebar-section-utility-bg))] text-sidebar-foreground;
+  }
+  .sidebar-section-header-utility:hover:not([aria-expanded="true"]) {
+    @apply bg-[hsl(var(--sidebar-section-utility-bg)/0.9)];
+  }
+
+  /* Styling for SidebarMenuButton to make it 3D / button-like */
+  [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"] {
+    @apply rounded-md px-3 py-2 my-1 text-sidebar-foreground; /* Adjusted padding and margin */
+    background-color: var(--sidebar-button-bg);
+    border: 1px solid var(--sidebar-button-border);
+    box-shadow: var(--sidebar-button-shadow);
+    transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out;
+  }
+
+  [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"]:hover {
+    background-color: var(--sidebar-button-hover-bg);
+    box-shadow: var(--sidebar-button-hover-shadow);
+    transform: translateY(-1px);
+  }
+
+  [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"]:active {
+    background-color: var(--sidebar-button-active-bg);
+    box-shadow: var(--sidebar-button-active-shadow);
+    transform: translateY(0.5px);
+  }
+
+  /* Ensure active state still applies primary background for distinction */
+  [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"] {
+    @apply bg-sidebar-primary text-sidebar-primary-foreground;
+    box-shadow: var(--sidebar-button-active-shadow); /* Keep some shadow for consistency */
+    transform: translateY(0.5px); /* Slight press effect for active */
+    border-color: hsl(var(--sidebar-primary)/0.8);
+  }
+   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"]:hover {
+    @apply bg-sidebar-primary/90; /* Slightly darker primary on hover for active items */
+    transform: translateY(0px);
+    box-shadow: var(--sidebar-button-hover-shadow);
+  }
+}
+
 
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
