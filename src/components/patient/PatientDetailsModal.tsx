@@ -11,7 +11,8 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Patient, Visit, Prescription, EnrichedVisit, PaymentMethod, PaymentSlip } from '@/lib/types';
-import { getVisitsByPatientId, addVisit, generateId, formatDate, updatePatient, getPrescriptionsByPatientId, addPaymentSlip } from '@/lib/localStorage';
+import { getVisitsByPatientId, addVisit, formatDate, updatePatient, getPrescriptionsByPatientId, addPaymentSlip } from '@/lib/localStorage';
+import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';

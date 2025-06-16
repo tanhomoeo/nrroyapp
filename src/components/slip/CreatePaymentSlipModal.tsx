@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { Patient, PaymentSlip, PaymentMethod } from '@/lib/types';
-import { addPaymentSlip, generateId, formatCurrency } from '@/lib/localStorage';
+import { addPaymentSlip, formatCurrency } from '@/lib/localStorage';
+import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Receipt } from 'lucide-react';
 

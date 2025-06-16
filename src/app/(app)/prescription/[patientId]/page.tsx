@@ -12,7 +12,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { getPatientById, addPrescription, generateId, getVisitById, getPrescriptionsByPatientId, getPrescriptionById, updatePrescription, formatDate, getClinicSettings } from '@/lib/localStorage'; 
+import { getPatientById, addPrescription, getVisitById, getPrescriptionsByPatientId, getPrescriptionById, updatePrescription, formatDate, getClinicSettings } from '@/lib/localStorage'; 
+import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
 import type { Patient, Prescription, Visit, ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { DiagnosisAssistant } from '@/components/ai/DiagnosisAssistant';

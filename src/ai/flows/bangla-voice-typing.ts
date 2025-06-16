@@ -1,4 +1,4 @@
-// 'use server'
+
 'use server';
 
 /**
@@ -50,6 +50,9 @@ const banglaVoiceTypingFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+        throw new Error("AI did not provide an output for Bangla voice typing correction.");
+    }
+    return output;
   }
 );

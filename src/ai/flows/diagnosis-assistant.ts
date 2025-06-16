@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -66,6 +67,9 @@ const diagnosePatientFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("AI did not provide an output for diagnosis suggestions.");
+    }
+    return output;
   }
 );

@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { addPatient, generateId, getClinicSettings, saveClinicSettings } from '@/lib/localStorage';
+import { addPatient, getClinicSettings, saveClinicSettings } from '@/lib/localStorage';
+import { generateSimpleId as generateId } from '@/lib/utils'; // Updated import
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
