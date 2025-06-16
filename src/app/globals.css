@@ -36,7 +36,7 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar specific colors - Light Theme */
-    --sidebar-background: 217 90% 94%;
+    --sidebar-background: hsl(217, 90%, 94%);
     --sidebar-foreground: 220 25% 30%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
@@ -44,7 +44,7 @@ body {
     --sidebar-accent-foreground: hsl(var(--primary));
     --sidebar-border: 220 20% 88%;
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-light: 217 95% 97%;
+    --sidebar-gradient-end-light: hsl(217, 95%, 97%);
 
     /* Section Header Backgrounds - Light Theme */
     --sidebar-section-main-bg: 210 80% 93%;
@@ -58,10 +58,10 @@ body {
     --sidebar-button-active-shadow: inset 0 1px 1px 0 rgba(0, 0, 0, 0.05);
 
     /* New Gradient Variables for Buttons - Light Theme */
-    --sidebar-button-gradient-start-light: hsl(0 0% 100%); /* White */
-    --sidebar-button-gradient-end-light: hsl(220 60% 97%); /* Very light cool gray (current --background) */
-    --sidebar-button-hover-gradient-start-light: hsl(220 30% 94%); /* current --muted */
-    --sidebar-button-hover-gradient-end-light: hsl(220 60% 98%); /* slightly lighter than end-light */
+    --sidebar-button-gradient-start-light: hsl(210 65% 95%);
+    --sidebar-button-gradient-end-light: hsl(210 65% 98%);
+    --sidebar-button-hover-gradient-start-light: hsl(210 65% 92%);
+    --sidebar-button-hover-gradient-end-light: hsl(210 65% 96%);
   }
 
   .dark {
@@ -92,7 +92,7 @@ body {
     --chart-5: 320 75% 60%;
 
     /* Sidebar specific colors for dark mode */
-    --sidebar-background: 217 30% 18%;
+    --sidebar-background: hsl(217, 30%, 18%);
     --sidebar-foreground: 210 20% 85%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
@@ -100,7 +100,7 @@ body {
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 15% 20%;
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-dark: 217 25% 14%;
+    --sidebar-gradient-end-dark: hsl(217, 25%, 14%);
 
     /* Section Header Backgrounds - Dark Theme */
     --sidebar-section-main-bg: 210 40% 22%;
@@ -114,10 +114,10 @@ body {
     --sidebar-button-active-shadow: inset 0 1px 2px 0 rgba(0,0,0,0.4);
 
     /* New Gradient Variables for Buttons - Dark Theme */
-    --sidebar-button-gradient-start-dark: hsl(220 20% 13%); /* current --card */
-    --sidebar-button-gradient-end-dark: hsl(220 20% 10%);   /* current --background */
-    --sidebar-button-hover-gradient-start-dark: hsl(220 20% 17%); /* current --muted */
-    --sidebar-button-hover-gradient-end-dark: hsl(220 20% 14%); /* slightly lighter than end-dark */
+    --sidebar-button-gradient-start-dark: hsl(220 20% 15%);
+    --sidebar-button-gradient-end-dark: hsl(220 20% 18%);
+    --sidebar-button-hover-gradient-start-dark: hsl(220 20% 18%);
+    --sidebar-button-hover-gradient-end-dark: hsl(220 20% 22%);
   }
 
   /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
@@ -182,7 +182,6 @@ body {
 
 
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"]:active {
-    /* background-color: var(--sidebar-button-active-bg); REMOVED */
     box-shadow: var(--sidebar-button-active-shadow);
     transform: translateY(0.5px);
   }
@@ -263,3 +262,4 @@ body {
   size: A4 portrait;
   margin: 15mm;
 }
+
