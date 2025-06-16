@@ -1,0 +1,486 @@
+
+'use client';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import {
+    Users, UserPlus, FileText, BarChart3, TrendingUp, Search as SearchIcon, Printer, CalendarDays, X, Loader2,
+    MessageSquareText, PlayCircle, CreditCard, ClipboardList, FilePlus2
+} from 'lucide-react';
+import { getPatients, getVisits, getPaymentSlips, formatCurrency, isToday, isThisMonth, getPatientById, getPaymentMethodLabel } from '@/lib/localStorage';
+import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/lib/types';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ROUTES, APP_NAME } from '@/lib/constants';
+import { format } from 'date-fns';
+import { bn } from 'date-fns/locale';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+interface QuickActionCardProps {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  bgColorClass: string;
+  textColorClass?: string;
+  href: string;
+}
+
+const QuickActionCard: React.FC<QuickActionCardProps> = ({ title, description, icon: Icon, bgColorClass, textColorClass = 'text-primary-foreground', href }) => (
+  <Link href={href} className={`block rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 ${bgColorClass} ${textColorClass}`}>
+    <div className="flex items-center mb-3">
+      <Icon className="h-8 w-8 mr-3" />
+      <h3 className="text-xl font-headline font-semibold">{title}</h3>
+    </div>
+    <p className="text-sm opacity-90">{description}</p>
+  </Link>
+);
+
+interface ActivityStat {
+  label: string;
+  value: string | number;
+  icon?: React.ElementType;
+}
+
+interface ActivityCardProps {
+  title: string;
+  stats: ActivityStat[];
+  bgColorClass: string;
+  textColorClass?: string;
+  detailsLink?: string;
+  icon?: React.ElementType;
+}
+
+const ActivityCard: React.FC<ActivityCardProps> = ({ title, stats, bgColorClass, textColorClass = 'text-primary-foreground', detailsLink, icon: TitleIcon }) => (
+  <Card className={`shadow-lg hover:shadow-xl transition-shadow duration-300 ${bgColorClass} ${textColorClass} overflow-hidden`}>
+    <CardHeader className="pb-2">
+      <div className="flex items-center">
+        {TitleIcon && <TitleIcon className="h-6 w-6 mr-2" />}
+        <CardTitle className={`text-lg font-headline ${textColorClass}`}>{title}</CardTitle>
+      </div>
+    </CardHeader>
+    <CardContent className="space-y-2 py-4">
+      {stats.map((stat, index) => (
+        <div key={index} className="flex items-center text-sm">
+          {stat.icon && <stat.icon className="h-4 w-4 mr-2 opacity-80" />}
+          <span>{stat.label}: </span>
+          <span className="font-semibold ml-1">{stat.value}</span>
+        </div>
+      ))}
+      {detailsLink && (
+        <Link href={detailsLink} className={`mt-3 inline-block text-sm ${textColorClass} opacity-90 hover:opacity-100 hover:underline`}>
+          বিস্তারিত দেখুন &rarr;
+        </Link>
+      )}
+    </CardContent>
+  </Card>
+);
+
+interface AppointmentDisplayItem {
+  visitId: string;
+  patient: Patient;
+  patientName: string;
+  diaryNumberDisplay: string;
+  address: string;
+  time: string;
+  reason: string;
+  status: 'Completed' | 'Pending';
+  paymentMethod?: string;
+  paymentAmount?: string;
+  createdAt: string;
+}
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<ClinicStats>({
+    totalPatients: 0,
+    todayPatientCount: 0,
+    monthlyPatientCount: 0,
+    todayRevenue: 0,
+    monthlyIncome: 0,
+    dailyActivePatients: 0,
+    dailyOtherRegistered: 0,
+    monthlyNewPatients:0,
+    monthlyTotalRegistered:0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [todaysAppointments, setTodaysAppointments] = useState<AppointmentDisplayItem[]>([]);
+  const [dashboardSearchTerm, setDashboardSearchTerm] = useState('');
+  const router = useRouter();
+
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPatientForPaymentModal, setSelectedPatientForPaymentModal] = useState<Patient | null>(null);
+  const [currentVisitIdForPaymentModal, setCurrentVisitIdForPaymentModal] = useState<string | null>(null);
+
+  const loadAppointments = useCallback(() => {
+    const allVisits = getVisits();
+    const allSlips = getPaymentSlips();
+
+    const todayVisits = allVisits.filter(v => isToday(v.visitDate));
+
+    const appointmentsData: AppointmentDisplayItem[] = todayVisits
+      .map(visit => {
+        const patient = getPatientById(visit.patientId);
+        if (!patient) return null;
+
+        const paymentSlipForVisit = allSlips.find(s => s.visitId === visit.id && s.amount > 0);
+        const currentStatus: 'Completed' | 'Pending' = paymentSlipForVisit ? 'Completed' : 'Pending';
+
+        return {
+          visitId: visit.id,
+          patient: patient,
+          patientName: patient.name,
+          diaryNumberDisplay: `${(patient.diaryNumber ? patient.diaryNumber.toLocaleString('bn-BD') : 'N/A')}`,
+          address: patient.villageUnion || 'N/A',
+          time: format(new Date(visit.createdAt), "p", { locale: bn }),
+          reason: visit.symptoms || 'N/A', 
+          status: currentStatus,
+          paymentMethod: paymentSlipForVisit ? getPaymentMethodLabel(paymentSlipForVisit.paymentMethod) : 'N/A',
+          paymentAmount: paymentSlipForVisit ? formatCurrency(paymentSlipForVisit.amount) : 'N/A',
+          createdAt: visit.createdAt,
+        };
+      })
+      .filter(Boolean) as AppointmentDisplayItem[];
+
+    setTodaysAppointments(appointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+  }, []);
+
+
+  const loadDashboardData = useCallback(() => {
+    setLoading(true);
+    const allPatients = getPatients();
+    const allSlips = getPaymentSlips();
+    const allVisits = getVisits();
+
+    const todayVisits = allVisits.filter(v => isToday(v.visitDate));
+    const uniqueTodayPatients = new Set(todayVisits.map(v => v.patientId));
+
+    const monthVisits = allVisits.filter(v => isThisMonth(v.visitDate));
+    const uniqueMonthPatients = new Set(monthVisits.map(v => v.patientId));
+
+    const todayRevenue = allSlips
+      .filter(s => isToday(s.date))
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    const monthlyIncome = allSlips
+        .filter(s => isThisMonth(s.date))
+        .reduce((sum, s) => sum + s.amount, 0);
+
+    const patientsCreatedThisMonth = allPatients.filter(p => isThisMonth(p.createdAt));
+
+    setStats({
+      totalPatients: allPatients.length,
+      todayPatientCount: uniqueTodayPatients.size,
+      monthlyPatientCount: uniqueMonthPatients.size,
+      todayRevenue: todayRevenue,
+      monthlyIncome: monthlyIncome,
+      dailyActivePatients: uniqueTodayPatients.size,
+      dailyOtherRegistered: allPatients.filter(p => !uniqueTodayPatients.has(p.id) && isToday(p.registrationDate)).length,
+      monthlyNewPatients: patientsCreatedThisMonth.length,
+      monthlyTotalRegistered: allPatients.length,
+    });
+
+    loadAppointments();
+    setLoading(false);
+  }, [loadAppointments]);
+
+  useEffect(() => {
+    loadDashboardData();
+    const handleExternalDataChange = () => {
+        loadDashboardData();
+    };
+    window.addEventListener('externalDataChange', handleExternalDataChange);
+    return () => {
+        window.removeEventListener('externalDataChange', handleExternalDataChange);
+    };
+  }, [loadDashboardData]);
+
+
+  const handleDashboardSearch = () => {
+    if (dashboardSearchTerm.trim()) {
+      router.push(`${ROUTES.PATIENT_SEARCH}?q=${encodeURIComponent(dashboardSearchTerm)}`);
+    }
+  };
+
+  const handlePrintAppointments = () => {
+    if (typeof window !== 'undefined') {
+      const elementsToHide = document.querySelectorAll('.hide-on-print-dashboard');
+      elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
+      document.body.classList.add('printing-dashboard-appointments-active');
+      window.print();
+      document.body.classList.remove('printing-dashboard-appointments-active');
+      elementsToHide.forEach(el => (el as HTMLElement).style.display = '');
+    }
+  };
+
+  const handleVoiceSearch = (text: string) => {
+    setDashboardSearchTerm(text);
+  };
+
+  const handleStartWorkflow = (patientId: string, visitId: string) => {
+    router.push(`${ROUTES.PRESCRIPTION}/${patientId}?visitId=${visitId}`);
+  };
+
+  const handleOpenPaymentModal = (patient: Patient, visitId: string) => {
+    setSelectedPatientForPaymentModal(patient);
+    setCurrentVisitIdForPaymentModal(visitId);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleGoToMedicineInstructions = (patient: Patient, visitId: string) => {
+    router.push(`${ROUTES.MEDICINE_INSTRUCTIONS}?patientId=${patient.id}&name=${encodeURIComponent(patient.name)}&visitId=${visitId}`);
+  };
+
+  const handlePaymentModalClose = (slipCreated: boolean = false) => {
+    setIsPaymentModalOpen(false);
+    setSelectedPatientForPaymentModal(null);
+    setCurrentVisitIdForPaymentModal(null);
+    if (slipCreated) {
+        loadAppointments();
+        window.dispatchEvent(new CustomEvent('externalDataChange'));
+    }
+  };
+
+
+  if (loading) {
+    return (
+      <div className="space-y-8 p-4 md:p-6 animate-pulse">
+        <div className="mb-6 px-4 md:px-0">
+          <div className="h-10 bg-muted rounded w-3/4 mb-2"></div>
+          <div className="h-6 bg-muted rounded w-1/2 mb-6"></div>
+          <div className="mt-6 max-w-xl">
+            <div className="flex h-11 items-center w-full rounded-md border border-input bg-muted shadow-inner">
+                <div className="h-5 w-5 bg-muted-foreground/30 rounded-full ml-3 mr-2"></div>
+                <div className="h-6 bg-muted-foreground/30 rounded flex-1 mr-2"></div>
+                <div className="h-full w-20 bg-muted-foreground/50 rounded-r-md"></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="h-8 bg-muted rounded w-1/3 mb-3 px-4 md:px-0"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-32 bg-muted rounded-lg"></div>)}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="bg-muted rounded-lg p-4">
+              <div className="h-6 w-1/2 bg-muted-foreground/30 rounded mb-3"></div>
+              <div className="h-4 w-3/4 bg-muted-foreground/20 rounded mb-2"></div>
+              <div className="h-4 w-2/3 bg-muted-foreground/20 rounded mb-2"></div>
+              <div className="h-4 w-3/5 bg-muted-foreground/20 rounded"></div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-muted rounded-lg p-4">
+          <div className="flex justify-between items-center mb-4">
+            <div className="h-8 bg-muted-foreground/30 rounded w-1/3"></div>
+            <div className="h-8 bg-muted-foreground/20 rounded w-1/4"></div>
+          </div>
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+                <div key={i} className="grid grid-cols-5 gap-3 items-center">
+                    <div className="h-5 bg-muted-foreground/20 rounded col-span-1"></div>
+                    <div className="h-5 bg-muted-foreground/20 rounded col-span-1"></div>
+                    <div className="h-5 bg-muted-foreground/20 rounded col-span-1"></div>
+                    <div className="h-5 bg-muted-foreground/20 rounded col-span-1"></div>
+                    <div className="h-5 bg-muted-foreground/20 rounded col-span-1"></div>
+                </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+    <div className="space-y-8 p-1 md:p-2">
+      <div className="mb-6 px-4 md:px-0 hide-on-print-dashboard">
+        <h1 className="text-3xl font-bold font-headline text-foreground">{APP_NAME}</h1>
+        <p className="text-muted-foreground">একটি আদর্শ হোমিওপ্যাথিক চিকিৎসালয়</p>
+
+        <div className="mt-6 max-w-xl">
+          <div className="flex h-11 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary">
+            <div className="pl-3 pr-1 flex items-center h-full">
+              <SearchIcon className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <Input
+              id="dashboardSearchInput"
+              type="search"
+              placeholder="রোগী অনুসন্ধান করুন (নাম, আইডি, ফোন...)"
+              className="flex-1 h-full border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-2 text-base placeholder-muted-foreground"
+              value={dashboardSearchTerm}
+              onChange={(e) => setDashboardSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleDashboardSearch()}
+            />
+            {dashboardSearchTerm && (
+              <Button variant="ghost" size="icon" className="h-full w-10 text-muted-foreground hover:text-foreground" onClick={() => setDashboardSearchTerm('')}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            <MicrophoneButton
+              onTranscription={handleVoiceSearch}
+              targetInputId="dashboardSearchInput"
+              className="h-full w-10 border-l border-input rounded-none px-2"
+              variant="ghost"
+            />
+            <Button
+              variant="default"
+              className="rounded-none h-full px-5 text-base"
+              onClick={handleDashboardSearch}
+            >
+              অনুসন্ধান
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="hide-on-print-dashboard">
+        <h2 className="text-xl font-semibold font-headline text-foreground mb-3 px-4 md:px-0">দ্রুত কার্যক্রম</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <QuickActionCard
+            title="নতুন রোগী ভর্তি"
+            description="সিস্টেমে নতুন রোগীদের দ্রুত নিবন্ধন করুন।"
+            icon={UserPlus}
+            bgColorClass="bg-green-500 dark:bg-green-600"
+            href={ROUTES.PATIENT_ENTRY}
+          />
+          <QuickActionCard
+            title="রোগীর তালিকা"
+            description="সকল নিবন্ধিত রোগীদের প্রোফাইল খুঁজুন ও দেখুন।"
+            icon={Users}
+            bgColorClass="bg-blue-500 dark:bg-blue-600"
+            href={ROUTES.DICTIONARY}
+          />
+          <QuickActionCard
+            title="দৈনিক প্রতিবেদন"
+            description="দৈনিক কার্যক্রমের বিস্তারিত সারসংক্ষেপ দেখুন।"
+            icon={FileText}
+            bgColorClass="bg-purple-500 dark:bg-purple-600"
+            href={ROUTES.DAILY_REPORT}
+          />
+          <QuickActionCard
+            title="AI অভিযোগ সারাংশ"
+            description="AI দ্বারা রোগীর অভিযোগ সারাংশ করুন।"
+            icon={MessageSquareText}
+            bgColorClass="bg-teal-500 dark:bg-teal-600"
+            href={ROUTES.AI_SUMMARY}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 hide-on-print-dashboard">
+        <ActivityCard
+          title="মাসিক কার্যকলাপ"
+          icon={BarChart3}
+          stats={[
+            { label: 'এই মাসে নতুন রোগী', value: stats.monthlyNewPatients || 0, icon: UserPlus },
+            { label: 'মোট নিবন্ধিত রোগী', value: stats.monthlyTotalRegistered || 0, icon: Users },
+            { label: 'আনুমানিক মাসিক আয়', value: formatCurrency(stats.monthlyIncome || 0), icon: TrendingUp },
+          ]}
+          bgColorClass="bg-sky-500 dark:bg-sky-600"
+          detailsLink={ROUTES.DAILY_REPORT}
+        />
+        <ActivityCard
+          title="দৈনিক কার্যকলাপ"
+          icon={CalendarDays}
+          stats={[
+            { label: 'আজ নতুন/সক্রিয় রোগী', value: stats.dailyActivePatients || 0, icon: UserPlus },
+            { label: 'অন্যান্য নিবন্ধিত রোগী', value: stats.dailyOtherRegistered || 0, icon: Users },
+            { label: 'আজকের আয়', value: formatCurrency(stats.todayRevenue || 0), icon: TrendingUp },
+          ]}
+          bgColorClass="bg-amber-500 dark:bg-amber-600"
+          detailsLink={ROUTES.DAILY_REPORT}
+        />
+      </div>
+
+      <Card className="shadow-lg dashboard-appointments-card">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="font-headline text-xl">আজকের সাক্ষাৎকার</CardTitle>
+            <CardDescription>{format(new Date(), "eeee, MMMM dd, yyyy", { locale: bn })}</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={handlePrintAppointments} className="hide-on-print-dashboard"><Printer className="mr-2 h-4 w-4" /> প্রিন্ট তালিকা</Button>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[15%]">রোগীর নাম</TableHead>
+                  <TableHead className="w-[10%]">সময়</TableHead>
+                  <TableHead className="w-[10%]">ডায়েরি নং</TableHead>
+                  <TableHead className="w-[15%]">ঠিকানা</TableHead>
+                  <TableHead className="w-[10%]">পেমেন্ট মাধ্যম</TableHead>
+                  <TableHead className="w-[10%] text-right">পরিমাণ</TableHead>
+                  <TableHead className="w-[20%] text-center">অবস্থা ও কার্যক্রম</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {todaysAppointments.length > 0 ? todaysAppointments.map((appt) => (
+                  <TableRow key={appt.visitId}>
+                    <TableCell className="font-medium">{appt.patientName}</TableCell>
+                    <TableCell>{appt.time}</TableCell>
+                    <TableCell>{appt.diaryNumberDisplay}</TableCell>
+                    <TableCell>{appt.address}</TableCell>
+                    <TableCell>{appt.paymentMethod}</TableCell>
+                    <TableCell className="text-right">{appt.paymentAmount}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center justify-center gap-1">
+                         <Badge variant={appt.status === 'Completed' ? 'default' : 'secondary'}
+                              className={
+                                appt.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 border-green-300 dark:border-green-600' :
+                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100 border-yellow-300 dark:border-yellow-600'
+                              }
+                        >
+                          {appt.status === 'Completed' ? 'কার্যক্রম শেষ' : 'অপেক্ষমান'}
+                        </Badge>
+                        <div className="flex items-center gap-1 mt-1">
+                           <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => handleStartWorkflow(appt.patient.id, appt.visitId)}
+                                        className="h-7 w-7 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-700/30"
+                                    >
+                                        <PlayCircle className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>কার্যক্রম শুরু করুন</p>
+                                </TooltipContent>
+                           </Tooltip>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      আজকের জন্য কোন সাক্ষাৎ নেই।
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedPatientForPaymentModal && currentVisitIdForPaymentModal && (
+        <CreatePaymentSlipModal
+          patient={selectedPatientForPaymentModal}
+          visitId={currentVisitIdForPaymentModal}
+          isOpen={isPaymentModalOpen}
+          onClose={(slipCreated) => handlePaymentModalClose(slipCreated)}
+        />
+      )}
+    </div>
+    </TooltipProvider>
+  );
+}

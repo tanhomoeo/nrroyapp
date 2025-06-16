@@ -1,0 +1,35 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[dev]
+  command = "npm run dev" # Local dev command
+  port = 3000
+  publish = ".next" # Should match build.publish for consistency with Next.js output
+
+# The Netlify Next.js runtime plugin usually handles this automatically.
+# If you were using a very old version of Next.js or a static site,
+# you might need redirect rules, but for modern Next.js, this is typically
+# handled by the runtime.
+# Example:
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
+
+[functions]
+  # This tells Netlify where your serverless functions (if any, separate from Next.js API routes) are located.
+  # For Next.js API routes and Server Components, Netlify's Next.js runtime handles this.
+  # directory = "netlify/functions" # Uncomment and adjust if you have separate Netlify functions.
+
+[build.environment]
+  # If you have specific Node.js version requirements, you can set it here.
+  # NODE_VERSION = "18" # Example, Netlify often defaults to a recent LTS
+  # NPM_FLAGS = "--version" # Example custom npm flags
+
+# Next.js runtime configuration (handled by @netlify/plugin-nextjs)
+# You usually don't need to configure this section manually as the plugin does it.
+# However, if you need to force a specific runtime or opt-out:
+# [plugins.plugin-nextjs]
+  # # To disable the Next.js Runtime and build a static site (if your app supports it)
+  # buildType = "static"

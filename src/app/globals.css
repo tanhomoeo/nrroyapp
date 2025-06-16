@@ -1,0 +1,169 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'PT Sans', sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 220 60% 97%; /* Very light cool gray #F7F9FC */
+    --foreground: 220 25% 25%; /* Dark grayish blue for text #333C4D */
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 220 25% 25%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 25%;
+    --primary: 210 73% 50%; /* Medium Blue #3498DB */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 220 30% 90%; /* Light grayish blue for secondary elements #DDE3EA */
+    --secondary-foreground: 220 25% 35%; /* Darker blue for text on secondary #4A5568 */
+    --muted: 220 30% 94%; /* Lighter than secondary for borders etc #ECF0F3 */
+    --muted-foreground: 220 25% 55%; /* Gray for placeholder text #7B879A */
+    --accent: 145 58% 50%; /* Greenish teal for accent #2ECC71 */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 20% 85%; /* #CCD3DB */
+    --input: 220 20% 90%; /* #DEE3E8 */
+    --ring: 210 73% 55%; /* Slightly darker primary for ring */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors - Light Theme */
+    --sidebar-background: 220 35% 98%; /* Base and gradient start for sidebar */
+    --sidebar-foreground: 220 25% 30%;
+    --sidebar-primary: hsl(var(--primary));
+    --sidebar-primary-foreground: hsl(var(--primary-foreground));
+    --sidebar-accent: 220 30% 90%;
+    --sidebar-accent-foreground: hsl(var(--primary));
+    --sidebar-border: 220 20% 88%;
+    --sidebar-ring: hsl(var(--primary));
+    --sidebar-gradient-end-light: 220 30% 92%; /* Gradient end for light theme */
+  }
+
+  .dark {
+    --background: 220 20% 10%; /* Dark blue-gray #1A202C */
+    --foreground: 220 25% 90%; /* Light gray #E1E5EB */
+    --card: 220 20% 13%; /* Slightly lighter dark blue-gray #1D2430 */
+    --card-foreground: 220 25% 90%;
+    --popover: 220 20% 13%;
+    --popover-foreground: 220 25% 90%;
+    --primary: 210 73% 55%; /* Medium Blue #4A90E2 */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 220 20% 20%; /* Darker gray #2D3748 */
+    --secondary-foreground: 220 25% 80%; /* Lighter gray #A0AEC0 */
+    --muted: 220 20% 17%; /* #242B3D */
+    --muted-foreground: 220 25% 65%; /* #8A96A8 */
+    --accent: 145 58% 55%; /* Greenish teal for accent #38D39F */
+    --accent-foreground: 0 0% 0%; /* Black text on accent */
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 25%; /* #313B4A */
+    --input: 220 20% 25%;
+    --ring: 210 73% 50%;
+
+    --chart-1: 210 70% 60%;
+    --chart-2: 145 60% 50%;
+    --chart-3: 30 80% 60%;
+    --chart-4: 260 70% 65%;
+    --chart-5: 320 75% 60%;
+
+    /* Sidebar specific colors for dark mode */
+    --sidebar-background: 220 18% 20%; /* Base and gradient start for sidebar */
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: hsl(var(--primary));
+    --sidebar-primary-foreground: hsl(var(--primary-foreground));
+    --sidebar-accent: 220 15% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: hsl(var(--primary));
+    --sidebar-gradient-end-dark: 220 15% 10%; /* Gradient end for dark theme */
+  }
+
+  /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
+  /* The [data-sidebar="sidebar"] element gets bg-sidebar from Tailwind, which uses --sidebar-background */
+  /* This background-image rule layers the gradient on top for the specific variant. */
+  [data-variant="sidebar"] [data-sidebar="sidebar"] {
+    background-image: linear-gradient(to bottom, hsl(var(--sidebar-background)), hsl(var(--sidebar-gradient-end-light)));
+  }
+  .dark [data-variant="sidebar"] [data-sidebar="sidebar"] {
+    background-image: linear-gradient(to bottom, hsl(var(--sidebar-background)), hsl(var(--sidebar-gradient-end-dark)));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-muted/50;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/70;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary;
+}
+
+/* Print styles for Dashboard Appointments */
+@media print {
+  .hide-on-print-dashboard {
+    display: none !important;
+  }
+  body.printing-dashboard-appointments-active {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0;
+    padding: 0;
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+  body.printing-dashboard-appointments-active .dashboard-appointments-card {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  body.printing-dashboard-appointments-active .dashboard-appointments-card .card-header,
+  body.printing-dashboard-appointments-active .dashboard-appointments-card .card-content {
+    padding: 10mm !important;
+  }
+   body.printing-dashboard-appointments-active .dashboard-appointments-card table th,
+   body.printing-dashboard-appointments-active .dashboard-appointments-card table td {
+    font-size: 10pt !important;
+    color: #000 !important;
+    border: 1px solid #ccc !important;
+  }
+  body.printing-dashboard-appointments-active .dashboard-appointments-card table th {
+    background-color: #f0f0f0 !important;
+  }
+  body.printing-dashboard-appointments-active .dashboard-appointments-card .badge {
+    border: 1px solid #ccc !important;
+    background-color: #fff !important;
+    color: #000 !important;
+  }
+}
+@page {
+  size: A4 portrait;
+  margin: 15mm;
+}
+    

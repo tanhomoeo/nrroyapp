@@ -1,0 +1,7 @@
+{
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://nrroyapp.web.app"
+  },
+  "cloud_run_deploy": {},
+  "gemini_api": {}
+}
