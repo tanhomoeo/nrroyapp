@@ -52,16 +52,16 @@ body {
     --sidebar-section-utility-bg: 50 70% 93%;
 
     /* Submenu Button Styles - Light Theme */
-    --sidebar-button-border: hsl(var(--border));
-    --sidebar-button-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0,0,0,0.02);
-    --sidebar-button-hover-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0,0,0,0.03);
-    --sidebar-button-active-shadow: inset 0 1px 1px 0 rgba(0, 0, 0, 0.05);
+    --sidebar-button-border: hsl(145 40% 85%); /* Light green border */
+    --sidebar-button-shadow: 0 1px 2px 0 hsla(145, 30%, 50%, 0.1), 0 0 0 1px hsla(145, 30%, 50%, 0.05);
+    --sidebar-button-hover-shadow: 0 2px 4px 0 hsla(145, 30%, 50%, 0.12), 0 0 0 1px hsla(145, 30%, 50%, 0.07);
+    --sidebar-button-active-shadow: inset 0 1px 1px 0 hsla(145, 30%, 50%, 0.1);
 
-    /* New Gradient Variables for Buttons - Light Theme */
-    --sidebar-button-gradient-start-light: hsl(210 65% 95%);
-    --sidebar-button-gradient-end-light: hsl(210 65% 98%);
-    --sidebar-button-hover-gradient-start-light: hsl(210 65% 92%);
-    --sidebar-button-hover-gradient-end-light: hsl(210 65% 96%);
+    /* New Gradient Variables for Buttons - Light Theme (Greenish) */
+    --sidebar-button-gradient-start-light: hsl(145 55% 94%); /* Lightest Green */
+    --sidebar-button-gradient-end-light: hsl(145 55% 97%); /* Even Lighter Green */
+    --sidebar-button-hover-gradient-start-light: hsl(145 55% 90%); /* Slightly Darker Light Green on Hover */
+    --sidebar-button-hover-gradient-end-light: hsl(145 55% 94%); /* Lighter Green on Hover */
   }
 
   .dark {
@@ -108,16 +108,16 @@ body {
     --sidebar-section-utility-bg: 50 35% 22%;
 
     /* Submenu Button Styles - Dark Theme */
-    --sidebar-button-border: hsl(var(--border));
-    --sidebar-button-shadow: 0 1px 1px 0 rgba(0,0,0,0.4), 0 1px 0 0 rgba(255,255,255,0.03) inset;
-    --sidebar-button-hover-shadow: 0 2px 3px 0 rgba(0,0,0,0.45), 0 1px 0 0 rgba(255,255,255,0.03) inset;
-    --sidebar-button-active-shadow: inset 0 1px 2px 0 rgba(0,0,0,0.4);
+    --sidebar-button-border: hsl(145 25% 20%); /* Dark green border */
+    --sidebar-button-shadow: 0 1px 1px 0 hsla(145, 20%, 10%, 0.4), 0 1px 0 0 rgba(255,255,255,0.03) inset;
+    --sidebar-button-hover-shadow: 0 2px 3px 0 hsla(145, 20%, 10%, 0.45), 0 1px 0 0 rgba(255,255,255,0.03) inset;
+    --sidebar-button-active-shadow: inset 0 1px 2px 0 hsla(145, 20%, 10%, 0.4);
 
-    /* New Gradient Variables for Buttons - Dark Theme */
-    --sidebar-button-gradient-start-dark: hsl(220 20% 15%);
-    --sidebar-button-gradient-end-dark: hsl(220 20% 18%);
-    --sidebar-button-hover-gradient-start-dark: hsl(220 20% 18%);
-    --sidebar-button-hover-gradient-end-dark: hsl(220 20% 22%);
+    /* New Gradient Variables for Buttons - Dark Theme (Greenish) */
+    --sidebar-button-gradient-start-dark: hsl(145 30% 22%); /* Dark Green */
+    --sidebar-button-gradient-end-dark: hsl(145 30% 25%);   /* Slightly Lighter Dark Green */
+    --sidebar-button-hover-gradient-start-dark: hsl(145 30% 25%); /* Darker Green on Hover */
+    --sidebar-button-hover-gradient-end-dark: hsl(145 30% 28%);   /* Lighter Dark Green on Hover */
   }
 
   /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
@@ -262,4 +262,5 @@ body {
   size: A4 portrait;
   margin: 15mm;
 }
+
 
