@@ -1,11 +1,12 @@
+
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import {nextPlugin} from '@genkit-ai/next'; // Added import
+import * as genkitNext from '@genkit-ai/next'; // Changed import
 
 export const ai = genkit({
   plugins: [
     googleAI(),
-    nextPlugin(), // Added nextPlugin
+    genkitNext.nextPlugin(), // Changed usage
   ],
   // model: 'googleai/gemini-2.0-flash', // Removed: Model should be specified per call or prompt.
 });
