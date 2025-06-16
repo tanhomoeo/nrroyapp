@@ -7,7 +7,7 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics"; // Optional, if using Analytics
 
-// Your web app's Firebase configuration variables from .env.local
+// Your web app's Firebase configuration variables from .env
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -24,26 +24,28 @@ let app: FirebaseApp;
 
 // Diagnostic log for API key
 const apiKeyFromEnv = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-console.log("Firebase API Key from env. Is it present? :", apiKeyFromEnv ? "Yes, Loaded" : "NO, NOT LOADED or EMPTY");
+if (typeof window !== 'undefined') { // Run console logs only on the client-side
+    console.log("Firebase API Key from env. Is it present? :", apiKeyFromEnv ? "Yes, Loaded" : "NO, NOT LOADED or EMPTY");
+}
 
 
 if (!apiKeyFromEnv) {
-  console.error(
-    "CRITICAL ERROR: NEXT_PUBLIC_FIREBASE_API_KEY is missing or empty. " +
-    "Firebase SDK cannot initialize correctly. " +
-    "Please ensure this variable is set in your .env.local file and that you have RESTARTED your Next.js development server."
-  );
-  // Potentially throw an error or handle this state appropriately
-  // For now, we'll allow initialization to proceed, but it will likely fail for auth.
+  if (typeof window !== 'undefined') {
+      console.error(
+        "CRITICAL ERROR: NEXT_PUBLIC_FIREBASE_API_KEY is missing or empty. " +
+        "Firebase SDK cannot initialize correctly. " +
+        "Please ensure this variable is set in your .env file and that you have RESTARTED your Next.js development server."
+      );
+  }
 }
 
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
-  console.log("Firebase app initialized.");
+  if (typeof window !== 'undefined') console.log("Firebase app initialized.");
 } else {
   app = getApp();
-  console.log("Firebase app already initialized.");
+  if (typeof window !== 'undefined') console.log("Firebase app already initialized.");
 }
 
 const auth: Auth = getAuth(app);
