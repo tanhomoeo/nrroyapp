@@ -25,9 +25,10 @@ export const metadata: Metadata = {
   title: APP_NAME,
   description: `Patient Management System for ${APP_NAME}`,
   icons: {
-    icon: '/icons/favicon.ico', // Default path, change if your icon has a different name/format
-    // apple: '/icons/apple-touch-icon.png', // Optional: for Apple devices
-    // shortcut: '/icons/favicon.ico', // Optional: for shortcut icon
+    icon: '/icons/favicon.ico', // Default path, assuming favicon.ico in public/icons/
+    // You can add other icon types if needed:
+    // apple: '/icons/apple-touch-icon.png',
+    // shortcut: '/icons/favicon-16x16.png', // Example
   },
 };
 
@@ -39,7 +40,9 @@ export default function RootLayout({
   return (
     <html lang="bn" className={`${poppins.variable} ${pt_sans.variable}`} suppressHydrationWarning>
       <head>
-        {/* Favicon link is now handled by the metadata object above for Next.js App Router */}
+        {/* Favicon link is now primarily handled by the metadata object above for Next.js App Router */}
+        {/* However, placing a basic link here can serve as a fallback or for older systems. */}
+        <link rel="icon" href="/icons/favicon.ico" sizes="any" />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider
