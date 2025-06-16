@@ -17,29 +17,40 @@ import {
 } from '@/components/ui/sidebar';
 import {
   ChevronDown,
-} from 'lucide-react'; // Removed individual Lucide icons, ChevronDown kept for collapse
+  Home,
+  UserPlus,
+  Search,
+  ListChecks, // Changed from ListAlt to a more suitable Lucide icon
+  MessageSquareText,
+  FileText,
+  ScrollText,
+  Archive, // For Store Management
+  DollarSign, // For Personal Expenses
+  Building2, // For Clinic Information
+  Settings, // For App Settings
+} from 'lucide-react';
 import { ROUTES, APP_NAME } from '@/lib/constants';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 const mainNavItems = [
-  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: 'dashboard.svg' },
-  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: 'user-plus.svg' },
-  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: 'search.svg' },
-  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: 'list-alt.svg' },
-  { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: 'ai-summary.svg' },
-  { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: 'file-text.svg' },
-  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: 'scroll-text.svg' },
+  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: Home },
+  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: UserPlus },
+  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: Search },
+  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks },
+  { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: MessageSquareText },
+  { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: FileText },
+  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText },
 ];
 
 const managementNavItems = [
-  { href: ROUTES.STORE_MANAGEMENT, label: 'ঔষধ ব্যবস্থাপনা', icon: 'store.svg', comingSoon: true },
-  { href: ROUTES.PERSONAL_EXPENSES, label: 'ব্যক্তিগত খরচ', icon: 'dollar-sign.svg', comingSoon: true },
+  { href: ROUTES.STORE_MANAGEMENT, label: 'ঔষধ ব্যবস্থাপনা', icon: Archive, comingSoon: true },
+  { href: ROUTES.PERSONAL_EXPENSES, label: 'ব্যক্তিগত খরচ', icon: DollarSign, comingSoon: true },
 ];
 
 const utilityNavItems = [
-  { href: ROUTES.CLINIC_INFORMATION, label: 'ক্লিনিকের তথ্য', icon: 'building.svg' },
-  { href: ROUTES.APP_SETTINGS, label: 'অ্যাপ সেটিংস', icon: 'settings.svg' },
+  { href: ROUTES.CLINIC_INFORMATION, label: 'ক্লিনিকের তথ্য', icon: Building2 },
+  { href: ROUTES.APP_SETTINGS, label: 'অ্যাপ সেটিংস', icon: Settings },
 ];
 
 interface CollapsibleSidebarSectionProps {
@@ -63,9 +74,9 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
           "transition-colors duration-150",
           isSidebarIconOnly && "hidden",
           isOpen && !isSidebarIconOnly && "bg-sidebar-accent/60",
-          !isOpen && headerClassName, 
-          isOpen ? "hover:bg-sidebar-accent/70" : (headerClassName ? "" : "hover:bg-sidebar-accent"), 
-          headerClassName 
+          !isOpen && headerClassName,
+          isOpen ? "hover:bg-sidebar-accent/70" : (headerClassName ? "" : "hover:bg-sidebar-accent"),
+          headerClassName
         )}
         aria-expanded={isOpen}
         aria-controls={`section-content-${title.replace(/\s+/g, '-').toLowerCase()}`}
@@ -102,16 +113,25 @@ export function AppSidebar() {
 
   return (
     <Sidebar side="left" variant="sidebar" collapsible="icon">
-      <SidebarHeader className="p-4 flex items-center justify-center group-data-[collapsible=expanded]:justify-start">
+      <SidebarHeader className={cn(
+        "p-4 flex items-center",
+        isSidebarIconOnly ? "justify-center" : "justify-start"
+      )}>
         <Link href={ROUTES.DASHBOARD} className="flex items-center">
           <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary/20 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/50">
+            {/* The app logo will still try to load from public/icons/app-logo.svg */}
+            {/* Please ensure public/icons/app-logo.svg exists for it to display */}
             <Image
-              src="/icons/app-logo.svg" 
+              src="/icons/app-logo.svg"
               alt={`${APP_NAME} Logo`}
-              width={32} 
+              width={32}
               height={32}
               className="object-contain"
               data-ai-hint="clinic health logo"
+              onError={(e) => {
+                // Fallback or hide if image fails to load, e.g., e.currentTarget.style.display = 'none';
+                console.warn('App logo failed to load from public/icons/app-logo.svg');
+              }}
             />
           </Avatar>
         </Link>
@@ -127,13 +147,7 @@ export function AppSidebar() {
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
                 >
                   <Link href={item.href}>
-                    <Image 
-                        src={`/icons/${item.icon}`} 
-                        alt={item.label} 
-                        width={20} 
-                        height={20} 
-                        className="h-5 w-5" 
-                    />
+                    <item.icon className="h-5 w-5" />
                     <span>{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -158,13 +172,7 @@ export function AppSidebar() {
                   }}
                 >
                   <Link href={item.href} >
-                    <Image 
-                        src={`/icons/${item.icon}`} 
-                        alt={item.label} 
-                        width={20} 
-                        height={20} 
-                        className="h-5 w-5" 
-                    />
+                    <item.icon className="h-5 w-5" />
                     <span>
                       {item.label}
                       {item.comingSoon && <span className="text-xs text-sidebar-foreground/70 ml-1 group-data-[collapsible=icon]:hidden">(শীঘ্রই আসছে)</span>}
@@ -188,13 +196,7 @@ export function AppSidebar() {
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
                 >
                   <Link href={item.href}>
-                     <Image 
-                        src={`/icons/${item.icon}`} 
-                        alt={item.label} 
-                        width={20} 
-                        height={20} 
-                        className="h-5 w-5" 
-                    />
+                     <item.icon className="h-5 w-5" />
                     <span>{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -211,4 +213,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
