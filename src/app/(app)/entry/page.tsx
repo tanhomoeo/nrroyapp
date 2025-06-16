@@ -102,11 +102,8 @@ export default function PatientEntryPage() {
         villageUnion: data.villageUnion,
         diaryNumber: parsedDiaryNumber,
       };
-      const patientId = await addPatient(newPatientData);
-
-      if (!patientId) {
-        throw new Error("Failed to save patient to Firestore.");
-      }
+      
+      const patientId = await addPatient(newPatientData); // This will now throw on error
 
       if (parsedDiaryNumber !== undefined && parsedDiaryNumber === currentNextDiaryNumber) {
         const newNextDiaryNumber = parsedDiaryNumber + 1;
@@ -134,11 +131,19 @@ export default function PatientEntryPage() {
           villageUnion: '',
       }); 
       router.push(`${ROUTES.PATIENT_SEARCH}?phone=${newPatientData.phone}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to register patient:', error);
+      let errorMessage = 'রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে।';
+      // Check if it's a Firebase error and has a more specific message or code
+      if (error.message) {
+          errorMessage += ` বিস্তারিত: ${error.message}`;
+      }
+      if (error.code) {
+          errorMessage += ` (Code: ${error.code})`;
+      }
       toast({
         title: 'নিবন্ধন ব্যর্থ হয়েছে',
-        description: 'রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে।',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -445,3 +450,4 @@ export default function PatientEntryPage() {
     </div>
   );
 }
+

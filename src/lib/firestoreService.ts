@@ -60,7 +60,7 @@ export const getPatients = async (): Promise<Patient[]> => {
   }
 };
 
-export const addPatient = async (patientData: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>): Promise<string | null> => {
+export const addPatient = async (patientData: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
     const newPatient = {
       ...patientData,
@@ -71,7 +71,7 @@ export const addPatient = async (patientData: Omit<Patient, 'id' | 'createdAt' |
     return docRef.id;
   } catch (error) {
     console.error("Error adding patient: ", error);
-    return null;
+    throw error; // Re-throw the original Firebase error
   }
 };
 
@@ -495,3 +495,4 @@ export const clearAllLocalStorageData = () => {
           }
       }
 };
+
