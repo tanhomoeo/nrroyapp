@@ -1,4 +1,3 @@
-
 {
   "hosting": {
     "source": ".",
@@ -11,9 +10,11 @@
       "region": "us-central1"
     }
   },
+  "extensions": {},
   "firestore": {
-    "rules": "firestore.rules",
+    "database": "(default)",
+    "location": "asia-south1",
+    "rules": "y",
     "indexes": "firestore.indexes.json"
-  },
-  "extensions": {}
+  }
 }
