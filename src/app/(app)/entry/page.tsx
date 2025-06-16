@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addPatient, getClinicSettings, saveClinicSettings } from '@/lib/firestoreService';
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+// MicrophoneButton for AI text correction removed
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { Loader2, CalendarIcon, UserPlus } from 'lucide-react';
@@ -144,9 +144,8 @@ export default function PatientEntryPage() {
     }
   };
 
-  const handleVoiceInput = (field: keyof PatientFormValues) => (text: string) => {
-    form.setValue(field, text as any); // Cast to 'any' to satisfy setValue, zod will validate later
-  };
+  // Removed handleVoiceInput as MicrophoneButton for AI correction is removed.
+  // If the new FloatingVoiceInput needs direct interaction with form fields, it would be handled differently.
 
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
@@ -240,11 +239,7 @@ export default function PatientEntryPage() {
                       <FormControl className="flex-1">
                         <Input placeholder="পুরো নাম লিখুন" {...field} id="patientNameEntry" className={inputFieldClass} />
                       </FormControl>
-                      <MicrophoneButton
-                        targetInputId="patientNameEntry"
-                        onTranscription={handleVoiceInput('name')}
-                        className="rounded-l-none border-l h-full"
-                      />
+                      {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -377,11 +372,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                           <Input placeholder="অভিভাবকের নাম লিখুন" {...field} id="guardianNameEntry" className={inputFieldClass}/>
                         </FormControl>
-                        <MicrophoneButton
-                          targetInputId="guardianNameEntry"
-                          onTranscription={handleVoiceInput('guardianName')}
-                          className="rounded-l-none border-l h-full"
-                        />
+                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -398,11 +389,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                            <Input placeholder="গ্রাম বা ইউনিয়ন লিখুন" {...field} id="villageUnionEntry" className={inputFieldClass}/>
                         </FormControl>
-                        <MicrophoneButton
-                          targetInputId="villageUnionEntry"
-                          onTranscription={handleVoiceInput('villageUnion')}
-                          className="rounded-l-none border-l h-full"
-                        />
+                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -418,11 +405,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                            <Input placeholder="থানা বা উপজেলা লিখুন" {...field} id="thanaUpazilaEntry" className={inputFieldClass}/>
                         </FormControl>
-                         <MicrophoneButton
-                          targetInputId="thanaUpazilaEntry"
-                          onTranscription={handleVoiceInput('thanaUpazila')}
-                          className="rounded-l-none border-l h-full"
-                        />
+                         {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -438,11 +421,7 @@ export default function PatientEntryPage() {
                         <FormControl className="flex-1">
                            <Input placeholder="জেলা লিখুন" {...field} id="districtEntry" className={inputFieldClass}/>
                         </FormControl>
-                        <MicrophoneButton
-                          targetInputId="districtEntry"
-                          onTranscription={handleVoiceInput('district')}
-                          className="rounded-l-none border-l h-full"
-                        />
+                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>

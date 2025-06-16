@@ -15,10 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getPatientById, addPrescription, getVisitById, getPrescriptionsByPatientId, getPrescriptionById, updatePrescription, formatDate, getClinicSettings } from '@/lib/firestoreService';
 import type { Patient, Prescription, Visit, ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-// DiagnosisAssistant is still imported if you want to show a "coming soon" or similar message.
-// If fully removing, delete this import too.
 import { DiagnosisAssistant } from '@/components/ai/DiagnosisAssistant'; 
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+// MicrophoneButton for AI text correction removed
 import { PlusCircle, Trash2, Save, Loader2, Printer, ClipboardList } from 'lucide-react'; 
 import { Separator } from '@/components/ui/separator';
 import { APP_NAME, ROUTES } from '@/lib/constants'; 
@@ -223,14 +221,7 @@ export default function PrescriptionPage() {
     }
   };
 
-  const handleVoiceInput = (field: keyof PrescriptionFormValues) => (text: string) => {
-    form.setValue(field, text as any);
-  };
-  
-  const handleMedicineItemVoiceInput = (index: number, field: keyof PrescriptionItem) => (text: string) => {
-    form.setValue(`items.${index}.${field}` as any, text);
-  };
-
+  // Removed handleVoiceInput and handleMedicineItemVoiceInput as MicrophoneButton is removed
 
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-3">প্রেসক্রিপশন ডেটা লোড হচ্ছে...</p></div>;
@@ -315,11 +306,7 @@ export default function PrescriptionPage() {
                           <FormControl className="flex-1">
                             <Textarea placeholder="রোগ নির্ণয় বা প্রধান অভিযোগ লিখুন" {...field} rows={3} id="diagnosisMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none"/>
                           </FormControl>
-                          <MicrophoneButton
-                              targetInputId="diagnosisMain"
-                              onTranscription={handleVoiceInput('diagnosis')}
-                              className="rounded-l-none border-l h-auto self-stretch"
-                           />
+                          {/* MicrophoneButton removed */}
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -341,11 +328,7 @@ export default function PrescriptionPage() {
                                 <FormControl className="flex-1">
                                   <Input placeholder="যেমন, নাপা" {...field} id={`medName${index}`} className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-sm placeholder-muted-foreground"/>
                                 </FormControl>
-                                <MicrophoneButton
-                                  targetInputId={`medName${index}`}
-                                  onTranscription={handleMedicineItemVoiceInput(index, 'medicineName')}
-                                  className="rounded-l-none border-l h-full"
-                                />
+                                {/* MicrophoneButton removed */}
                               </div>
                               <FormMessage />
                             </FormItem>
@@ -458,11 +441,7 @@ export default function PrescriptionPage() {
                               <FormControl className="flex-1">
                                 <Textarea placeholder="যেমন, পর্যাপ্ত বিশ্রাম নিন, গরম জল পান করুন।" {...field} rows={3} id="adviceMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none"/>
                               </FormControl>
-                                <MicrophoneButton
-                                  targetInputId="adviceMain"
-                                  onTranscription={handleVoiceInput('advice')}
-                                  className="rounded-l-none border-l h-auto self-stretch"
-                                />
+                                {/* MicrophoneButton removed */}
                              </div>
                             <FormMessage />
                           </FormItem>
