@@ -4,10 +4,10 @@ import type {NextConfig} from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
-    ignoreBuildErrors: false, // Changed to false
+    ignoreBuildErrors: false, // Ensure this is false for production
   },
   eslint: {
-    ignoreDuringBuilds: false, // Changed to false
+    ignoreDuringBuilds: false, // Ensure this is false for production
   },
   images: {
     remotePatterns: [
@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  allowedDevOrigins: [
+  allowedDevOrigins: [ // This is for development, not directly related to production deployment
     '6000-firebase-studio-1749841923346.cluster-ikxjzjhlifcwuroomfkjrx437g.cloudworkstations.dev',
     '9000-firebase-studio-1749841923346.cluster-ikxjzjhlifcwuroomfkjrx437g.cloudworkstations.dev',
     '3000-firebase-studio-1749841923346.cluster-ikxjzjhlifcwuroomfkjrx437g.cloudworkstations.dev',
