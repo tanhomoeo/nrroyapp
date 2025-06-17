@@ -1,27 +1,38 @@
+
 rules_version = '2';
 
+// Default to open rules for development.
+// REMEMBER to secure these rules before deploying to production!
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow all reads and writes to all documents for development purposes.
-    // WARNING: This is insecure for production.
-    // Replace with specific rules before going live.
+    // Allow all reads and writes to all documents
+    // for development purposes.
     match /{document=**} {
       allow read, write: if true;
     }
 
-    // Example: Allow only authenticated users to read and write their own data in a 'users' collection
-    /*
-    match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+    /* Example: Secure rules for a 'patients' collection
+    match /patients/{patientId} {
+      // Allow authenticated users to read patient data
+      allow read: if request.auth != null;
+      // Allow authenticated users to create their own patient record
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Allow authenticated users to update their own patient record
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Generally, disallow delete or make it very specific
+      allow delete: if false;
     }
     */
 
-    // Example: Allow public read for a 'publicContent' collection, but only authenticated writes
-    /*
-    match /publicContent/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    /* Example: Secure rules for 'settings/clinic' document
+    match /settings/clinic {
+      // Allow any authenticated user to read clinic settings
+      allow read: if request.auth != null;
+      // Allow only specific admin users (e.g., by UID) or a role to write
+      // This requires you to have a way to identify admins (e.g., custom claims or a list of admin UIDs)
+      allow write: if request.auth != null && request.auth.uid == 'YOUR_ADMIN_USER_UID_HERE';
+      // Or, if you use custom claims:
+      // allow write: if request.auth != null && request.auth.token.admin == true;
     }
     */
   }
