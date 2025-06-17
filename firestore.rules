@@ -1,28 +1,43 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: This rule allows anyone to read and write to your entire database.
-    // This is useful for development but IS NOT SECURE for production.
-    // Before deploying your application to production, you MUST update these
-    // rules to properly restrict access.
-    //
-    // Example for allowing only authenticated users to read/write their own data:
-    // match /users/{userId}/{documents=**} {
-    //   allow read, write: if request.auth != null && request.auth.uid == userId;
-    // }
-    // match /patients/{patientId} {
-    //   allow read, write: if request.auth != null; // Example: allow any authenticated user
-    // }
-    // match /visits/{visitId} {
+    // By default, deny all reads and writes
+    // This is a "null rule" - no client-side access is allowed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Example: To allow all authenticated users to read/write everything (DANGEROUS for production)
+    // match /{document=**} {
     //   allow read, write: if request.auth != null;
     // }
-    // // Add similar rules for other collections like 'prescriptions', 'paymentSlips', 'settings'
-    //
-    // For now, using open rules for development:
-    match /{document=**} {
-      allow read, write: if true;
-    }
+
+    // Example: To allow anyone to read, but only authenticated users to write (Still very open)
+    // match /{document=**} {
+    //   allow read: if true;
+    //   allow write: if request.auth != null;
+    // }
+
+    // --- MORE SECURE EXAMPLES (Adapt to your specific needs) ---
+
+    // Allow users to read and write their own profile document
+    // match /users/{userId} {
+    //   allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+    //   allow create: if request.auth != null;
+    // }
+
+    // Allow authenticated users to read all 'posts' but only create/update/delete their own
+    // match /posts/{postId} {
+    //   allow read: if request.auth != null;
+    //   allow create: if request.auth != null;
+    //   allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    // }
+
+    // For a 'settings' collection, perhaps only readable by all, writable by admin (requires custom claims)
+    // match /settings/{settingId} {
+    //  allow read: if true;
+    //  allow write: if request.auth != null && request.auth.token.admin == true;
+    // }
   }
 }
