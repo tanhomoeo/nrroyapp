@@ -42,10 +42,10 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 const mainNavItems = [
-  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: Home },
-  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: UserPlus },
-  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: Search },
-  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks },
+  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: Home, theme: 'theme1' },
+  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: UserPlus, theme: 'theme2' },
+  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: Search, theme: 'theme3' },
+  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks, theme: 'theme4' },
   { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: MessageSquareText },
   { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: FileText },
   { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText },
@@ -121,7 +121,7 @@ export function AppSidebar() {
   const isSidebarIconOnly = sidebarState === 'collapsed';
   const { user, loading } = useAuth();
   const { toast } = useToast();
-  const [logoSrc, setLogoSrc] = useState("/icons/icon.png"); // Use new logo path
+  const [logoSrc, setLogoSrc] = useState("/icons/icon.png");
 
   const handleSignOut = async () => {
     try {
@@ -168,6 +168,7 @@ export function AppSidebar() {
                   isActive={pathname === item.href || (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href))}
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
                   onClick={() => setOpenMobile(false)}
+                  data-menu-item-theme={item.theme || undefined}
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />

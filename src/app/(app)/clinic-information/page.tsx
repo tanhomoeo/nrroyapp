@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { getClinicSettings, saveClinicSettings } from '@/lib/firestoreService';
 import type { ClinicSettings } from '@/lib/types';
@@ -239,7 +239,7 @@ export default function ClinicInformationPage() {
                         <Input type="number" placeholder="1" {...field} className={inputFieldClass} />
                       </FormControl>
                     </div>
-                    <FormDescription className="text-xs">রোগী নিবন্ধনের সময় এই নম্বরটি প্রস্তাবিত হবে।</FormDescription>
+                    <CardDescription className="text-xs">রোগী নিবন্ধনের সময় এই নম্বরটি প্রস্তাবিত হবে।</CardDescription>
                     <FormMessage />
                   </FormItem>
                 )}

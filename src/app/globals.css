@@ -51,15 +51,43 @@ body {
     --sidebar-section-management-bg: 160 50% 93%; /* Light Greenish */
     --sidebar-section-utility-bg: 50 70% 93%; /* Light Yellowish */
 
-    /* Submenu Button Styles - Light Theme (Greenish) */
-    --sidebar-button-gradient-start-light: hsl(145 55% 90%); /* Slightly darker light green for top */
+    /* Default Submenu Button Styles - Light Theme */
+    --sidebar-button-gradient-start-light: hsl(145 55% 90%); /* Light green for top */
     --sidebar-button-gradient-end-light: hsl(145 55% 95%);   /* Lighter green for bottom */
     --sidebar-button-hover-gradient-start-light: hsl(145 55% 85%);
     --sidebar-button-hover-gradient-end-light: hsl(145 55% 92%);
-    --sidebar-button-border: hsl(145 40% 75%); /* Adjusted border for more definition */
+    --sidebar-button-border: hsl(145 40% 75%);
     --sidebar-button-shadow: 0 1px 1px hsla(145, 30%, 50%, 0.15), inset 0 1px 0px hsla(0, 0%, 100%, 0.3);
     --sidebar-button-hover-shadow: 0 2px 3px hsla(145, 30%, 50%, 0.2), inset 0 1px 0px hsla(0, 0%, 100%, 0.3), 0 0 0 1px hsla(145, 40%, 70%, 0.5);
     --sidebar-button-active-shadow: inset 0 1px 2px hsla(145, 30%, 50%, 0.2);
+
+    /* Custom Button Theme 1 (Blueish) - Light */
+    --btn-theme1-gradient-start-light: hsl(200, 70%, 88%);
+    --btn-theme1-gradient-end-light: hsl(200, 70%, 93%);
+    --btn-theme1-border-light: hsl(200, 60%, 75%);
+    --btn-theme1-hover-gradient-start-light: hsl(200, 70%, 83%);
+    --btn-theme1-hover-gradient-end-light: hsl(200, 70%, 88%);
+
+    /* Custom Button Theme 2 (Greenish) - Light */
+    --btn-theme2-gradient-start-light: hsl(130, 50%, 88%);
+    --btn-theme2-gradient-end-light: hsl(130, 50%, 93%);
+    --btn-theme2-border-light: hsl(130, 40%, 75%);
+    --btn-theme2-hover-gradient-start-light: hsl(130, 50%, 83%);
+    --btn-theme2-hover-gradient-end-light: hsl(130, 50%, 88%);
+
+    /* Custom Button Theme 3 (Purplish) - Light */
+    --btn-theme3-gradient-start-light: hsl(260, 50%, 88%);
+    --btn-theme3-gradient-end-light: hsl(260, 50%, 93%);
+    --btn-theme3-border-light: hsl(260, 40%, 75%);
+    --btn-theme3-hover-gradient-start-light: hsl(260, 50%, 83%);
+    --btn-theme3-hover-gradient-end-light: hsl(260, 50%, 88%);
+    
+    /* Custom Button Theme 4 (Orangish) - Light */
+    --btn-theme4-gradient-start-light: hsl(30, 70%, 88%);
+    --btn-theme4-gradient-end-light: hsl(30, 70%, 93%);
+    --btn-theme4-border-light: hsl(30, 60%, 75%);
+    --btn-theme4-hover-gradient-start-light: hsl(30, 70%, 83%);
+    --btn-theme4-hover-gradient-end-light: hsl(30, 70%, 88%);
   }
 
   .dark {
@@ -105,7 +133,7 @@ body {
     --sidebar-section-management-bg: 160 30% 22%; /* Dark Greenish */
     --sidebar-section-utility-bg: 50 35% 22%; /* Dark Yellowish/Brownish */
     
-    /* Submenu Button Styles - Dark Theme (Greenish) */
+    /* Default Submenu Button Styles - Dark Theme */
     --sidebar-button-gradient-start-dark: hsl(145 35% 28%);
     --sidebar-button-gradient-end-dark: hsl(145 35% 32%);
     --sidebar-button-hover-gradient-start-dark: hsl(145 35% 30%);
@@ -114,6 +142,34 @@ body {
     --sidebar-button-shadow: 0 1px 1px hsla(145, 20%, 8%, 0.5), inset 0 1px 0px hsla(145, 30%, 45%, 0.1);
     --sidebar-button-hover-shadow: 0 2px 3px hsla(145, 20%, 8%, 0.6), inset 0 1px 0px hsla(145, 30%, 45%, 0.1), 0 0 0 1px hsla(145, 25%, 22%, 0.7);
     --sidebar-button-active-shadow: inset 0 1px 2px hsla(145, 20%, 8%, 0.5);
+
+    /* Custom Button Theme 1 (Blueish) - Dark */
+    --btn-theme1-gradient-start-dark: hsl(200, 50%, 30%);
+    --btn-theme1-gradient-end-dark: hsl(200, 50%, 35%);
+    --btn-theme1-border-dark: hsl(200, 40%, 25%);
+    --btn-theme1-hover-gradient-start-dark: hsl(200, 50%, 28%);
+    --btn-theme1-hover-gradient-end-dark: hsl(200, 50%, 33%);
+
+    /* Custom Button Theme 2 (Greenish) - Dark */
+    --btn-theme2-gradient-start-dark: hsl(130, 40%, 30%);
+    --btn-theme2-gradient-end-dark: hsl(130, 40%, 35%);
+    --btn-theme2-border-dark: hsl(130, 30%, 25%);
+    --btn-theme2-hover-gradient-start-dark: hsl(130, 40%, 28%);
+    --btn-theme2-hover-gradient-end-dark: hsl(130, 40%, 33%);
+
+    /* Custom Button Theme 3 (Purplish) - Dark */
+    --btn-theme3-gradient-start-dark: hsl(260, 40%, 30%);
+    --btn-theme3-gradient-end-dark: hsl(260, 40%, 35%);
+    --btn-theme3-border-dark: hsl(260, 30%, 25%);
+    --btn-theme3-hover-gradient-start-dark: hsl(260, 40%, 28%);
+    --btn-theme3-hover-gradient-end-dark: hsl(260, 40%, 33%);
+    
+    /* Custom Button Theme 4 (Orangish) - Dark */
+    --btn-theme4-gradient-start-dark: hsl(30, 50%, 30%);
+    --btn-theme4-gradient-end-dark: hsl(30, 50%, 35%);
+    --btn-theme4-border-dark: hsl(30, 40%, 25%);
+    --btn-theme4-hover-gradient-start-dark: hsl(30, 50%, 28%);
+    --btn-theme4-hover-gradient-end-dark: hsl(30, 50%, 33%);
   }
 
   /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
@@ -161,7 +217,7 @@ body {
     background-image: linear-gradient(to bottom, var(--sidebar-button-gradient-start-light), var(--sidebar-button-gradient-end-light));
     border: 1px solid var(--sidebar-button-border);
     box-shadow: var(--sidebar-button-shadow);
-    transition: background-image 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out;
+    transition: background-image 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out, border-color 0.15s ease-out;
   }
   .dark [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"] {
     background-image: linear-gradient(to bottom, var(--sidebar-button-gradient-start-dark), var(--sidebar-button-gradient-end-dark));
@@ -176,7 +232,6 @@ body {
      background-image: linear-gradient(to bottom, var(--sidebar-button-hover-gradient-start-dark), var(--sidebar-button-hover-gradient-end-dark));
   }
 
-
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"]:active {
     box-shadow: var(--sidebar-button-active-shadow);
     transform: translateY(0.5px);
@@ -184,17 +239,82 @@ body {
 
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"] {
     @apply bg-sidebar-primary text-sidebar-primary-foreground;
-    background-image: none; /* Override gradient for active state */
+    background-image: none !important; /* Override gradient for active state, important to override themed gradients */
     box-shadow: var(--sidebar-button-active-shadow);
     transform: translateY(0.5px);
-    border-color: hsl(var(--sidebar-primary)/0.8);
+    border-color: hsl(var(--sidebar-primary)/0.8) !important;
   }
    [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"]:hover {
     @apply bg-sidebar-primary/90;
-    background-image: none; /* Override gradient for active state hover */
+    background-image: none !important; /* Override gradient for active state hover */
     transform: translateY(0px);
     box-shadow: var(--sidebar-button-hover-shadow);
   }
+
+  /* Custom Button Theme 1 Styles */
+  [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme1-gradient-start-light), var(--btn-theme1-gradient-end-light));
+    border-color: var(--btn-theme1-border-light);
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme1-gradient-start-dark), var(--btn-theme1-gradient-end-dark));
+    border-color: var(--btn-theme1-border-dark);
+  }
+  [data-sidebar="menu-button"][data-menu-item-theme="theme1"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme1-hover-gradient-start-light), var(--btn-theme1-hover-gradient-end-light));
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme1-hover-gradient-start-dark), var(--btn-theme1-hover-gradient-end-dark));
+  }
+
+  /* Custom Button Theme 2 Styles */
+  [data-sidebar="menu-button"][data-menu-item-theme="theme2"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme2-gradient-start-light), var(--btn-theme2-gradient-end-light));
+    border-color: var(--btn-theme2-border-light);
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme2"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme2-gradient-start-dark), var(--btn-theme2-gradient-end-dark));
+    border-color: var(--btn-theme2-border-dark);
+  }
+  [data-sidebar="menu-button"][data-menu-item-theme="theme2"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme2-hover-gradient-start-light), var(--btn-theme2-hover-gradient-end-light));
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme2"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme2-hover-gradient-start-dark), var(--btn-theme2-hover-gradient-end-dark));
+  }
+
+  /* Custom Button Theme 3 Styles */
+  [data-sidebar="menu-button"][data-menu-item-theme="theme3"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme3-gradient-start-light), var(--btn-theme3-gradient-end-light));
+    border-color: var(--btn-theme3-border-light);
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme3"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme3-gradient-start-dark), var(--btn-theme3-gradient-end-dark));
+    border-color: var(--btn-theme3-border-dark);
+  }
+  [data-sidebar="menu-button"][data-menu-item-theme="theme3"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme3-hover-gradient-start-light), var(--btn-theme3-hover-gradient-end-light));
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme3"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme3-hover-gradient-start-dark), var(--btn-theme3-hover-gradient-end-dark));
+  }
+  
+  /* Custom Button Theme 4 Styles */
+  [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme4-gradient-start-light), var(--btn-theme4-gradient-end-light));
+    border-color: var(--btn-theme4-border-light);
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
+    background-image: linear-gradient(to bottom, var(--btn-theme4-gradient-start-dark), var(--btn-theme4-gradient-end-dark));
+    border-color: var(--btn-theme4-border-dark);
+  }
+  [data-sidebar="menu-button"][data-menu-item-theme="theme4"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme4-hover-gradient-start-light), var(--btn-theme4-hover-gradient-end-light));
+  }
+  .dark [data-sidebar="menu-button"][data-menu-item-theme="theme4"]:hover {
+    background-image: linear-gradient(to bottom, var(--btn-theme4-hover-gradient-start-dark), var(--btn-theme4-hover-gradient-end-dark));
+  }
+
 }
 
 
