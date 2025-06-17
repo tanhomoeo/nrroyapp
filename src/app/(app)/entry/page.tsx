@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { addPatient, getClinicSettings, saveClinicSettings } from '@/lib/firestoreService';
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-// MicrophoneButton for AI text correction removed
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { Loader2, CalendarIcon, UserPlus } from 'lucide-react';
@@ -67,13 +66,26 @@ export default function PatientEntryPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       setIsLoadingSettings(true);
-      const settings = await getClinicSettings();
-      setCurrentNextDiaryNumber(settings.nextDiaryNumber);
-      form.setValue('diaryNumberInput', settings.nextDiaryNumber.toString());
-      setIsLoadingSettings(false);
+      try {
+        const settings = await getClinicSettings();
+        setCurrentNextDiaryNumber(settings.nextDiaryNumber);
+        form.setValue('diaryNumberInput', settings.nextDiaryNumber.toString());
+      } catch (error) {
+        console.error("Failed to fetch clinic settings:", error);
+        toast({
+          title: "সেটিংস লোড ত্রুটি",
+          description: "ক্লিনিকের সেটিংস লোড করা যায়নি। ডিফল্ট মান ব্যবহার করা হচ্ছে।",
+          variant: "destructive",
+        });
+        // Set a default if settings fail to load, though getClinicSettings should return defaults
+        setCurrentNextDiaryNumber(1);
+        form.setValue('diaryNumberInput', '1');
+      } finally {
+        setIsLoadingSettings(false);
+      }
     };
     fetchSettings();
-  }, [form]);
+  }, [form, toast]);
 
   const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
@@ -103,22 +115,34 @@ export default function PatientEntryPage() {
         diaryNumber: parsedDiaryNumber,
       };
       
-      const patientId = await addPatient(newPatientData); // This will now throw on error
+      const patientId = await addPatient(newPatientData); 
 
-      if (parsedDiaryNumber !== undefined && parsedDiaryNumber === currentNextDiaryNumber) {
+      if (parsedDiaryNumber !== undefined && currentNextDiaryNumber !== null && parsedDiaryNumber === currentNextDiaryNumber) {
         const newNextDiaryNumber = parsedDiaryNumber + 1;
-        const currentSettings = await getClinicSettings();
-        await saveClinicSettings({ ...currentSettings, nextDiaryNumber: newNextDiaryNumber });
-        setCurrentNextDiaryNumber(newNextDiaryNumber);
+        try {
+          const currentSettings = await getClinicSettings();
+          await saveClinicSettings({ ...currentSettings, nextDiaryNumber: newNextDiaryNumber });
+          setCurrentNextDiaryNumber(newNextDiaryNumber);
+        } catch (settingsError) {
+            console.error("Failed to update next diary number in settings:", settingsError);
+            toast({
+              title: "সতর্কতা",
+              description: "রোগী নিবন্ধিত হয়েছে, কিন্তু পরবর্তী ডায়েরি নম্বর আপডেট করা যায়নি।",
+              variant: "default", // Use default or warning variant
+            });
+        }
       }
 
       toast({
         title: 'রোগী নিবন্ধিত',
-        description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${parsedDiaryNumber || 'N/A'}`,
+        description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${parsedDiaryNumber?.toLocaleString('bn-BD') || 'N/A'}`,
       });
+
       form.reset({ 
           registrationDate: new Date(),
-          diaryNumberInput: (currentNextDiaryNumber !== null && parsedDiaryNumber === currentNextDiaryNumber) ? (currentNextDiaryNumber + 1).toString() : currentNextDiaryNumber?.toString() || '',
+          diaryNumberInput: (currentNextDiaryNumber !== null && parsedDiaryNumber !== undefined && parsedDiaryNumber === currentNextDiaryNumber) 
+                            ? (currentNextDiaryNumber + 1).toString() 
+                            : currentNextDiaryNumber?.toString() || '',
           name: '',
           age: '',
           gender: '',
@@ -131,14 +155,14 @@ export default function PatientEntryPage() {
           villageUnion: '',
       }); 
       router.push(`${ROUTES.PATIENT_SEARCH}?phone=${newPatientData.phone}`);
+
     } catch (error: any) {
       console.error('Failed to register patient:', error);
       let errorMessage = 'রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে।';
-      // Check if it's a Firebase error and has a more specific message or code
       if (error.message) {
-          errorMessage += ` বিস্তারিত: ${error.message}`;
+          errorMessage = `নিবন্ধন ব্যর্থ: ${error.message}`;
       }
-      if (error.code) {
+      if (error.code) { // Firebase errors often have a code
           errorMessage += ` (Code: ${error.code})`;
       }
       toast({
@@ -149,9 +173,6 @@ export default function PatientEntryPage() {
     }
   };
 
-  // Removed handleVoiceInput as MicrophoneButton for AI correction is removed.
-  // If the new FloatingVoiceInput needs direct interaction with form fields, it would be handled differently.
-
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
   
@@ -159,7 +180,7 @@ export default function PatientEntryPage() {
       return (
         <div className="flex h-screen items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-3">সেটিংস লোড হচ্ছে...</p>
+            <p className="ml-3 text-lg text-foreground">সেটিংস লোড হচ্ছে...</p>
         </div>
       );
   }
@@ -193,7 +214,7 @@ export default function PatientEntryPage() {
                         >
                           <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
                           {field.value && isValid(field.value) ? (
-                            format(field.value, "PPP")
+                            format(field.value, "PPP", { locale: bn })
                           ) : (
                             <span>একটি তারিখ নির্বাচন করুন</span>
                           )}
@@ -208,6 +229,7 @@ export default function PatientEntryPage() {
                             date > new Date() || date < new Date("1900-01-01")
                           }
                           initialFocus
+                          locale={bn}
                         />
                       </PopoverContent>
                     </Popover>
@@ -223,10 +245,10 @@ export default function PatientEntryPage() {
                     <FormLabel>ডায়েরি নম্বর (ঐচ্ছিক)</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="ডায়েরি নম্বর লিখুন" {...field} type="number" className={inputFieldClass}/>
+                        <Input placeholder="ডায়েরি নম্বর লিখুন" {...field} type="number" className={inputFieldClass} id="patientDiaryNumberEntry"/>
                       </FormControl>
                     </div>
-                    <FormDescription className="text-xs">সিস্টেম পরবর্তী নম্বর: {currentNextDiaryNumber}</FormDescription>
+                    <FormDescription className="text-xs">সিস্টেম পরবর্তী নম্বর: {currentNextDiaryNumber?.toLocaleString('bn-BD')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -244,7 +266,6 @@ export default function PatientEntryPage() {
                       <FormControl className="flex-1">
                         <Input placeholder="পুরো নাম লিখুন" {...field} id="patientNameEntry" className={inputFieldClass} />
                       </FormControl>
-                      {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -259,7 +280,7 @@ export default function PatientEntryPage() {
                     <FormLabel>বয়স</FormLabel>
                      <div className={inputWrapperClass}>
                         <FormControl className="flex-1">
-                          <Input placeholder="বয়স লিখুন" {...field} type="text" className={inputFieldClass}/>
+                          <Input placeholder="বয়স লিখুন" {...field} type="text" className={inputFieldClass} id="patientAgeEntry"/>
                         </FormControl>
                      </div>
                     <FormMessage />
@@ -275,7 +296,7 @@ export default function PatientEntryPage() {
                     <FormLabel>লিঙ্গ</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
-                        <SelectTrigger className={inputWrapperClass}>
+                        <SelectTrigger className={inputWrapperClass} id="patientGenderEntry">
                           <SelectValue placeholder="লিঙ্গ নির্বাচন করুন" />
                         </SelectTrigger>
                       </FormControl>
@@ -298,7 +319,7 @@ export default function PatientEntryPage() {
                     <FormLabel>রোগীর পেশা (ঐচ্ছিক)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
-                        <SelectTrigger className={inputWrapperClass}>
+                        <SelectTrigger className={inputWrapperClass} id="patientOccupationEntry">
                           <SelectValue placeholder="পেশা নির্বাচন করুন" />
                         </SelectTrigger>
                       </FormControl>
@@ -327,7 +348,7 @@ export default function PatientEntryPage() {
                     <FormLabel>ফোন নম্বর <span className="text-destructive">*</span></FormLabel>
                     <div className={inputWrapperClass}>
                         <FormControl className="flex-1">
-                            <Input type="tel" placeholder="যেমন: 01XXXXXXXXX" {...field} className={inputFieldClass}/>
+                            <Input type="tel" placeholder="যেমন: 01XXXXXXXXX" {...field} className={inputFieldClass} id="patientPhoneEntry"/>
                         </FormControl>
                     </div>
                     <FormMessage />
@@ -339,14 +360,14 @@ export default function PatientEntryPage() {
                 control={form.control}
                 name="guardianRelation"
                 render={({ field }) => (
-                  <FormItem className="space-y-3 md:col-span-2">
-                    <FormLabel>অভিভাবকের তথ্য (ঐচ্ছিক)</FormLabel>
+                  <FormItem className="space-y-3 md:col-span-1"> {/* Adjusted span */}
+                    <FormLabel>অভিভাবকের সম্পর্ক</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue=""
+                        value={field.value || ''} // ensure value is not undefined
                         className="flex space-x-4 pt-1" 
+                        id="patientGuardianRelationEntry"
                       >
                         <FormItem className="flex items-center space-x-2 space-y-0">
                           <FormControl>
@@ -371,13 +392,12 @@ export default function PatientEntryPage() {
                 control={form.control}
                 name="guardianName"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-3">
-                    <FormLabel>অভিভাবকের নাম</FormLabel>
+                  <FormItem className="md:col-span-2"> {/* Adjusted span */}
+                    <FormLabel>অভিভাবকের নাম (ঐচ্ছিক)</FormLabel>
                      <div className={inputWrapperClass}>
                         <FormControl className="flex-1">
                           <Input placeholder="অভিভাবকের নাম লিখুন" {...field} id="guardianNameEntry" className={inputFieldClass}/>
                         </FormControl>
-                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -389,12 +409,11 @@ export default function PatientEntryPage() {
                 name="villageUnion"
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
-                    <FormLabel>গ্রাম / ইউনিয়ন</FormLabel>
+                    <FormLabel>গ্রাম / ইউনিয়ন (ঐচ্ছিক)</FormLabel>
                      <div className={inputWrapperClass}>
                         <FormControl className="flex-1">
                            <Input placeholder="গ্রাম বা ইউনিয়ন লিখুন" {...field} id="villageUnionEntry" className={inputFieldClass}/>
                         </FormControl>
-                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -405,12 +424,11 @@ export default function PatientEntryPage() {
                 name="thanaUpazila"
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
-                    <FormLabel>থানা / উপজেলা</FormLabel>
+                    <FormLabel>থানা / উপজেলা (ঐচ্ছিক)</FormLabel>
                      <div className={inputWrapperClass}>
                         <FormControl className="flex-1">
                            <Input placeholder="থানা বা উপজেলা লিখুন" {...field} id="thanaUpazilaEntry" className={inputFieldClass}/>
                         </FormControl>
-                         {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -421,12 +439,11 @@ export default function PatientEntryPage() {
                 name="district"
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
-                    <FormLabel>জেলা</FormLabel>
+                    <FormLabel>জেলা (ঐচ্ছিক)</FormLabel>
                      <div className={inputWrapperClass}>
                         <FormControl className="flex-1">
                            <Input placeholder="জেলা লিখুন" {...field} id="districtEntry" className={inputFieldClass}/>
                         </FormControl>
-                        {/* MicrophoneButton removed */}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -434,7 +451,7 @@ export default function PatientEntryPage() {
               />
             </CardContent>
             <CardFooter className="flex justify-end p-6 border-t">
-              <Button type="submit" disabled={form.formState.isSubmitting || currentNextDiaryNumber === null} className="min-w-[150px]">
+              <Button type="submit" disabled={form.formState.isSubmitting || isLoadingSettings} className="min-w-[150px]">
                 {form.formState.isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> সংরক্ষণ করা হচ্ছে...
@@ -450,4 +467,3 @@ export default function PatientEntryPage() {
     </div>
   );
 }
-

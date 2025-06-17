@@ -1,10 +1,45 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Allow all reads and writes for development and testing.
     // WARNING: Secure these rules before deploying to production!
+    // This rule allows anyone to read and write to any document in your database.
+    // It is highly insecure for a production environment.
     match /{document=**} {
       allow read, write: if true;
     }
+
+    // Example of more secure rules (commented out):
+    // // Match any document in the 'patients' collection
+    // match /patients/{patientId} {
+    //   // Allow a user to read and write their own patient data
+    //   allow read, write: if request.auth != null && request.auth.uid == patientId;
+    //   // Allow authenticated users to create new patient records (e.g., for themselves)
+    //   allow create: if request.auth != null;
+    // }
+    //
+    // // Match any document in the 'visits' collection
+    // match /visits/{visitId} {
+    //   // Allow authenticated users to create visits
+    //   allow create: if request.auth != null;
+    //   // Allow users to read/write visits associated with their patientId (if patientId is a field in visit doc)
+    //   // Or, if you have a more complex role system, you might check for doctor roles.
+    //   allow read, write: if request.auth != null; // This is still broad, refine based on your app's logic
+    // }
+    //
+    // // Secure other collections similarly
+    // match /prescriptions/{prescriptionId} {
+    //   allow read, write: if request.auth != null; // Example: only authenticated users
+    // }
+    //
+    // match /paymentSlips/{slipId} {
+    //   allow read, write: if request.auth != null; // Example: only authenticated users
+    // }
+    //
+    // match /settings/clinic {
+    //  allow read: if true; // Clinic settings might be publicly readable
+    //  allow write: if request.auth != null; // Or some admin role: request.auth.token.admin == true
+    // }
   }
 }

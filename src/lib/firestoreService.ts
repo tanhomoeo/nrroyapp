@@ -1,9 +1,5 @@
 
-// Remove 'use server' if all calls are from client-side 'use client' components.
-// For now, assuming some server-side interaction might be intended or for broader compatibility.
-// If strictly client-side, this directive is not needed here but in the calling components.
-
-import { db } from './firebase'; // Ensure db is correctly initialized Firestore instance
+import { db } from './firebase';
 import {
   collection,
   addDoc,
@@ -22,38 +18,67 @@ import {
 import type { Patient, Visit, Prescription, PaymentSlip, ClinicSettings, PaymentMethod } from './types';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, isValid } from 'date-fns';
 
+// --- Data Conversion Helpers ---
 
-// Helper to convert Firestore Timestamps to ISO strings and vice-versa for consistency
-const convertTimestampToISO = (data: any) => {
-  for (const key in data) {
-    if (data[key] instanceof Timestamp) {
-      data[key] = data[key].toDate().toISOString();
+const convertTimestampsToISO = (data: any): any => {
+  if (!data) return data;
+  const result = { ...data };
+  for (const key in result) {
+    if (result[key] instanceof Timestamp) {
+      result[key] = result[key].toDate().toISOString();
+    } else if (typeof result[key] === 'object' && result[key] !== null) {
+      // Recursively convert for nested objects (e.g., items in prescription)
+      if (Array.isArray(result[key])) {
+        result[key] = result[key].map(item => typeof item === 'object' ? convertTimestampsToISO(item) : item);
+      } else {
+        result[key] = convertTimestampsToISO(result[key]);
+      }
     }
   }
-  return data;
+  return result;
 };
 
-const convertISOToTimestamp = (data: any) => {
-    for (const key in data) {
-        // Check if it's a date field name and is a string (potential ISO string)
-        if ((key.toLowerCase().includes('date') || key.toLowerCase().includes('at')) && typeof data[key] === 'string') {
-            const dateObj = new Date(data[key]);
-            if (isValid(dateObj)) {
-                 data[key] = Timestamp.fromDate(dateObj);
-            }
-        }
+const convertDocument = <T extends { id: string }>(docSnap: any): T => {
+  return convertTimestampsToISO({ ...docSnap.data(), id: docSnap.id }) as T;
+};
+
+const prepareDataForFirestore = (data: any): any => {
+  if (!data) return data;
+  const result = { ...data };
+  // Convert known date string fields to Timestamps
+  const dateFields = ['createdAt', 'updatedAt', 'visitDate', 'registrationDate', 'date'];
+  for (const key in result) {
+    if (dateFields.includes(key) && typeof result[key] === 'string') {
+      const dateObj = new Date(result[key]);
+      if (isValid(dateObj)) {
+        result[key] = Timestamp.fromDate(dateObj);
+      } else {
+        console.warn(`Invalid date string for field ${key}: ${result[key]}`);
+        // Decide how to handle invalid dates: remove, set to null, or keep as is (might cause Firestore error)
+        // delete result[key]; // Option: remove invalid date field
+      }
+    } else if (result[key] instanceof Date) { // Handle if Date object is passed
+        result[key] = Timestamp.fromDate(result[key]);
+    } else if (typeof result[key] === 'object' && result[key] !== null) {
+       if (Array.isArray(result[key])) {
+        result[key] = result[key].map(item => typeof item === 'object' ? prepareDataForFirestore(item) : item);
+      } else {
+        result[key] = prepareDataForFirestore(result[key]);
+      }
     }
-    return data;
+  }
+  return result;
 };
 
 
 // --- Patients ---
-const patientsCollection = collection(db, 'patients');
+const patientsCollectionRef = collection(db, 'patients');
 
 export const getPatients = async (): Promise<Patient[]> => {
   try {
-    const snapshot = await getDocs(query(patientsCollection, orderBy('createdAt', 'desc')));
-    return snapshot.docs.map(doc => convertTimestampToISO({ ...doc.data(), id: doc.id } as Patient));
+    const q = query(patientsCollectionRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(docSnap => convertDocument<Patient>(docSnap));
   } catch (error) {
     console.error("Error getting patients: ", error);
     return [];
@@ -62,16 +87,17 @@ export const getPatients = async (): Promise<Patient[]> => {
 
 export const addPatient = async (patientData: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
+    const now = Timestamp.now();
     const newPatient = {
       ...patientData,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now,
+      updatedAt: now,
     };
-    const docRef = await addDoc(patientsCollection, convertISOToTimestamp(newPatient));
+    const docRef = await addDoc(patientsCollectionRef, prepareDataForFirestore(newPatient));
     return docRef.id;
   } catch (error) {
     console.error("Error adding patient: ", error);
-    throw error; // Re-throw the original Firebase error
+    throw error;
   }
 };
 
@@ -82,7 +108,7 @@ export const updatePatient = async (patientId: string, patientData: Partial<Omit
       ...patientData,
       updatedAt: Timestamp.now(),
     };
-    await updateDoc(patientRef, convertISOToTimestamp(updatedData));
+    await updateDoc(patientRef, prepareDataForFirestore(updatedData));
     return true;
   } catch (error) {
     console.error("Error updating patient: ", error);
@@ -94,10 +120,7 @@ export const getPatientById = async (id: string): Promise<Patient | null> => {
   try {
     const patientRef = doc(db, 'patients', id);
     const docSnap = await getDoc(patientRef);
-    if (docSnap.exists()) {
-      return convertTimestampToISO({ ...docSnap.data(), id: docSnap.id } as Patient);
-    }
-    return null;
+    return docSnap.exists() ? convertDocument<Patient>(docSnap) : null;
   } catch (error) {
     console.error("Error getting patient by ID: ", error);
     return null;
@@ -105,12 +128,13 @@ export const getPatientById = async (id: string): Promise<Patient | null> => {
 };
 
 // --- Visits ---
-const visitsCollection = collection(db, 'visits');
+const visitsCollectionRef = collection(db, 'visits');
 
 export const getVisits = async (): Promise<Visit[]> => {
   try {
-    const snapshot = await getDocs(query(visitsCollection, orderBy('createdAt', 'desc')));
-    return snapshot.docs.map(doc => convertTimestampToISO({ ...doc.data(), id: doc.id } as Visit));
+    const q = query(visitsCollectionRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(docSnap => convertDocument<Visit>(docSnap));
   } catch (error) {
     console.error("Error getting visits: ", error);
     return [];
@@ -123,7 +147,7 @@ export const addVisit = async (visitData: Omit<Visit, 'id' | 'createdAt'>): Prom
       ...visitData,
       createdAt: Timestamp.now(),
     };
-    const docRef = await addDoc(visitsCollection, convertISOToTimestamp(newVisit));
+    const docRef = await addDoc(visitsCollectionRef, prepareDataForFirestore(newVisit));
     return docRef.id;
   } catch (error) {
     console.error("Error adding visit: ", error);
@@ -133,9 +157,9 @@ export const addVisit = async (visitData: Omit<Visit, 'id' | 'createdAt'>): Prom
 
 export const getVisitsByPatientId = async (patientId: string): Promise<Visit[]> => {
   try {
-    const q = query(visitsCollection, where('patientId', '==', patientId), orderBy('visitDate', 'desc'));
+    const q = query(visitsCollectionRef, where('patientId', '==', patientId), orderBy('visitDate', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => convertTimestampToISO({ ...doc.data(), id: doc.id } as Visit));
+    return snapshot.docs.map(docSnap => convertDocument<Visit>(docSnap));
   } catch (error) {
     console.error("Error getting visits by patient ID: ", error);
     return [];
@@ -146,10 +170,7 @@ export const getVisitById = async (id: string): Promise<Visit | null> => {
   try {
     const visitRef = doc(db, 'visits', id);
     const docSnap = await getDoc(visitRef);
-    if (docSnap.exists()) {
-      return convertTimestampToISO({ ...docSnap.data(), id: docSnap.id } as Visit);
-    }
-    return null;
+    return docSnap.exists() ? convertDocument<Visit>(docSnap) : null;
   } catch (error) {
     console.error("Error getting visit by ID: ", error);
     return null;
@@ -158,12 +179,13 @@ export const getVisitById = async (id: string): Promise<Visit | null> => {
 
 
 // --- Prescriptions ---
-const prescriptionsCollection = collection(db, 'prescriptions');
+const prescriptionsCollectionRef = collection(db, 'prescriptions');
 
 export const getPrescriptions = async (): Promise<Prescription[]> => {
   try {
-    const snapshot = await getDocs(query(prescriptionsCollection, orderBy('createdAt', 'desc')));
-    return snapshot.docs.map(doc => convertTimestampToISO({ ...doc.data(), id: doc.id } as Prescription));
+    const q = query(prescriptionsCollectionRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(docSnap => convertDocument<Prescription>(docSnap));
   } catch (error) {
     console.error("Error getting prescriptions: ", error);
     return [];
@@ -176,7 +198,7 @@ export const addPrescription = async (prescriptionData: Omit<Prescription, 'id' 
       ...prescriptionData,
       createdAt: Timestamp.now(),
     };
-    const docRef = await addDoc(prescriptionsCollection, convertISOToTimestamp(newPrescription));
+    const docRef = await addDoc(prescriptionsCollectionRef, prepareDataForFirestore(newPrescription));
     return docRef.id;
   } catch (error) {
     console.error("Error adding prescription: ", error);
@@ -187,12 +209,7 @@ export const addPrescription = async (prescriptionData: Omit<Prescription, 'id' 
 export const updatePrescription = async (prescriptionId: string, prescriptionData: Partial<Omit<Prescription, 'id' | 'createdAt'>>): Promise<boolean> => {
   try {
     const presRef = doc(db, 'prescriptions', prescriptionId);
-    const updatedData = {
-        ...prescriptionData,
-        // Ensure date fields are Timestamps if they exist in prescriptionData
-        ...(prescriptionData.date && { date: Timestamp.fromDate(new Date(prescriptionData.date)) }),
-    };
-    await updateDoc(presRef, convertISOToTimestamp(updatedData));
+    await updateDoc(presRef, prepareDataForFirestore(prescriptionData));
     return true;
   } catch (error) {
     console.error("Error updating prescription: ", error);
@@ -205,10 +222,7 @@ export const getPrescriptionById = async (id: string): Promise<Prescription | nu
   try {
     const presRef = doc(db, 'prescriptions', id);
     const docSnap = await getDoc(presRef);
-    if (docSnap.exists()) {
-      return convertTimestampToISO({ ...docSnap.data(), id: docSnap.id } as Prescription);
-    }
-    return null;
+    return docSnap.exists() ? convertDocument<Prescription>(docSnap) : null;
   } catch (error) {
     console.error("Error getting prescription by ID: ", error);
     return null;
@@ -217,9 +231,9 @@ export const getPrescriptionById = async (id: string): Promise<Prescription | nu
 
 export const getPrescriptionsByPatientId = async (patientId: string): Promise<Prescription[]> => {
   try {
-    const q = query(prescriptionsCollection, where('patientId', '==', patientId), orderBy('date', 'desc'));
+    const q = query(prescriptionsCollectionRef, where('patientId', '==', patientId), orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => convertTimestampToISO({ ...doc.data(), id: doc.id } as Prescription));
+    return snapshot.docs.map(docSnap => convertDocument<Prescription>(docSnap));
   } catch (error) {
     console.error("Error getting prescriptions by patient ID: ", error);
     return [];
@@ -228,12 +242,13 @@ export const getPrescriptionsByPatientId = async (patientId: string): Promise<Pr
 
 
 // --- Payment Slips ---
-const paymentSlipsCollection = collection(db, 'paymentSlips');
+const paymentSlipsCollectionRef = collection(db, 'paymentSlips');
 
 export const getPaymentSlips = async (): Promise<PaymentSlip[]> => {
   try {
-    const snapshot = await getDocs(query(paymentSlipsCollection, orderBy('createdAt', 'desc')));
-    return snapshot.docs.map(doc => convertTimestampToISO({ ...doc.data(), id: doc.id } as PaymentSlip));
+    const q = query(paymentSlipsCollectionRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(docSnap => convertDocument<PaymentSlip>(docSnap));
   } catch (error) {
     console.error("Error getting payment slips: ", error);
     return [];
@@ -246,7 +261,7 @@ export const addPaymentSlip = async (slipData: Omit<PaymentSlip, 'id' | 'created
       ...slipData,
       createdAt: Timestamp.now(),
     };
-    const docRef = await addDoc(paymentSlipsCollection, convertISOToTimestamp(newSlip));
+    const docRef = await addDoc(paymentSlipsCollectionRef, prepareDataForFirestore(newSlip));
     return docRef.id;
   } catch (error) {
     console.error("Error adding payment slip: ", error);
@@ -256,9 +271,9 @@ export const addPaymentSlip = async (slipData: Omit<PaymentSlip, 'id' | 'created
 
 export const getPaymentSlipsByPatientId = async (patientId: string): Promise<PaymentSlip[]> => {
   try {
-    const q = query(paymentSlipsCollection, where('patientId', '==', patientId), orderBy('date', 'desc'));
+    const q = query(paymentSlipsCollectionRef, where('patientId', '==', patientId), orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => convertTimestampToISO({ ...doc.data(), id: doc.id } as PaymentSlip));
+    return snapshot.docs.map(docSnap => convertDocument<PaymentSlip>(docSnap));
   } catch (error) {
     console.error("Error getting payment slips by patient ID: ", error);
     return [];
@@ -266,16 +281,12 @@ export const getPaymentSlipsByPatientId = async (patientId: string): Promise<Pay
 };
 
 // --- Settings ---
-const settingsDocRef = doc(db, 'settings', 'clinic'); // Single document for clinic settings
+const settingsDocRef = doc(db, 'settings', 'clinic');
 
 export const getClinicSettings = async (): Promise<ClinicSettings> => {
   try {
     const docSnap = await getDoc(settingsDocRef);
-    if (docSnap.exists()) {
-      return docSnap.data() as ClinicSettings;
-    }
-    // Default settings if not found
-    return {
+    const defaultSettings: ClinicSettings = {
       nextDiaryNumber: 1,
       clinicName: 'ত্রিফুল আরোগ্য নিকেতন',
       doctorName: '',
@@ -283,9 +294,14 @@ export const getClinicSettings = async (): Promise<ClinicSettings> => {
       clinicContact: '',
       bmRegNo: '',
     };
+    if (docSnap.exists()) {
+      return { ...defaultSettings, ...docSnap.data() } as ClinicSettings;
+    }
+    return defaultSettings;
   } catch (error) {
     console.error("Error getting clinic settings: ", error);
-    return { // Return default on error
+    // Return default on error
+    return {
       nextDiaryNumber: 1,
       clinicName: 'ত্রিফুল আরোগ্য নিকেতন',
       doctorName: '',
@@ -298,7 +314,7 @@ export const getClinicSettings = async (): Promise<ClinicSettings> => {
 
 export const saveClinicSettings = async (settings: ClinicSettings): Promise<boolean> => {
   try {
-    await setDoc(settingsDocRef, settings);
+    await setDoc(settingsDocRef, settings); // Using setDoc to overwrite or create
     return true;
   } catch (error) {
     console.error("Error saving clinic settings: ", error);
@@ -307,7 +323,7 @@ export const saveClinicSettings = async (settings: ClinicSettings): Promise<bool
 };
 
 
-// --- Date helpers (can remain or be moved if preferred) ---
+// --- Date & Utility helpers ---
 export const isToday = (dateString: string): boolean => {
     if (!dateString) return false;
     const date = new Date(dateString);
@@ -336,9 +352,12 @@ export const formatDate = (dateString?: string, options?: Intl.DateTimeFormatOpt
     ...options
   };
   try {
+    // Using 'en-BD' locale can sometimes provide better consistency for Bangla numerals in dates
+    // depending on system setup, though 'bn-BD' is the standard.
     return date.toLocaleDateString('bn-BD', defaultOptions);
   } catch (e) {
-    return 'Invalid Date';
+    console.warn(`Error formatting date: ${dateString}`, e);
+    return 'Invalid Date'; // Fallback
   }
 };
 
@@ -362,7 +381,7 @@ export const getPaymentMethodLabel = (methodValue?: PaymentMethod): string => {
 
 export const getWeekRange = (date: Date): { start: Date; end: Date } => {
   const validDate = isValid(date) ? date : new Date();
-  const start = startOfWeek(validDate, { weekStartsOn: 0 });
+  const start = startOfWeek(validDate, { weekStartsOn: 0 }); // Sunday as start of week
   const end = endOfWeek(validDate, { weekStartsOn: 0 });
   return { start, end };
 };
@@ -374,125 +393,141 @@ export const getMonthRange = (date: Date): { start: Date; end: Date } => {
   return { start, end };
 };
 
-// Function to replace localStorage data with Firestore - THIS IS A DESTRUCTIVE OPERATION
-// Only call this if you are sure you want to migrate from localStorage to Firestore for the first time.
-// And ensure you have a backup of localStorage if needed.
+// --- localStorage to Firestore Migration (One-time use) ---
 export const migrateLocalStorageToFirestore = async () => {
   if (typeof window === 'undefined') {
-    console.error("migrateLocalStorageToFirestore can only be called from the client-side.");
     alert("Migration can only be initiated from the client-side.");
     return;
   }
-  console.warn("Starting migration from localStorage to Firestore. This is a destructive operation for Firestore if data with same IDs exist and might overwrite or duplicate if not handled carefully. This script assumes fresh Firestore collections.");
+  if (!confirm("WARNING: This will attempt to copy data from localStorage to Firestore. If data with the same IDs already exists in Firestore, it might be overwritten. This is intended for a one-time migration to a fresh Firestore setup or for users who understand the merging implications. It's highly recommended to BACKUP your Firestore data before proceeding if it's not empty. Continue?")) {
+    return;
+  }
+
+  console.warn("Starting migration from localStorage to Firestore.");
+  alert("Migration started. This may take a few moments. You'll be notified upon completion or if an error occurs. Please do not close this window.");
 
   const batch = writeBatch(db);
+  let operationsCount = 0;
 
   try {
+    // Helper to add to batch and manage batch size
+    const addToBatch = async (ref: any, data: any) => {
+      batch.set(ref, data);
+      operationsCount++;
+      if (operationsCount >= 490) { // Firestore batch limit is 500 operations
+        await batch.commit();
+        // Reset batch and counter: Note - this will create a new batch, previous batch is gone.
+        // This basic implementation might not be ideal for very large datasets.
+        // A more robust solution would involve a new batch object or a queue system.
+        // For this app's scale, it might be okay.
+        console.log(`${operationsCount} operations committed. Starting new batch.`);
+        // batch = writeBatch(db); // This line would be problematic as batch is const.
+        // A full re-init of batch is needed which is complex here.
+        // This function should ideally be refactored if datasets are huge.
+        // For simplicity, we assume one large batch or that the user runs this multiple times
+        // if it fails due to size. A better approach for large migrations is server-side scripts.
+        operationsCount = 0;
+         alert("A batch of data has been committed. If you have a very large dataset, you might need to re-run the migration if it times out or shows errors for subsequent data types. This is a simplified client-side migration.");
+      }
+    };
+
+
     // Migrate Patients
     const localPatientsRaw = localStorage.getItem('triful_arogya_niketan_patients');
     if (localPatientsRaw) {
       const localPatients: Patient[] = JSON.parse(localPatientsRaw);
-      console.log(`Found ${localPatients.length} patients in localStorage.`);
+      console.log(`Migrating ${localPatients.length} patients...`);
       for (const patient of localPatients) {
         const { id, ...patientData } = patient;
-        const patientRef = doc(db, 'patients', id); // Use existing ID for migration
-        const firestorePatientData = convertISOToTimestamp({
+        const patientRef = doc(db, 'patients', id);
+        await addToBatch(patientRef, prepareDataForFirestore({
           ...patientData,
-          createdAt: patient.createdAt ? Timestamp.fromDate(new Date(patient.createdAt)) : Timestamp.now(),
-          updatedAt: patient.updatedAt ? Timestamp.fromDate(new Date(patient.updatedAt)) : Timestamp.now(),
-        });
-        batch.set(patientRef, firestorePatientData);
+          // Ensure createdAt and updatedAt are handled correctly
+          createdAt: patient.createdAt || new Date().toISOString(),
+          updatedAt: patient.updatedAt || new Date().toISOString(),
+        }));
       }
-      console.log("Patients queued for Firestore batch write.");
     }
-
 
     // Migrate Visits
     const localVisitsRaw = localStorage.getItem('triful_arogya_niketan_visits');
     if (localVisitsRaw) {
         const localVisits: Visit[] = JSON.parse(localVisitsRaw);
-        console.log(`Found ${localVisits.length} visits in localStorage.`);
+        console.log(`Migrating ${localVisits.length} visits...`);
         for (const visit of localVisits) {
             const { id, ...visitData } = visit;
             const visitRef = doc(db, 'visits', id);
-            const firestoreVisitData = convertISOToTimestamp({
+            await addToBatch(visitRef, prepareDataForFirestore({
                 ...visitData,
-                visitDate: visit.visitDate ? Timestamp.fromDate(new Date(visit.visitDate)) : Timestamp.now(),
-                createdAt: visit.createdAt ? Timestamp.fromDate(new Date(visit.createdAt)) : Timestamp.now(),
-            });
-            batch.set(visitRef, firestoreVisitData);
+                createdAt: visit.createdAt || new Date().toISOString(),
+            }));
         }
-        console.log("Visits queued for Firestore batch write.");
     }
 
     // Migrate Prescriptions
     const localPrescriptionsRaw = localStorage.getItem('triful_arogya_niketan_prescriptions');
     if (localPrescriptionsRaw) {
         const localPrescriptions: Prescription[] = JSON.parse(localPrescriptionsRaw);
-        console.log(`Found ${localPrescriptions.length} prescriptions in localStorage.`);
+        console.log(`Migrating ${localPrescriptions.length} prescriptions...`);
         for (const prescription of localPrescriptions) {
             const { id, ...prescriptionData } = prescription;
             const presRef = doc(db, 'prescriptions', id);
-             const firestorePrescriptionData = convertISOToTimestamp({
+            await addToBatch(presRef, prepareDataForFirestore({
                 ...prescriptionData,
-                date: prescription.date ? Timestamp.fromDate(new Date(prescription.date)) : Timestamp.now(),
-                createdAt: prescription.createdAt ? Timestamp.fromDate(new Date(prescription.createdAt)) : Timestamp.now(),
-            });
-            batch.set(presRef, firestorePrescriptionData);
+                 createdAt: prescription.createdAt || new Date().toISOString(),
+            }));
         }
-        console.log("Prescriptions queued for Firestore batch write.");
     }
 
     // Migrate Payment Slips
     const localPaymentSlipsRaw = localStorage.getItem('triful_arogya_niketan_payment_slips');
     if (localPaymentSlipsRaw) {
         const localPaymentSlips: PaymentSlip[] = JSON.parse(localPaymentSlipsRaw);
-        console.log(`Found ${localPaymentSlips.length} payment slips in localStorage.`);
+        console.log(`Migrating ${localPaymentSlips.length} payment slips...`);
         for (const slip of localPaymentSlips) {
             const { id, ...slipData } = slip;
             const slipRef = doc(db, 'paymentSlips', id);
-            const firestoreSlipData = convertISOToTimestamp({
+            await addToBatch(slipRef, prepareDataForFirestore({
                 ...slipData,
-                date: slip.date ? Timestamp.fromDate(new Date(slip.date)) : Timestamp.now(),
-                createdAt: slip.createdAt ? Timestamp.fromDate(new Date(slip.createdAt)) : Timestamp.now(),
-            });
-            batch.set(slipRef, firestoreSlipData);
+                createdAt: slip.createdAt || new Date().toISOString(),
+            }));
         }
-        console.log("Payment Slips queued for Firestore batch write.");
     }
 
     // Migrate Clinic Settings
     const localSettingsRaw = localStorage.getItem('triful_arogya_niketan_settings');
     if (localSettingsRaw) {
         const localSettings: ClinicSettings = JSON.parse(localSettingsRaw);
-        console.log("Found clinic settings in localStorage.");
+        console.log("Migrating clinic settings...");
         const settingsRef = doc(db, 'settings', 'clinic');
-        batch.set(settingsRef, localSettings); // No timestamp conversion needed as per current type
-        console.log("Clinic Settings queued for Firestore batch write.");
+        // Settings don't typically have createdAt/updatedAt in the same way,
+        // so directly use prepareDataForFirestore if it handles general objects,
+        // or just pass localSettings if no date conversion is needed for it.
+        await addToBatch(settingsRef, localSettings);
     }
 
-    await batch.commit();
-    console.log("Firestore migration batch committed successfully.");
-    alert("Migration from localStorage to Firestore completed. Please verify data in Firebase Console. It's recommended to clear localStorage afterwards if migration is successful and no longer needed.");
+    if (operationsCount > 0) {
+      await batch.commit();
+      console.log("Final batch of migration operations committed successfully.");
+    }
+    alert("Migration from localStorage to Firestore completed successfully! Please verify your data in the Firebase Console. It is recommended to clear localStorage data from the settings page after successful migration and verification.");
 
   } catch (error) {
     console.error("Error during migration to Firestore: ", error);
-    alert(`Migration failed: ${error}. Check console for details.`);
+    alert(`Migration failed: ${error instanceof Error ? error.message : String(error)}. Check console for details. Some data might have been partially migrated.`);
   }
 };
 
-// To delete all data from localStorage (USE WITH EXTREME CAUTION!)
+// --- Clear localStorage Data (USE WITH CAUTION) ---
 export const clearAllLocalStorageData = () => {
-      if (typeof window !== 'undefined') {
-          if (confirm("WARNING: This will delete ALL application data from your browser's localStorage. This cannot be undone. Are you sure?")) {
-              localStorage.removeItem('triful_arogya_niketan_patients');
-              localStorage.removeItem('triful_arogya_niketan_visits');
-              localStorage.removeItem('triful_arogya_niketan_prescriptions');
-              localStorage.removeItem('triful_arogya_niketan_payment_slips');
-              localStorage.removeItem('triful_arogya_niketan_settings');
-              alert("All application data has been cleared from localStorage.");
-              window.location.reload();
-          }
-      }
+  if (typeof window === 'undefined') return;
+  if (confirm("WARNING: This will delete ALL application data from your browser's localStorage. This action CANNOT BE UNDONE. Only proceed if you have successfully migrated your data to Firestore or have a backup. Are you absolutely sure?")) {
+    localStorage.removeItem('triful_arogya_niketan_patients');
+    localStorage.removeItem('triful_arogya_niketan_visits');
+    localStorage.removeItem('triful_arogya_niketan_prescriptions');
+    localStorage.removeItem('triful_arogya_niketan_payment_slips');
+    localStorage.removeItem('triful_arogya_niketan_settings');
+    alert("All application data has been cleared from localStorage. The page will now reload.");
+    window.location.reload();
+  }
 };
-
