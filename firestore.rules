@@ -3,42 +3,26 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: This rule allows open access to your entire database.
-    // This is suitable for initial development and testing ONLY.
-    // Before deploying to production, you MUST secure your data.
-    // See: https://firebase.google.com/docs/firestore/security/get-started
+    // WARNING: This rule allows anyone to read and write to your entire database.
+    // This is useful for development but IS NOT SECURE for production.
+    // Before deploying your application to production, you MUST update these
+    // rules to properly restrict access.
+    //
+    // Example for allowing only authenticated users to read/write their own data:
+    // match /users/{userId}/{documents=**} {
+    //   allow read, write: if request.auth != null && request.auth.uid == userId;
+    // }
+    // match /patients/{patientId} {
+    //   allow read, write: if request.auth != null; // Example: allow any authenticated user
+    // }
+    // match /visits/{visitId} {
+    //   allow read, write: if request.auth != null;
+    // }
+    // // Add similar rules for other collections like 'prescriptions', 'paymentSlips', 'settings'
+    //
+    // For now, using open rules for development:
     match /{document=**} {
       allow read, write: if true;
     }
-
-    // --- PRODUCTION RULE EXAMPLES (Commented out by default) ---
-    // You will need to uncomment and adapt these based on your app's needs.
-
-    // Example: Allow only authenticated users to read and write their own data
-    /*
-    match /users/{userId}/{documents=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    */
-
-    // Example: Allow authenticated users to read all 'patients' but only create/update/delete their own
-    /*
-    match /patients/{patientId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null; // Add more specific rules, e.g., request.resource.data.createdBy == request.auth.uid
-      allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid; // Assuming a 'createdBy' field
-    }
-    */
-
-    // Example: Allow only specific admin UIDs to manage 'settings'
-    /*
-    function isAdmin() {
-      return request.auth.uid in ['ADMIN_UID_1', 'ADMIN_UID_2'];
-    }
-    match /settings/{settingId} {
-      allow read: if request.auth != null; // Or make it public if settings are public
-      allow write: if isAdmin();
-    }
-    */
   }
 }
