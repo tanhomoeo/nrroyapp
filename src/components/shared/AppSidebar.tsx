@@ -42,13 +42,13 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 const mainNavItems = [
-  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: Home, theme: 'theme1' },
-  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: UserPlus, theme: 'theme2' },
-  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: Search, theme: 'theme3' },
-  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks, theme: 'theme4' },
-  { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: MessageSquareText },
-  { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: FileText },
-  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText },
+  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: Home }, // Will use new default solid style
+  { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: UserPlus, theme: 'theme1' },
+  { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: Search, theme: 'theme2' },
+  { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks, theme: 'theme3' },
+  { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: MessageSquareText, theme: 'theme4' },
+  { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: FileText, theme: 'theme5' },
+  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText, theme: 'theme6' },
 ];
 
 const managementNavItems = [
@@ -284,3 +284,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
