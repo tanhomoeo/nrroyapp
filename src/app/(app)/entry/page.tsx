@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -19,8 +20,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { format, isValid } from 'date-fns';
+import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // Added
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 
 const patientFormSchema = z.object({
   registrationDate: z.date({ required_error: "নিবন্ধনের তারিখ আবশ্যক।" }),
@@ -39,17 +41,24 @@ const patientFormSchema = z.object({
 
 type PatientFormValues = z.infer<typeof patientFormSchema>;
 
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
+
 export default function PatientEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [currentNextDiaryNumber, setCurrentNextDiaryNumber] = useState<number | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  // State for global voice input management
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
-  const activeInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
-
 
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(patientFormSchema),
@@ -92,29 +101,12 @@ export default function PatientEntryPage() {
     fetchSettings();
   }, [form, toast]);
 
-  const handleVoiceInput = (fieldName: keyof PatientFormValues, transcript: string) => {
-    const currentVal = form.getValues(fieldName) || "";
-    form.setValue(fieldName, currentVal + transcript, { shouldValidate: true });
-  };
-  
-  const handleFinalVoiceInput = (fieldName: keyof PatientFormValues, transcript: string) => {
-    const currentVal = form.getValues(fieldName) || "";
-    // Replace interim results with the final one, or append if it makes more sense.
-    // For simplicity, appending here. You might want to replace the last interim part.
-    form.setValue(fieldName, currentVal.substring(0, currentVal.lastIndexOf(' ') + 1) + transcript + " ", { shouldValidate: true });
-  };
-
-
   const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
       const parsedDiaryNumber = data.diaryNumberInput ? parseInt(data.diaryNumberInput, 10) : undefined;
 
       if (data.diaryNumberInput && (isNaN(parsedDiaryNumber as number) || (parsedDiaryNumber as number) < 0)) {
-        toast({
-          title: 'অবৈধ ডায়েরি নম্বর',
-          description: 'ডায়েরি নম্বর একটি সংখ্যা হতে হবে।',
-          variant: 'destructive',
-        });
+        form.setError("diaryNumberInput", { type: "manual", message: "ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।" });
         return;
       }
 
@@ -134,14 +126,17 @@ export default function PatientEntryPage() {
       };
 
       const patientId = await addPatient(newPatientData);
-      // The error throwing is now inside addPatient, so no need for `if (!patientId)` check here
 
+      let nextDiaryNumberToSet = currentNextDiaryNumber;
       if (parsedDiaryNumber !== undefined && currentNextDiaryNumber !== null && parsedDiaryNumber >= currentNextDiaryNumber) {
-         const newNextDiaryNumber = parsedDiaryNumber + 1;
+         nextDiaryNumberToSet = parsedDiaryNumber + 1;
+      }
+
+      if (nextDiaryNumberToSet !== currentNextDiaryNumber && nextDiaryNumberToSet !== null) {
         try {
           const currentSettings = await getClinicSettings();
-          await saveClinicSettings({ ...currentSettings, nextDiaryNumber: newNextDiaryNumber });
-          setCurrentNextDiaryNumber(newNextDiaryNumber); // Update local state
+          await saveClinicSettings({ ...currentSettings, nextDiaryNumber: nextDiaryNumberToSet });
+          setCurrentNextDiaryNumber(nextDiaryNumberToSet);
         } catch (settingsError) {
           console.error("Failed to update next diary number in settings:", settingsError);
           toast({
@@ -152,7 +147,6 @@ export default function PatientEntryPage() {
         }
       }
 
-
       toast({
         title: 'রোগী নিবন্ধিত',
         description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${parsedDiaryNumber?.toLocaleString('bn-BD') || 'N/A'}`,
@@ -160,9 +154,7 @@ export default function PatientEntryPage() {
 
       form.reset({
         registrationDate: new Date(),
-        diaryNumberInput: (currentNextDiaryNumber !== null && parsedDiaryNumber !== undefined && parsedDiaryNumber >= (currentNextDiaryNumber -1) ) // if it was current, next one is +1
-                            ? (parsedDiaryNumber + 1).toString() 
-                            : currentNextDiaryNumber?.toString() || '',
+        diaryNumberInput: nextDiaryNumberToSet?.toString() || '',
         name: '',
         age: '',
         gender: '',
@@ -174,17 +166,13 @@ export default function PatientEntryPage() {
         thanaUpazila: '',
         villageUnion: '',
       });
-      router.push(`${ROUTES.PATIENT_SEARCH}?phone=${newPatientData.phone}`);
+      router.push(`${ROUTES.PATIENT_SEARCH}?q=${newPatientData.phone}`);
 
     } catch (error: any) {
       console.error('Failed to register patient:', error);
-      let errorMessage = 'রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে।';
-      if (error.message) {
-        errorMessage = `নিবন্ধন ব্যর্থ: ${error.message}`;
-      }
       toast({
         title: 'নিবন্ধন ব্যর্থ হয়েছে',
-        description: errorMessage,
+        description: `রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে: ${error.message || 'Unknown error'}`,
         variant: 'destructive',
       });
     }
@@ -280,12 +268,11 @@ export default function PatientEntryPage() {
                     <FormLabel>পুরো নাম <span className="text-destructive">*</span></FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="পুরো নাম লিখুন" {...field} id="patientNameEntry" className={inputFieldClass} 
-                         onFocus={(e) => activeInputRef.current = e.target} />
+                        <Input placeholder="পুরো নাম লিখুন" {...field} id="patientNameEntry" className={inputFieldClass} />
                       </FormControl>
                       <MicrophoneButton
-                        onTranscript={(t) => form.setValue('name', (form.getValues('name') || "") + t)}
-                        onFinalTranscript={(t) => handleFinalVoiceInput('name', t)}
+                        onTranscript={(t) => field.onChange(field.value + t)}
+                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                         targetFieldDescription="রোগীর নাম"
                         fieldKey="patientNameEntry"
                         isListeningGlobal={isListeningGlobal}
@@ -423,12 +410,11 @@ export default function PatientEntryPage() {
                     <FormLabel>অভিভাবকের নাম (ঐচ্ছিক)</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="অভিভাবকের নাম লিখুন" {...field} id="guardianNameEntry" className={inputFieldClass}
-                         onFocus={(e) => activeInputRef.current = e.target} />
+                        <Input placeholder="অভিভাবকের নাম লিখুন" {...field} id="guardianNameEntry" className={inputFieldClass} />
                       </FormControl>
                       <MicrophoneButton
-                        onTranscript={(t) => form.setValue('guardianName', (form.getValues('guardianName') || "") + t)}
-                        onFinalTranscript={(t) => handleFinalVoiceInput('guardianName', t)}
+                        onTranscript={(t) => field.onChange(field.value + t)}
+                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                         targetFieldDescription="অভিভাবকের নাম"
                         fieldKey="guardianNameEntry"
                         isListeningGlobal={isListeningGlobal}
@@ -450,12 +436,11 @@ export default function PatientEntryPage() {
                     <FormLabel>গ্রাম / ইউনিয়ন (ঐচ্ছিক)</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="গ্রাম বা ইউনিয়ন লিখুন" {...field} id="villageUnionEntry" className={inputFieldClass}
-                         onFocus={(e) => activeInputRef.current = e.target} />
+                        <Input placeholder="গ্রাম বা ইউনিয়ন লিখুন" {...field} id="villageUnionEntry" className={inputFieldClass} />
                       </FormControl>
                       <MicrophoneButton
-                        onTranscript={(t) => form.setValue('villageUnion', (form.getValues('villageUnion') || "") + t)}
-                        onFinalTranscript={(t) => handleFinalVoiceInput('villageUnion', t)}
+                        onTranscript={(t) => field.onChange(field.value + t)}
+                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                         targetFieldDescription="গ্রাম/ইউনিয়ন"
                         fieldKey="villageUnionEntry"
                         isListeningGlobal={isListeningGlobal}
@@ -476,12 +461,11 @@ export default function PatientEntryPage() {
                     <FormLabel>থানা / উপজেলা (ঐচ্ছিক)</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="থানা বা উপজেলা লিখুন" {...field} id="thanaUpazilaEntry" className={inputFieldClass}
-                         onFocus={(e) => activeInputRef.current = e.target} />
+                        <Input placeholder="থানা বা উপজেলা লিখুন" {...field} id="thanaUpazilaEntry" className={inputFieldClass} />
                       </FormControl>
                       <MicrophoneButton
-                        onTranscript={(t) => form.setValue('thanaUpazila', (form.getValues('thanaUpazila') || "") + t)}
-                        onFinalTranscript={(t) => handleFinalVoiceInput('thanaUpazila', t)}
+                        onTranscript={(t) => field.onChange(field.value + t)}
+                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                         targetFieldDescription="থানা/উপজেলা"
                         fieldKey="thanaUpazilaEntry"
                         isListeningGlobal={isListeningGlobal}
@@ -502,12 +486,11 @@ export default function PatientEntryPage() {
                     <FormLabel>জেলা (ঐচ্ছিক)</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="জেলা লিখুন" {...field} id="districtEntry" className={inputFieldClass}
-                         onFocus={(e) => activeInputRef.current = e.target} />
+                        <Input placeholder="জেলা লিখুন" {...field} id="districtEntry" className={inputFieldClass} />
                       </FormControl>
                       <MicrophoneButton
-                        onTranscript={(t) => form.setValue('district', (form.getValues('district') || "") + t)}
-                        onFinalTranscript={(t) => handleFinalVoiceInput('district', t)}
+                        onTranscript={(t) => field.onChange(field.value + t)}
+                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                         targetFieldDescription="জেলা"
                         fieldKey="districtEntry"
                         isListeningGlobal={isListeningGlobal}

@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Patient, Visit, Prescription, EnrichedVisit, PaymentMethod, PaymentSlip } from '@/lib/types';
-import { getVisitsByPatientId, addVisit, formatDate, updatePatient, getPrescriptionsByPatientId, addPaymentSlip } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getVisitsByPatientId, addVisit, formatDate, updatePatient, getPrescriptionsByPatientId, addPaymentSlip } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import { ROUTES } from '@/lib/constants';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; 
 import { cn } from '@/lib/utils';
 import { isValid, format as formatDateFns } from 'date-fns';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 
 interface PatientDetailsModalProps {
   patient: Patient;
@@ -81,6 +82,15 @@ const visitAndPaymentFormSchema = z.object({
 });
 type VisitAndPaymentFormValues = z.infer<typeof visitAndPaymentFormSchema>;
 
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
 
 export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'info', onPatientUpdate }: PatientDetailsModalProps) {
   const [visits, setVisits] = useState<EnrichedVisit[]>([]);
@@ -89,6 +99,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
   const [currentTab, setCurrentTab] = useState(defaultTab);
   const { toast } = useToast();
   const router = useRouter();
+
+  const [isListeningGlobal, setIsListeningGlobal] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
 
   const patientInfoForm = useForm<PatientInfoValues>({
     resolver: zodResolver(patientInfoSchema),
@@ -198,7 +211,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         guardianRelation: data.guardianRelation,
         guardianName: data.guardianName,
         thanaUpazila: data.thanaUpazila,
-        registrationDate: new Date(data.registrationDate).toISOString(), // Store as ISO string
+        registrationDate: new Date(data.registrationDate).toISOString(),
       };
       
       const success = await updatePatient(patient.id, updatedPatientData);
@@ -262,10 +275,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       receivedBy: '',
     });
     
-    await fetchVisitsAndPrescriptions(patient.id); // Refresh visit history
-    window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components
-    // onClose(); // Keep modal open or close based on UX preference, currently keeps open
-    setCurrentTab('history'); // Switch to history tab after adding
+    await fetchVisitsAndPrescriptions(patient.id); 
+    window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
+    setCurrentTab('history'); 
     router.push(`${ROUTES.PRESCRIPTION}/${patient.id}?visitId=${visitId}`);
   };
 
@@ -324,7 +336,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel htmlFor="registrationDateModal">নিবন্ধনের তারিখ</FormLabel>
-                        <div className={inputWrapperClass}>
+                        <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
                           <FormControl>
                             <Input id="registrationDateModal" type="date" {...field} value={field.value ? formatDateFns(new Date(field.value), 'yyyy-MM-dd') : ''} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                           </FormControl>
@@ -339,7 +351,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="diaryNumberModal">ডায়েরি নম্বর</FormLabel>
-                          <div className={inputWrapperClass}>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
                             <FormControl>
                               <Input id="diaryNumberModal" type="number" {...field} 
                                 onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
@@ -359,10 +371,20 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="nameModal">নাম</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                            <FormControl className="flex-1">
                               <Input id="nameModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
+                             {isEditingInfo && <MicrophoneButton
+                                onTranscript={(t) => field.onChange(field.value + t)}
+                                onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                                targetFieldDescription="রোগীর নাম (মোডাল)"
+                                fieldKey="patientNameModal"
+                                isListeningGlobal={isListeningGlobal}
+                                setIsListeningGlobal={setIsListeningGlobal}
+                                currentListeningField={currentListeningField}
+                                setCurrentListeningField={setCurrentListeningField}
+                              />}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -374,7 +396,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="ageModal">বয়স</FormLabel>
-                          <div className={inputWrapperClass}>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
                             <FormControl>
                               <Input id="ageModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
@@ -391,7 +413,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <FormLabel>লিঙ্গ</FormLabel>
                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={!isEditingInfo}>
                             <FormControl>
-                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass, !isEditingInfo && "cursor-default")}>
                                 <SelectValue placeholder="লিঙ্গ নির্বাচন করুন" />
                               </SelectTrigger>
                             </FormControl>
@@ -413,7 +435,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <FormLabel>রোগীর পেশা</FormLabel>
                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={!isEditingInfo}>
                             <FormControl>
-                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass, !isEditingInfo && "cursor-default")}>
                                 <SelectValue placeholder="পেশা নির্বাচন করুন" />
                               </SelectTrigger>
                             </FormControl>
@@ -439,7 +461,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="phoneModal">ফোন</FormLabel>
-                          <div className={inputWrapperClass}>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
                             <FormControl>
                               <Input id="phoneModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
@@ -454,10 +476,20 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="guardianNameModal">অভিভাবকের নাম</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                            <FormControl className="flex-1">
                               <Input id="guardianNameModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
+                             {isEditingInfo && <MicrophoneButton
+                                onTranscript={(t) => field.onChange(field.value + t)}
+                                onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                                targetFieldDescription="অভিভাবকের নাম (মোডাল)"
+                                fieldKey="guardianNameModal"
+                                isListeningGlobal={isListeningGlobal}
+                                setIsListeningGlobal={setIsListeningGlobal}
+                                currentListeningField={currentListeningField}
+                                setCurrentListeningField={setCurrentListeningField}
+                              />}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -471,7 +503,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <FormLabel>অভিভাবকের সম্পর্ক</FormLabel>
                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={!isEditingInfo}>
                             <FormControl>
-                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                              <SelectTrigger className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass, !isEditingInfo && "cursor-default")}>
                                 <SelectValue placeholder="সম্পর্ক নির্বাচন করুন" />
                               </SelectTrigger>
                             </FormControl>
@@ -490,10 +522,20 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="villageUnionModal">গ্রাম/ইউনিয়ন</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                            <FormControl className="flex-1">
                               <Input id="villageUnionModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
+                            {isEditingInfo && <MicrophoneButton
+                                onTranscript={(t) => field.onChange(field.value + t)}
+                                onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                                targetFieldDescription="গ্রাম/ইউনিয়ন (মোডাল)"
+                                fieldKey="villageUnionModal"
+                                isListeningGlobal={isListeningGlobal}
+                                setIsListeningGlobal={setIsListeningGlobal}
+                                currentListeningField={currentListeningField}
+                                setCurrentListeningField={setCurrentListeningField}
+                              />}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -505,10 +547,20 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="thanaUpazilaModal">থানা/উপজেলা</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                            <FormControl className="flex-1">
                               <Input id="thanaUpazilaModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
+                            {isEditingInfo && <MicrophoneButton
+                                onTranscript={(t) => field.onChange(field.value + t)}
+                                onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                                targetFieldDescription="থানা/উপজেলা (মোডাল)"
+                                fieldKey="thanaUpazilaModal"
+                                isListeningGlobal={isListeningGlobal}
+                                setIsListeningGlobal={setIsListeningGlobal}
+                                currentListeningField={currentListeningField}
+                                setCurrentListeningField={setCurrentListeningField}
+                              />}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -520,10 +572,20 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="districtModal">জেলা</FormLabel>
-                          <div className={inputWrapperClass}>
-                            <FormControl>
+                          <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
+                            <FormControl className="flex-1">
                               <Input id="districtModal" {...field} readOnly={!isEditingInfo} className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} />
                             </FormControl>
+                            {isEditingInfo && <MicrophoneButton
+                                onTranscript={(t) => field.onChange(field.value + t)}
+                                onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                                targetFieldDescription="জেলা (মোডাল)"
+                                fieldKey="districtModal"
+                                isListeningGlobal={isListeningGlobal}
+                                setIsListeningGlobal={setIsListeningGlobal}
+                                currentListeningField={currentListeningField}
+                                setCurrentListeningField={setCurrentListeningField}
+                              />}
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -626,9 +688,20 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                         <FormItem className="md:col-span-2">
                           <FormLabel htmlFor="symptomsModalPayment">উপসর্গ / প্রধান অভিযোগ / উদ্দেশ্য</FormLabel>
                           <div className={textareaWrapperClass}>
-                            <FormControl>
+                            <FormControl className="flex-1">
                               <Textarea id="symptomsModalPayment" placeholder="রোগীর প্রধান উপসর্গগুলি বা ভিজিটের উদ্দেশ্য বর্ণনা করুন" {...field} rows={3} className={textareaFieldClass}/>
                             </FormControl>
+                            <MicrophoneButton
+                                onTranscript={(t) => field.onChange(field.value + t)}
+                                onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                                targetFieldDescription="উপসর্গ/উদ্দেশ্য"
+                                fieldKey="symptomsModalPayment"
+                                isListeningGlobal={isListeningGlobal}
+                                setIsListeningGlobal={setIsListeningGlobal}
+                                currentListeningField={currentListeningField}
+                                setCurrentListeningField={setCurrentListeningField}
+                                className="self-start mt-1"
+                              />
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -706,11 +779,21 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       name="receivedBy"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel htmlFor="receivedByModal">গ্রহণকারী (ঐচ্ছিক)</FormLabel>
+                          <FormLabel htmlFor="receivedByModalPayment">গ্রহণকারী (ঐচ্ছিক)</FormLabel>
                           <div className={inputWrapperClass}>
-                            <FormControl>
-                              <Input id="receivedByModal" placeholder="গ্রহণকারীর নাম" {...field} className={inputFieldClass}/>
+                            <FormControl className="flex-1">
+                              <Input id="receivedByModalPayment" placeholder="গ্রহণকারীর নাম" {...field} className={inputFieldClass}/>
                             </FormControl>
+                            <MicrophoneButton
+                                onTranscript={(t) => field.onChange(field.value + t)}
+                                onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                                targetFieldDescription="গ্রহণকারী"
+                                fieldKey="receivedByModalPayment"
+                                isListeningGlobal={isListeningGlobal}
+                                setIsListeningGlobal={setIsListeningGlobal}
+                                currentListeningField={currentListeningField}
+                                setCurrentListeningField={setCurrentListeningField}
+                              />
                           </div>
                           <FormMessage />
                         </FormItem>

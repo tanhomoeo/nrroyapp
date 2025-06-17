@@ -1,11 +1,11 @@
 
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getPatients } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getPatients } from '@/lib/firestoreService';
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { 
@@ -25,6 +25,17 @@ import { PatientDetailsModal } from '@/components/patient/PatientDetailsModal';
 import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
 
 export default function SearchPatientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +48,9 @@ export default function SearchPatientsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const [isListeningGlobal, setIsListeningGlobal] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -99,7 +113,6 @@ export default function SearchPatientsPage() {
     setAllPatients(prevAllPatients => 
       prevAllPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p)
     );
-    // Optionally re-filter if search term is active
     if (searchTerm.trim()) {
         const lowerSearchTerm = searchTerm.toLowerCase();
         const results = allPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p).filter(patient => {
@@ -141,6 +154,17 @@ export default function SearchPatientsPage() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-2 text-base placeholder-muted-foreground"
           aria-label="Search term"
+          id="patientSearchPageInput"
+        />
+        <MicrophoneButton
+          onTranscript={(t) => setSearchTerm(prev => prev + t)}
+          onFinalTranscript={(t) => setSearchTerm(prev => appendFinalTranscript(prev, t))}
+          targetFieldDescription="রোগী অনুসন্ধান"
+          fieldKey="patientSearchPageInput"
+          isListeningGlobal={isListeningGlobal}
+          setIsListeningGlobal={setIsListeningGlobal}
+          currentListeningField={currentListeningField}
+          setCurrentListeningField={setCurrentListeningField}
         />
         {searchTerm && (
           <Button variant="ghost" size="icon" className="h-full w-10 text-muted-foreground hover:text-foreground" onClick={() => setSearchTerm('')}>

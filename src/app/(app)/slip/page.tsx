@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,14 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { getPaymentSlips, getPatients, formatDate, formatCurrency, PAYMENT_METHOD_LABELS, getPaymentMethodLabel } from '@/lib/firestoreService';
 import type { PaymentSlip, Patient, PaymentMethod } from '@/lib/types';
-// import { PaymentSlipModal } from '@/components/slip/PaymentSlipModal'; // Static import removed
 import { Eye, Loader2, SearchIcon as SearchIconLucide, Filter } from 'lucide-react';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 
 const PaymentSlipModal = dynamic(() =>
   import('@/components/slip/PaymentSlipModal').then((mod) => mod.PaymentSlipModal),
   {
-    ssr: false, // Modal is likely client-side only
-    loading: () => <p>Loading modal...</p>, // Optional loading state
+    ssr: false, 
+    loading: () => <div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">স্লিপ মডাল লোড হচ্ছে...</span></div>,
   }
 );
 
@@ -31,6 +31,15 @@ const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string 
     .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, ''>, label }))
 ];
 
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
 
 export default function SlipSearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,6 +49,10 @@ export default function SlipSearchPage() {
   const [selectedSlip, setSelectedSlip] = useState<EnrichedSlip | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [isListeningGlobal, setIsListeningGlobal] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,7 +116,18 @@ export default function SlipSearchPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-2 text-base placeholder-muted-foreground"
               aria-label="Search payment slips"
+              id="slipSearchPageInput"
           />
+           <MicrophoneButton
+              onTranscript={(t) => setSearchTerm(prev => prev + t)}
+              onFinalTranscript={(t) => setSearchTerm(prev => appendFinalTranscript(prev, t))}
+              targetFieldDescription="স্লিপ অনুসন্ধান"
+              fieldKey="slipSearchPageInput"
+              isListeningGlobal={isListeningGlobal}
+              setIsListeningGlobal={setIsListeningGlobal}
+              currentListeningField={currentListeningField}
+              setCurrentListeningField={setCurrentListeningField}
+            />
         </div>
         <div className="w-full md:w-auto md:min-w-[200px]">
           <Select

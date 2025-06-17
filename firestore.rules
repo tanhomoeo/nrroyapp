@@ -1,61 +1,45 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default Deny: By default, deny all reads and writes.
-    // This is a good security practice. Specific rules below will grant access.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // DEVELOPMENT/TESTING RULE: Allows all reads and writes.
-    // WARNING: Secure these rules before deploying to a live production environment!
-    // To use this, uncomment the block below and comment out or remove the "Default Deny" rule above.
-    /*
+    // DEFAULT DEVELOPMENT RULE: Allow all reads and writes.
+    // WARNING: THIS IS INSECURE FOR PRODUCTION.
+    // You MUST secure these rules before deploying to a live environment.
     match /{document=**} {
       allow read, write: if true;
     }
-    */
 
-    // Example of more secure rules (customize as needed for production):
-    //
-    // // Allow logged-in users to read and write their own data in a 'users' collection
-    // match /users/{userId} {
-    //   allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-    //   allow create: if request.auth != null;
-    // }
-    //
-    // // Public read for 'publicContent', authenticated write
-    // match /publicContent/{docId} {
-    //   allow read: if true;
-    //   allow write: if request.auth != null;
-    // }
-    //
-    // Allow authenticated users to read/write patients, visits, prescriptions, paymentSlips
-    // This is a basic example and might need further refinement based on your exact needs
-    // (e.g., only specific doctors can write/update certain fields).
+    // Example of more secure rules (TODO: Implement these based on your app's needs)
+    /*
+    // Allow only authenticated users to read/write their own patient data
     match /patients/{patientId} {
-      allow read, write: if request.auth != null;
-    }
-    match /visits/{visitId} {
-      allow read, write: if request.auth != null;
-    }
-    match /prescriptions/{prescriptionId} {
-      allow read, write: if request.auth != null;
-    }
-    match /paymentSlips/{slipId} {
-      allow read, write: if request.auth != null;
-    }
-    match /settings/clinic {
-      allow read: if true; // Clinic settings might be publicly readable
-      allow write: if request.auth != null; // Or restrict to specific admin UIDs
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.ownerUid; 
+                           // Assuming you add an 'ownerUid' field to your patient documents
     }
 
-    // CURRENTLY ACTIVE RULE FOR DEVELOPMENT (allows all access):
-    // Remove or comment out the more specific rules above if you are using this one.
-     match /{document=**} {
-       allow read, write: if true;
-     }
+    // Allow authenticated users to read/write their visits
+    match /visits/{visitId} {
+      allow read, write: if request.auth != null; // Further refine: only owner of linked patient
+    }
+
+    // Allow authenticated users to read/write their prescriptions
+    match /prescriptions/{prescriptionId} {
+      allow read, write: if request.auth != null; // Further refine
+    }
+
+    // Allow authenticated users to read/write their payment slips
+    match /paymentSlips/{slipId} {
+      allow read, write: if request.auth != null; // Further refine
+    }
+
+    // Clinic settings might be readable by all authenticated users,
+    // but only writable by an admin role (requires custom claims or specific UIDs)
+    match /settings/clinic {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.admin == true; // Example admin check
+    }
+    */
   }
 }

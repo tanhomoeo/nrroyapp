@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import {
     Users, UserPlus, FileText, BarChart3, TrendingUp, Search as SearchIcon, Printer, CalendarDays, X, Loader2,
     MessageSquareText, PlayCircle, CreditCard, ClipboardList, FilePlus2
 } from 'lucide-react';
-import { getPatients, getVisits, getPaymentSlips, formatCurrency, isToday, isThisMonth, getPatientById, getPaymentMethodLabel } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getPatients, getVisits, getPaymentSlips, formatCurrency, isToday, isThisMonth, getPatientById, getPaymentMethodLabel } from '@/lib/firestoreService';
 import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/lib/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -19,10 +19,14 @@ import { ROUTES, APP_NAME } from '@/lib/constants';
 import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 
 const CreatePaymentSlipModal = dynamic(() =>
   import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => <div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div>
+  }
 );
 
 interface QuickActionCardProps {
@@ -98,6 +102,16 @@ interface AppointmentDisplayItem {
   createdAt: string;
 }
 
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<ClinicStats>({
     totalPatients: 0,
@@ -119,16 +133,20 @@ export default function DashboardPage() {
   const [selectedPatientForPaymentModal, setSelectedPatientForPaymentModal] = useState<Patient | null>(null);
   const [currentVisitIdForPaymentModal, setCurrentVisitIdForPaymentModal] = useState<string | null>(null);
 
+  const [isListeningGlobal, setIsListeningGlobal] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
+
+
   const loadAppointments = useCallback(async () => {
     const allVisits = await getVisits();
     const allSlips = await getPaymentSlips();
-    const allPatients = await getPatients(); // Fetch all patients once
+    const allPatients = await getPatients(); 
 
     const todayVisits = allVisits.filter(v => isToday(v.visitDate));
 
     const appointmentsDataPromises: Promise<AppointmentDisplayItem | null>[] = todayVisits
       .map(async visit => {
-        const patient = allPatients.find(p => p.id === visit.patientId); // Use cached patients
+        const patient = allPatients.find(p => p.id === visit.patientId); 
         if (!patient) return null;
 
         const paymentSlipForVisit = allSlips.find(s => s.visitId === visit.id && s.amount > 0);
@@ -315,6 +333,16 @@ export default function DashboardPage() {
               onChange={(e) => setDashboardSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleDashboardSearch()}
             />
+             <MicrophoneButton
+              onTranscript={(t) => setDashboardSearchTerm(prev => prev + t)}
+              onFinalTranscript={(t) => setDashboardSearchTerm(prev => appendFinalTranscript(prev, t))}
+              targetFieldDescription="ড্যাশবোর্ড অনুসন্ধান"
+              fieldKey="dashboardSearch"
+              isListeningGlobal={isListeningGlobal}
+              setIsListeningGlobal={setIsListeningGlobal}
+              currentListeningField={currentListeningField}
+              setCurrentListeningField={setCurrentListeningField}
+            />
             {dashboardSearchTerm && (
               <Button variant="ghost" size="icon" className="h-full w-10 text-muted-foreground hover:text-foreground" onClick={() => setDashboardSearchTerm('')}>
                 <X className="h-4 w-4" />
@@ -477,4 +505,3 @@ export default function DashboardPage() {
     </TooltipProvider>
   );
 }
-

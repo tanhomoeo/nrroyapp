@@ -1,6 +1,6 @@
 
 'use client';
-import React from 'react';
+import React, { useState } from 'react'; // Added useState for microphone state
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,14 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { Patient, PaymentSlip, PaymentMethod } from '@/lib/types';
-import { addPaymentSlip, formatCurrency } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { addPaymentSlip, formatCurrency } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Receipt } from 'lucide-react';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 
 interface CreatePaymentSlipModalProps {
   patient: Patient;
   isOpen: boolean;
-  onClose: (slipCreated?: boolean) => void; // Modified to indicate if a slip was created
+  onClose: (slipCreated?: boolean) => void;
   onSlipCreated?: (slip: PaymentSlip) => void; 
   visitId?: string; 
 }
@@ -48,8 +49,21 @@ const paymentSlipSchema = z.object({
 
 type PaymentSlipFormValues = z.infer<typeof paymentSlipSchema>;
 
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
+
 export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated, visitId }: CreatePaymentSlipModalProps) {
   const { toast } = useToast();
+  const [isListeningGlobal, setIsListeningGlobal] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
+
   const form = useForm<PaymentSlipFormValues>({
     resolver: zodResolver(paymentSlipSchema),
     defaultValues: {
@@ -86,8 +100,8 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
         onSlipCreated(createdSlip);
       }
       form.reset({ purpose: '', amount: 0, paymentMethod: 'cash', receivedBy: '' });
-      onClose(true); // Indicate slip was created
-      window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify other components
+      onClose(true); 
+      window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
     } catch (error) {
       console.error("Failed to create payment slip:", error);
       toast({
@@ -125,9 +139,19 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
                 <FormItem>
                   <FormLabel>Purpose</FormLabel>
                   <div className={inputWrapperClass}>
-                    <FormControl>
-                      <Input placeholder="e.g., Consultation Fee, Medicine" {...field} className={inputFieldClass}/>
+                    <FormControl className="flex-1">
+                      <Input placeholder="e.g., Consultation Fee, Medicine" {...field} className={inputFieldClass} id="slipPurposeModal"/>
                     </FormControl>
+                    <MicrophoneButton
+                        onTranscript={(t) => field.onChange(field.value + t)}
+                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                        targetFieldDescription="উদ্দেশ্য (স্লিপ)"
+                        fieldKey="slipPurposeModal"
+                        isListeningGlobal={isListeningGlobal}
+                        setIsListeningGlobal={setIsListeningGlobal}
+                        currentListeningField={currentListeningField}
+                        setCurrentListeningField={setCurrentListeningField}
+                      />
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -181,9 +205,19 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
                 <FormItem>
                   <FormLabel>Received By (Optional)</FormLabel>
                   <div className={inputWrapperClass}>
-                    <FormControl>
-                      <Input placeholder="Name of receiver" {...field} className={inputFieldClass}/>
+                    <FormControl className="flex-1">
+                      <Input placeholder="Name of receiver" {...field} className={inputFieldClass} id="slipReceivedByModal"/>
                     </FormControl>
+                    <MicrophoneButton
+                        onTranscript={(t) => field.onChange(field.value + t)}
+                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                        targetFieldDescription="গ্রহণকারী (স্লিপ)"
+                        fieldKey="slipReceivedByModal"
+                        isListeningGlobal={isListeningGlobal}
+                        setIsListeningGlobal={setIsListeningGlobal}
+                        currentListeningField={currentListeningField}
+                        setCurrentListeningField={setCurrentListeningField}
+                      />
                   </div>
                   <FormMessage />
                 </FormItem>

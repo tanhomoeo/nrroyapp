@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,10 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { getClinicSettings, saveClinicSettings } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getClinicSettings, saveClinicSettings } from '@/lib/firestoreService';
 import type { ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Loader2, Save, Building } from 'lucide-react';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 
 const clinicInfoFormSchema = z.object({
   clinicName: z.string().min(1, "Clinic name is required."),
@@ -26,9 +27,22 @@ const clinicInfoFormSchema = z.object({
 
 type ClinicInfoFormValues = z.infer<typeof clinicInfoFormSchema>;
 
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
+
 export default function ClinicInformationPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [isListeningGlobal, setIsListeningGlobal] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
+
   const form = useForm<ClinicInfoFormValues>({
     resolver: zodResolver(clinicInfoFormSchema),
     defaultValues: {
@@ -44,33 +58,40 @@ export default function ClinicInformationPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       setIsLoading(true);
-      const currentSettings = await getClinicSettings();
-      form.reset({
-        clinicName: currentSettings.clinicName || '',
-        doctorName: currentSettings.doctorName || '',
-        clinicAddress: currentSettings.clinicAddress || '',
-        clinicContact: currentSettings.clinicContact || '',
-        bmRegNo: currentSettings.bmRegNo || '',
-        nextDiaryNumber: currentSettings.nextDiaryNumber || 1,
-      });
-      setIsLoading(false);
+      try {
+        const currentSettings = await getClinicSettings();
+        form.reset({
+          clinicName: currentSettings.clinicName || '',
+          doctorName: currentSettings.doctorName || '',
+          clinicAddress: currentSettings.clinicAddress || '',
+          clinicContact: currentSettings.clinicContact || '',
+          bmRegNo: currentSettings.bmRegNo || '',
+          nextDiaryNumber: currentSettings.nextDiaryNumber || 1,
+        });
+      } catch (error) {
+          console.error("Failed to fetch clinic settings for form:", error);
+          toast({ title: "Error", description: "Could not load clinic settings.", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchSettings();
-  }, [form]);
+  }, [form, toast]);
 
   const onSubmit: SubmitHandler<ClinicInfoFormValues> = async (data) => {
     try {
-      const currentSettings = await getClinicSettings(); // Fetch latest before saving
+      const currentSettings = await getClinicSettings(); 
       const updatedSettings: ClinicSettings = {
         ...currentSettings, 
         ...data,
-        nextDiaryNumber: data.nextDiaryNumber || currentSettings.nextDiaryNumber || 1, // Ensure it's always a number
+        nextDiaryNumber: data.nextDiaryNumber || currentSettings.nextDiaryNumber || 1,
       };
       await saveClinicSettings(updatedSettings);
       toast({
         title: 'Clinic Information Saved',
         description: 'Clinic details have been updated successfully.',
       });
+      window.dispatchEvent(new CustomEvent('firestoreDataChange'));
     } catch (error) {
       console.error('Failed to save clinic information:', error);
       toast({
@@ -117,9 +138,19 @@ export default function ClinicInformationPage() {
                   <FormItem>
                     <FormLabel>Clinic Name</FormLabel>
                     <div className={inputWrapperClass}>
-                      <FormControl>
-                        <Input placeholder="e.g., Your Clinic Name" {...field} className={inputFieldClass} />
+                      <FormControl className="flex-1">
+                        <Input placeholder="e.g., Your Clinic Name" {...field} className={inputFieldClass} id="clinicNameInfo" />
                       </FormControl>
+                       <MicrophoneButton
+                          onTranscript={(t) => field.onChange(field.value + t)}
+                          onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                          targetFieldDescription="ক্লিনিকের নাম"
+                          fieldKey="clinicNameInfo"
+                          isListeningGlobal={isListeningGlobal}
+                          setIsListeningGlobal={setIsListeningGlobal}
+                          currentListeningField={currentListeningField}
+                          setCurrentListeningField={setCurrentListeningField}
+                        />
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -132,9 +163,19 @@ export default function ClinicInformationPage() {
                   <FormItem>
                     <FormLabel>Doctor's Name</FormLabel>
                     <div className={inputWrapperClass}>
-                      <FormControl>
-                        <Input placeholder="e.g., Dr. John Doe" {...field} className={inputFieldClass} />
+                      <FormControl className="flex-1">
+                        <Input placeholder="e.g., Dr. John Doe" {...field} className={inputFieldClass} id="doctorNameInfo" />
                       </FormControl>
+                      <MicrophoneButton
+                          onTranscript={(t) => field.onChange(field.value + t)}
+                          onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                          targetFieldDescription="ডাক্তারের নাম"
+                          fieldKey="doctorNameInfo"
+                          isListeningGlobal={isListeningGlobal}
+                          setIsListeningGlobal={setIsListeningGlobal}
+                          currentListeningField={currentListeningField}
+                          setCurrentListeningField={setCurrentListeningField}
+                        />
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -147,9 +188,20 @@ export default function ClinicInformationPage() {
                   <FormItem className="md:col-span-2">
                     <FormLabel>Clinic Address</FormLabel>
                     <div className={textareaWrapperClass}>
-                      <FormControl>
-                        <Textarea placeholder="Full clinic address" {...field} rows={3} className={textareaFieldClass} />
+                      <FormControl className="flex-1">
+                        <Textarea placeholder="Full clinic address" {...field} rows={3} className={textareaFieldClass} id="clinicAddressInfo" />
                       </FormControl>
+                      <MicrophoneButton
+                          onTranscript={(t) => field.onChange(field.value + t)}
+                          onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
+                          targetFieldDescription="ক্লিনিকের ঠিকানা"
+                          fieldKey="clinicAddressInfo"
+                          isListeningGlobal={isListeningGlobal}
+                          setIsListeningGlobal={setIsListeningGlobal}
+                          currentListeningField={currentListeningField}
+                          setCurrentListeningField={setCurrentListeningField}
+                          className="self-start mt-1"
+                        />
                     </div>
                     <FormMessage />
                   </FormItem>

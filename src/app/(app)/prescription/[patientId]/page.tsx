@@ -1,5 +1,6 @@
+
 'use client';
-import React, { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +16,7 @@ import { getPatientById, addPrescription, getVisitById, getPrescriptionsByPatien
 import type { Patient, Prescription, Visit, ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { DiagnosisAssistant } from '@/components/ai/DiagnosisAssistant';
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // Added
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 import { PlusCircle, Trash2, Save, Loader2, Printer, ClipboardList } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { APP_NAME, ROUTES } from '@/lib/constants';
@@ -41,6 +42,16 @@ const prescriptionFormSchema = z.object({
 
 type PrescriptionFormValues = z.infer<typeof prescriptionFormSchema>;
 
+// Helper for appending final transcript
+const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
+  let textToSet = currentValue || "";
+  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
+     textToSet += " ";
+  }
+  textToSet += transcript + " ";
+  return textToSet;
+};
+
 export default function PrescriptionPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -57,11 +68,8 @@ export default function PrescriptionPage() {
   const [showInstructionsButton, setShowInstructionsButton] = useState(false);
   const { toast } = useToast();
 
-  // State for global voice input management
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
-  const activeInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
-
 
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionFormSchema),
@@ -82,100 +90,93 @@ export default function PrescriptionPage() {
 
   const fetchPrescriptionData = useCallback(async () => {
     setIsLoading(true);
-    const fetchedPatient = await getPatientById(patientId);
-    setPatient(fetchedPatient || null);
-    const currentClinicSettings = await getClinicSettings();
-    setClinicSettings(currentClinicSettings);
+    try {
+      const fetchedPatient = await getPatientById(patientId);
+      setPatient(fetchedPatient || null);
+      const currentClinicSettings = await getClinicSettings();
+      setClinicSettings(currentClinicSettings);
 
-    let visitForDiagnosis: Visit | null = null;
-    if (visitId) {
-      const visit = await getVisitById(visitId);
-      setCurrentVisit(visit || null);
-      visitForDiagnosis = visit;
-    }
-
-    let initialDiagnosis = '';
-    let initialDoctorName = form.getValues('doctorName') || currentClinicSettings.doctorName || '';
-    setShowInstructionsButton(false);
-
-    if (prescriptionIdQuery) {
-      const prescription = await getPrescriptionById(prescriptionIdQuery);
-      if (prescription) {
-        setExistingPrescription(prescription);
-        initialDiagnosis = prescription.diagnosis || '';
-        initialDoctorName = prescription.doctorName || initialDoctorName;
-        form.reset({
-          prescriptionType: prescription.prescriptionType,
-          items: prescription.items,
-          followUpDays: prescription.followUpDays,
-          advice: prescription.advice,
-          diagnosis: initialDiagnosis,
-          doctorName: initialDoctorName,
-        });
-        setShowInstructionsButton(true);
+      let visitForDiagnosis: Visit | null = null;
+      if (visitId) {
+        const visit = await getVisitById(visitId);
+        setCurrentVisit(visit || null);
+        visitForDiagnosis = visit;
       }
-    } else if (visitId) {
-      const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
-      if (prescriptionsForVisit.length > 0) {
-        const currentPrescription = prescriptionsForVisit[0];
-        setExistingPrescription(currentPrescription);
-        initialDiagnosis = currentPrescription.diagnosis || '';
-        initialDoctorName = currentPrescription.doctorName || initialDoctorName;
-        form.reset({
-          prescriptionType: currentPrescription.prescriptionType,
-          items: currentPrescription.items,
-          followUpDays: currentPrescription.followUpDays,
-          advice: currentPrescription.advice,
-          diagnosis: initialDiagnosis,
-          doctorName: initialDoctorName,
-        });
-        setShowInstructionsButton(true);
+
+      let initialDiagnosis = '';
+      let initialDoctorName = form.getValues('doctorName') || currentClinicSettings.doctorName || '';
+      setShowInstructionsButton(false);
+
+      if (prescriptionIdQuery) {
+        const prescription = await getPrescriptionById(prescriptionIdQuery);
+        if (prescription) {
+          setExistingPrescription(prescription);
+          initialDiagnosis = prescription.diagnosis || '';
+          initialDoctorName = prescription.doctorName || initialDoctorName;
+          form.reset({
+            prescriptionType: prescription.prescriptionType,
+            items: prescription.items,
+            followUpDays: prescription.followUpDays,
+            advice: prescription.advice,
+            diagnosis: initialDiagnosis,
+            doctorName: initialDoctorName,
+          });
+          setShowInstructionsButton(true);
+        }
+      } else if (visitId) {
+        const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
+        if (prescriptionsForVisit.length > 0) {
+          const currentPrescription = prescriptionsForVisit[0]; // Use the most recent one for the visit
+          setExistingPrescription(currentPrescription);
+          initialDiagnosis = currentPrescription.diagnosis || '';
+          initialDoctorName = currentPrescription.doctorName || initialDoctorName;
+          form.reset({
+            prescriptionType: currentPrescription.prescriptionType,
+            items: currentPrescription.items,
+            followUpDays: currentPrescription.followUpDays,
+            advice: currentPrescription.advice,
+            diagnosis: initialDiagnosis,
+            doctorName: initialDoctorName,
+          });
+          setShowInstructionsButton(true);
+        } else {
+          // No existing prescription for this visit, set initial values
+          if (visitForDiagnosis?.symptoms) initialDiagnosis = visitForDiagnosis.symptoms;
+          if (visitForDiagnosis?.diagnosis) initialDiagnosis = visitForDiagnosis.diagnosis || initialDiagnosis; // Prefer existing diagnosis from visit
+          form.reset({
+            ...form.getValues(), // keep other form values like type, items, etc.
+            diagnosis: initialDiagnosis,
+            doctorName: initialDoctorName,
+            // Reset items if it's a truly new prescription for this visit
+            items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
+            followUpDays: 7,
+            advice: '',
+          });
+        }
       } else {
-        if (visitForDiagnosis?.symptoms) initialDiagnosis = visitForDiagnosis.symptoms;
-        if (visitForDiagnosis?.diagnosis) initialDiagnosis = visitForDiagnosis.diagnosis;
-        form.reset({
-          ...form.getValues(),
-          diagnosis: initialDiagnosis,
-          doctorName: initialDoctorName,
-        });
+        // No visitId, might be a general prescription (less common flow)
+        form.setValue('doctorName', initialDoctorName);
       }
-    } else {
-      form.setValue('doctorName', initialDoctorName);
-    }
 
-    if (!form.getValues('diagnosis') && visitForDiagnosis?.symptoms) {
-      form.setValue('diagnosis', visitForDiagnosis.symptoms);
-    } else if (!form.getValues('diagnosis') && visitForDiagnosis?.diagnosis) {
-      form.setValue('diagnosis', visitForDiagnosis.diagnosis);
+      // Final check for diagnosis if still empty
+      if (!form.getValues('diagnosis') && visitForDiagnosis?.symptoms) {
+        form.setValue('diagnosis', visitForDiagnosis.symptoms);
+      } else if (!form.getValues('diagnosis') && visitForDiagnosis?.diagnosis) {
+        form.setValue('diagnosis', visitForDiagnosis.diagnosis);
+      }
+    } catch (error) {
+        console.error("Error fetching prescription data:", error);
+        toast({ title: "Error", description: "Failed to load prescription data.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
     }
-
-    setIsLoading(false);
-  }, [patientId, visitId, prescriptionIdQuery, form]);
+  }, [patientId, visitId, prescriptionIdQuery, form, toast]);
 
 
   useEffect(() => {
     fetchPrescriptionData();
   }, [fetchPrescriptionData]);
-
-  const handleVoiceInput = (fieldName: keyof PrescriptionFormValues | `items.${number}.medicineName` | `items.${number}.notes`, transcript: string) => {
-    const currentVal = form.getValues(fieldName) as string || "";
-    form.setValue(fieldName, currentVal + transcript, { shouldValidate: true });
-  };
   
-  const handleFinalVoiceInput = (fieldName: keyof PrescriptionFormValues | `items.${number}.medicineName` | `items.${number}.notes`, transcript: string) => {
-      const currentVal = form.getValues(fieldName) as string || "";
-      // This simple append might need refinement for better UX with interim results
-      // For now, it appends the final segment and a space.
-      let textToSet = currentVal;
-      if (currentVal.endsWith(transcript.slice(0,-1))) { // Basic check if interim was the start of final
-         textToSet = currentVal.slice(0, currentVal.length - transcript.slice(0,-1).length);
-      } else if (currentVal.length > 0 && !currentVal.endsWith(" ")) {
-         textToSet += " ";
-      }
-      textToSet += transcript + " ";
-      form.setValue(fieldName, textToSet, { shouldValidate: true });
-  };
-
   const onSubmit: SubmitHandler<PrescriptionFormValues> = async (data) => {
     if (!patient || !visitId) {
       toast({ title: "Error", description: "Patient or Visit information is missing.", variant: "destructive" });
@@ -184,41 +185,36 @@ export default function PrescriptionPage() {
 
     try {
       let currentPrescriptionId = existingPrescription?.id;
+      const prescriptionDataPayload = {
+        patientId: patient.id,
+        visitId: visitId,
+        date: new Date().toISOString(),
+        prescriptionType: data.prescriptionType,
+        items: data.items,
+        followUpDays: data.followUpDays,
+        advice: data.advice,
+        diagnosis: data.diagnosis,
+        doctorName: data.doctorName || clinicSettings?.doctorName,
+      };
+
       if (existingPrescription) {
-        const updatedPrescriptionData: Omit<Prescription, 'id' | 'createdAt'> = {
-          patientId: patient.id,
-          visitId: visitId,
-          date: new Date().toISOString(),
-          prescriptionType: data.prescriptionType,
-          items: data.items,
-          followUpDays: data.followUpDays,
-          advice: data.advice,
-          diagnosis: data.diagnosis,
-          doctorName: data.doctorName || clinicSettings?.doctorName,
-          serialNumber: existingPrescription.serialNumber,
-        };
-        await updatePrescription(existingPrescription.id, updatedPrescriptionData);
+        await updatePrescription(existingPrescription.id, {
+          ...prescriptionDataPayload,
+          serialNumber: existingPrescription.serialNumber, // Keep existing serial
+        });
         toast({ title: 'প্রেসক্রিপশন আপডেট হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন আপডেট করা হয়েছে।` });
       } else {
-        const newPrescriptionData: Omit<Prescription, 'id' | 'createdAt'> = {
+        const newId = await addPrescription({
+          ...prescriptionDataPayload,
           serialNumber: `P${Date.now().toString().slice(-6)}`,
-          patientId: patient.id,
-          visitId: visitId,
-          date: new Date().toISOString(),
-          prescriptionType: data.prescriptionType,
-          items: data.items,
-          followUpDays: data.followUpDays,
-          advice: data.advice,
-          diagnosis: data.diagnosis,
-          doctorName: data.doctorName || clinicSettings?.doctorName,
-        };
-        const newId = await addPrescription(newPrescriptionData);
+        });
         if (!newId) throw new Error("Failed to add prescription");
         currentPrescriptionId = newId;
-        setExistingPrescription({ ...newPrescriptionData, id: newId, createdAt: new Date().toISOString() });
+        setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: `P${Date.now().toString().slice(-6)}` }); // Update local state with new prescription
         toast({ title: 'প্রেসক্রিপশন সংরক্ষণ করা হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন সংরক্ষণ করা হয়েছে।` });
       }
-      setShowInstructionsButton(true);
+      setShowInstructionsButton(true); // Show button after save/update
+      window.dispatchEvent(new CustomEvent('firestoreDataChange'));
     } catch (error) {
       console.error('Failed to save prescription:', error);
       toast({ title: 'সংরক্ষণ ব্যর্থ', description: 'প্রেসক্রিপশন সংরক্ষণ করার সময় একটি ত্রুটি ঘটেছে।', variant: "destructive" });
@@ -326,12 +322,11 @@ export default function PrescriptionPage() {
                         <FormLabel>রোগ নির্ণয় / প্রধান অভিযোগ</FormLabel>
                         <div className="flex items-start w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary min-h-[80px]">
                           <FormControl className="flex-1">
-                            <Textarea placeholder="রোগ নির্ণয় বা প্রধান অভিযোগ লিখুন" {...field} rows={3} id="diagnosisMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none"
-                             onFocus={(e) => activeInputRef.current = e.target} />
+                            <Textarea placeholder="রোগ নির্ণয় বা প্রধান অভিযোগ লিখুন" {...field} rows={3} id="diagnosisMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none" />
                           </FormControl>
                           <MicrophoneButton
-                            onTranscript={(t) => form.setValue('diagnosis', (form.getValues('diagnosis') || "") + t)}
-                            onFinalTranscript={(t) => handleFinalVoiceInput('diagnosis', t)}
+                            onTranscript={(t) => field.onChange(field.value + t)}
+                            onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                             targetFieldDescription="রোগ নির্ণয়"
                             fieldKey="diagnosisMain"
                             isListeningGlobal={isListeningGlobal}
@@ -359,12 +354,11 @@ export default function PrescriptionPage() {
                               <FormLabel className="text-xs">ঔষধের নাম</FormLabel>
                               <div className="flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary">
                                 <FormControl className="flex-1">
-                                  <Input placeholder="যেমন, নাপা" {...field} id={`medName${index}`} className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-sm placeholder-muted-foreground"
-                                   onFocus={(e) => activeInputRef.current = e.target} />
+                                  <Input placeholder="যেমন, নাপা" {...field} id={`medName${index}`} className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-sm placeholder-muted-foreground" />
                                 </FormControl>
                                 <MicrophoneButton
-                                  onTranscript={(t) => form.setValue(`items.${index}.medicineName`, (form.getValues(`items.${index}.medicineName`) || "") + t)}
-                                  onFinalTranscript={(t) => handleFinalVoiceInput(`items.${index}.medicineName`, t)}
+                                  onTranscript={(t) => field.onChange(field.value + t)}
+                                  onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                                   targetFieldDescription={`ঔষধ ${index + 1}`}
                                   fieldKey={`medName${index}`}
                                   isListeningGlobal={isListeningGlobal}
@@ -430,12 +424,11 @@ export default function PrescriptionPage() {
                               <FormLabel className="text-xs">নোট</FormLabel>
                               <div className="flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary">
                                 <FormControl className="flex-1">
-                                  <Input placeholder="যেমন, খাবারের পর" {...field} id={`medNotes${index}`} className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-sm placeholder-muted-foreground"
-                                   onFocus={(e) => activeInputRef.current = e.target} />
+                                  <Input placeholder="যেমন, খাবারের পর" {...field} id={`medNotes${index}`} className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-sm placeholder-muted-foreground" />
                                 </FormControl>
                                  <MicrophoneButton
-                                  onTranscript={(t) => form.setValue(`items.${index}.notes`, (form.getValues(`items.${index}.notes`) || "") + t)}
-                                  onFinalTranscript={(t) => handleFinalVoiceInput(`items.${index}.notes`, t)}
+                                  onTranscript={(t) => field.onChange(field.value + t)}
+                                  onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                                   targetFieldDescription={`ঔষধের নোট ${index + 1}`}
                                   fieldKey={`medNotes${index}`}
                                   isListeningGlobal={isListeningGlobal}
@@ -493,12 +486,11 @@ export default function PrescriptionPage() {
                           <FormLabel>পরামর্শ / সাধারণ নির্দেশাবলী</FormLabel>
                           <div className="flex items-start w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary min-h-[80px]">
                             <FormControl className="flex-1">
-                              <Textarea placeholder="যেমন, পর্যাপ্ত বিশ্রাম নিন, গরম জল পান করুন।" {...field} rows={3} id="adviceMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none"
-                               onFocus={(e) => activeInputRef.current = e.target} />
+                              <Textarea placeholder="যেমন, পর্যাপ্ত বিশ্রাম নিন, গরম জল পান করুন।" {...field} rows={3} id="adviceMain" className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-none" />
                             </FormControl>
                             <MicrophoneButton
-                              onTranscript={(t) => form.setValue('advice', (form.getValues('advice') || "") + t)}
-                              onFinalTranscript={(t) => handleFinalVoiceInput('advice', t)}
+                              onTranscript={(t) => field.onChange(field.value + t)}
+                              onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
                               targetFieldDescription="পরামর্শ"
                               fieldKey="adviceMain"
                               isListeningGlobal={isListeningGlobal}
