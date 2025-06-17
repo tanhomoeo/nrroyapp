@@ -1,51 +1,76 @@
-// Genkit AI functionality has been removed or is currently disabled.
-// This file is kept for potential future use or to avoid breaking imports.
+'use server';
 
-// If you re-integrate Genkit, initialize it here:
-// import { genkit } from 'genkit';
-// import { googleAI } from '@genkit-ai/googleai';
-// import * as genkitNext from '@genkit-ai/next'; // If using Next.js plugin
+/**
+ * @fileOverview Initializes and exports the Genkit AI instance.
+ * This instance is configured with the Google AI plugin.
+ * It assumes that the GOOGLE_GENAI_API_KEY environment variable is set.
+ */
 
-// export const ai = genkit({
-//   plugins: [
-//     googleAI(),
-//     // genkitNext.nextPlugin(), // Uncomment if @genkit-ai/next is installed and used
-//   ],
-//   enableTracingAndMetrics: true,
-//   logLevel: 'debug',
-// });
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 
-console.warn("Genkit AI features are currently disabled. Genkit initialization in src/ai/genkit.ts is commented out.");
+// Initialize Genkit with the Google AI plugin.
+// The Google AI plugin will automatically look for the GOOGLE_GENAI_API_KEY
+// in your environment variables.
+export const ai = genkit({
+  plugins: [
+    googleAI(),
+  ],
+  // Note: `logLevel` and `enableTracingAndMetrics` are not configured directly in `genkit()` in v1.x.
+  // Telemetry and logging are typically handled by plugins or specific configurations.
+  // For Firebase, `enableFirebaseTelemetry()` from `@genkit-ai/firebase` would be used if you
+  // were integrating Firebase Functions telemetry with Genkit for flows deployed there.
+  // For client-side/Next.js Genkit usage, tracing might be observed via other means if configured.
+});
 
-// To prevent import errors if other files still try to import 'ai'
-export const ai = {
-    defineFlow: (config: any, handler: any) => { 
-        console.warn(`Genkit defineFlow for ${config.name} called but Genkit is disabled.`);
-        return async (...args: any[]) => {
-            console.warn(`Genkit flow ${config.name} executed but Genkit is disabled. Returning mock error.`);
-            throw new Error(`Genkit flow ${config.name} cannot be executed as Genkit is disabled.`);
-        };
-    },
-    definePrompt: (config: any) => {
-        console.warn(`Genkit definePrompt for ${config.name} called but Genkit is disabled.`);
-        return async (...args: any[]) => {
-            console.warn(`Genkit prompt ${config.name} executed but Genkit is disabled. Returning mock error output.`);
-            return { output: null, error: `Genkit prompt ${config.name} cannot be executed as Genkit is disabled.` };
-        };
-    },
-    generate: async (options: any) => {
-        console.warn("Genkit ai.generate called but Genkit is disabled.");
-        return { text: () => Promise.resolve("AI response unavailable (Genkit disabled)."), output: null };
-    },
-     generateStream: (options: any) => {
-        console.warn("Genkit ai.generateStream called but Genkit is disabled.");
-        async function* emptyStream() {
-            yield { text: "AI stream unavailable." };
-        }
-        return { 
-            stream: emptyStream(), 
-            response: Promise.resolve({ text: () => "AI response unavailable." }) 
-        };
-    }
-    // Add other Genkit methods as needed if they cause import issues elsewhere
-};
+console.log("Genkit initialized in src/ai/genkit.ts with the Google AI plugin.");
+
+// Example of how to use a specific model (e.g., Gemini 1.5 Flash) with ai.generate:
+//
+// import { gemini15Flash } from '@genkit-ai/googleai'; // This specific named export might represent a model object or string.
+//                                                    // Alternatively, use the model identifier string.
+//
+// async function exampleGeneration() {
+//   try {
+//     const { text } = await ai.generate({
+//       model: 'gemini-1.5-flash-latest', // Recommended to use the string identifier for clarity
+//       prompt: 'Tell me a fun fact about Next.js.',
+//     });
+//     console.log('Generated text:', text);
+//     return text;
+//   } catch (error) {
+//     console.error('Error during AI generation:', error);
+//     return 'Failed to generate text.';
+//   }
+// }
+//
+// // To define a flow, you would typically do so in a separate file under `src/ai/flows/`, for example:
+// /*
+// // In a file like src/ai/flows/exampleFlow.ts
+// 'use server';
+// import { ai } from '@/ai/genkit'; // Import the initialized ai instance
+// import { z } from 'zod';
+//
+// export const exampleFlow = ai.defineFlow(
+//   {
+//     name: 'exampleFlow',
+//     inputSchema: z.string().describe('Name to greet'),
+//     outputSchema: z.string().describe('The greeting message'),
+//   },
+//   async (name) => {
+//     const { text } = await ai.generate({
+//         model: 'gemini-1.5-flash-latest',
+//         prompt: `Create a friendly greeting for ${name}.`,
+//     });
+//     return text ?? "Could not generate greeting.";
+//   }
+// );
+//
+// export async function runExampleFlow(name: string) {
+//   return await exampleFlow(name);
+// }
+// */
+//
+// // Then, you could call it from a server component or API route:
+// // const greeting = await runExampleFlow('Developer');
+// // console.log(greeting);
