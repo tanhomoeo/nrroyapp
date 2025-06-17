@@ -6,12 +6,12 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration based on your provided values
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyApdat8HDcEQzxt-vDaMvUA41uY4F8fWI8",
   authDomain: "nrroyapp.firebaseapp.com",
   projectId: "nrroyapp",
-  storageBucket: "nrroyapp.firebasestorage.app", // Using the value you provided
+  storageBucket: "nrroyapp.firebasestorage.app", // Changed from .appspot.com as per your last full config
   messagingSenderId: "550385387960",
   appId: "1:550385387960:web:59ec369942f69e844ae74d",
   measurementId: "G-CZSB1FRQBL"
@@ -22,19 +22,19 @@ if (typeof window !== 'undefined') {
   console.log("====================================================================");
   console.log("Firebase SDK Configuration Check (src/lib/firebase.ts):");
   console.log("--------------------------------------------------------------------");
+  console.log("Attempting to connect to Firebase project with this configuration:");
   console.log("Project ID:", firebaseConfig.projectId);
   console.log("API Key (first 5 chars):", firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) + "..." : "NOT SET");
   console.log("Auth Domain:", firebaseConfig.authDomain);
   console.log("Storage Bucket:", firebaseConfig.storageBucket);
   console.log("Messaging Sender ID:", firebaseConfig.messagingSenderId);
   console.log("App ID:", firebaseConfig.appId);
-  console.log("Measurement ID:", firebaseConfig.measurementId);
+  console.log("Measurement ID:", firebaseConfig.measurementId || "NOT SET");
   console.log("--------------------------------------------------------------------");
-  console.log("ACTION REQUIRED: Please meticulously verify these values against your Firebase project settings in the Firebase Console (console.firebase.google.com) for the project you intend to use. They MUST match exactly.");
+  console.log("ACTION REQUIRED: Please METICULOUSLY verify these values against your Firebase project settings in the Firebase Console (console.firebase.google.com) for the project you intend to use. They MUST match exactly.");
   console.log("Ensure your Firestore security rules (firestore.rules) are published to THIS SAME project ID ('" + firebaseConfig.projectId + "').");
   console.log("====================================================================");
 }
-
 
 // Initialize Firebase
 let app: FirebaseApp;
@@ -55,7 +55,7 @@ if (typeof window !== 'undefined') {
     if (supported && firebaseConfig.measurementId) {
       try {
         analytics = getAnalytics(app);
-        console.log("Firebase Analytics initialized.");
+        console.log("Firebase Analytics initialized for measurement ID:", firebaseConfig.measurementId);
       } catch (error) {
         console.error("Error initializing Firebase Analytics:", error);
       }
