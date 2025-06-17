@@ -13,13 +13,15 @@ import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 // See: https://firebase.google.com/docs/web/learn-more#config-object
 
 const firebaseConfig = {
-  apiKey: "avjaM8057XSBsNHxr78Ogc45ysDpJio14t6j7iHj", // YOUR PROVIDED API KEY
-  authDomain: "nrroyapp.firebaseapp.com", // From your Firebase project settings
-  projectId: "nrroyapp", // Your Firebase Project ID
-  storageBucket: "nrroyapp.appspot.com", // From your Firebase project settings
-  messagingSenderId: "REPLACE_WITH_YOUR_ACTUAL_MESSAGING_SENDER_ID", // CRITICAL: Replace with your Messaging Sender ID from Firebase Console
-  appId: "REPLACE_WITH_YOUR_ACTUAL_APP_ID", // CRITICAL: Replace with your App ID from Firebase Console
-  measurementId: "REPLACE_WITH_YOUR_MEASUREMENT_ID_IF_USING_ANALYTICS" // Optional: Replace if you use Analytics
+  apiKey: "avjaM8057XSBsNHxr78Ogc45ysDpJio14t6j7iHj",
+  authDomain: "nrroyapp.firebaseapp.com",
+  projectId: "nrroyapp",
+  storageBucket: "nrroyapp.appspot.com",
+  // CRITICAL: REPLACE THE NEXT TWO LINES WITH YOUR ACTUAL FIREBASE PROJECT VALUES
+  messagingSenderId: "REPLACE_WITH_YOUR_ACTUAL_MESSAGING_SENDER_ID",
+  appId: "REPLACE_WITH_YOUR_ACTUAL_APP_ID",
+  // Optional: Replace if you use Analytics, otherwise, it can be removed or left as placeholder
+  measurementId: "REPLACE_WITH_YOUR_MEASUREMENT_ID_IF_USING_ANALYTICS"
 };
 
 // --- CRITICAL DIAGNOSTIC LOG ---
@@ -32,13 +34,13 @@ if (typeof window !== 'undefined') {
   console.log("authDomain:", firebaseConfig.authDomain);
   console.log("projectId:", firebaseConfig.projectId);
   console.log("storageBucket:", firebaseConfig.storageBucket);
-  console.log("messagingSenderId:", firebaseConfig.messagingSenderId);
-  console.log("appId:", firebaseConfig.appId);
+  console.log("messagingSenderId:", firebaseConfig.messagingSenderId); // This will show the placeholder if not replaced
+  console.log("appId:", firebaseConfig.appId); // This will show the placeholder if not replaced
   console.log("measurementId:", firebaseConfig.measurementId);
   console.log("--------------------------------------------------------------------");
   console.log("ACTION REQUIRED: Please verify that ALL of the above values EXACTLY MATCH the settings for your Firebase project ('" + firebaseConfig.projectId + "') in the Firebase Console.");
   console.log("Go to Firebase Console -> Project settings (gear icon) -> General tab -> Your apps -> Firebase SDK snippet (Config).");
-  
+
   if (firebaseConfig.messagingSenderId === "REPLACE_WITH_YOUR_ACTUAL_MESSAGING_SENDER_ID" ||
       firebaseConfig.appId === "REPLACE_WITH_YOUR_ACTUAL_APP_ID") {
     console.error("CRITICAL ERROR: 'messagingSenderId' or 'appId' in src/lib/firebase.ts are still set to placeholder values. You MUST replace them with the actual values from your Firebase project settings for the app to connect correctly.");
@@ -56,10 +58,8 @@ let app: FirebaseApp;
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
-  if (typeof window !== 'undefined') console.log("Firebase App Initialized (New Instance). Project: " + firebaseConfig.projectId);
 } else {
   app = getApp();
-  if (typeof window !== 'undefined') console.log("Firebase App Re-initialized (Existing Instance). Project: " + (getApp().options.projectId || 'N/A'));
 }
 
 const auth: Auth = getAuth(app);
@@ -72,12 +72,11 @@ if (typeof window !== 'undefined') {
     if (supported && firebaseConfig.measurementId && firebaseConfig.measurementId !== "REPLACE_WITH_YOUR_MEASUREMENT_ID_IF_USING_ANALYTICS") {
       try {
         analytics = getAnalytics(app);
-        console.log("Firebase Analytics Initialized.");
       } catch (error) {
         console.error("Error initializing Firebase Analytics:", error);
       }
     } else if (firebaseConfig.measurementId === "REPLACE_WITH_YOUR_MEASUREMENT_ID_IF_USING_ANALYTICS") {
-        console.warn("Firebase Analytics: measurementId is a placeholder. Analytics will not be initialized.");
+        // console.warn("Firebase Analytics: measurementId is a placeholder. Analytics will not be initialized.");
     }
   }).catch(error => {
     console.error("Firebase Analytics: Error checking support:", error);
