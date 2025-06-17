@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'; // Removed FormLabel as it's not directly used with FormControl for simple inputs here
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import { ROUTES, APP_NAME } from '@/lib/constants';
@@ -45,8 +45,8 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: 'admin@example.com',
+      password: 'Admin',
     },
   });
 
@@ -62,10 +62,8 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login error:", error);
       let errorMessage = "সাইন ইন করার সময় একটি ত্রুটি হয়েছে।";
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {
         errorMessage = "আপনার ইমেইল অথবা পাসওয়ার্ড সঠিক নয়। অনুগ্রহ করে আবার চেষ্টা করুন।";
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "ইমেইল ঠিকানাটি সঠিক ফরম্যাটে নেই।";
       }
       toast({
         title: 'সাইন ইন ব্যর্থ হয়েছে',
@@ -172,7 +170,6 @@ export default function LoginPage() {
           </Form>
         </CardContent>
         <CardFooter className="text-center text-sm text-muted-foreground pt-6">
-          {/* Optional: Add links like "Forgot password?" or "Create account" here */}
           <p>&copy; {new Date().getFullYear()} {APP_NAME}। সর্বস্বত্ব সংরক্ষিত।</p>
         </CardFooter>
       </Card>
