@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
-import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
+import { appendFinalTranscript } from '@/lib/utils';
 
 const CreatePaymentSlipModal = dynamic(() =>
   import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
@@ -39,7 +39,7 @@ interface QuickActionCardProps {
   href: string;
 }
 
-const QuickActionCard: React.FC<QuickActionCardProps> = ({ title, description, icon: Icon, bgColorClass, textColorClass = 'text-primary-foreground', href }) => (
+const QuickActionCardMemoized: React.FC<QuickActionCardProps> = React.memo(({ title, description, icon: Icon, bgColorClass, textColorClass = 'text-primary-foreground', href }) => (
   <Link href={href} className={`block rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 ${bgColorClass} ${textColorClass}`}>
     <div className="flex items-center mb-3">
       <Icon className="h-8 w-8 mr-3" />
@@ -47,7 +47,9 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({ title, description, i
     </div>
     <p className="text-sm opacity-90">{description}</p>
   </Link>
-);
+));
+QuickActionCardMemoized.displayName = 'QuickActionCard';
+
 
 interface ActivityStat {
   label: string;
@@ -64,7 +66,7 @@ interface ActivityCardProps {
   icon?: React.ElementType;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ title, stats, bgColorClass, textColorClass = 'text-primary-foreground', detailsLink, icon: TitleIcon }) => (
+const ActivityCardMemoized: React.FC<ActivityCardProps> = React.memo(({ title, stats, bgColorClass, textColorClass = 'text-primary-foreground', detailsLink, icon: TitleIcon }) => (
   <Card className={`shadow-lg hover:shadow-xl transition-shadow duration-300 ${bgColorClass} ${textColorClass} overflow-hidden`}>
     <CardHeader className="pb-2">
       <div className="flex items-center">
@@ -87,7 +89,8 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ title, stats, bgColorClass,
       )}
     </CardContent>
   </Card>
-);
+));
+ActivityCardMemoized.displayName = 'ActivityCard';
 
 interface AppointmentDisplayItem {
   visitId: string;
@@ -353,28 +356,28 @@ export default function DashboardPage() {
       <div className="hide-on-print-dashboard">
         <h2 className="text-xl font-semibold font-headline text-foreground mb-3 px-4 md:px-0">দ্রুত কার্যক্রম</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <QuickActionCard
+          <QuickActionCardMemoized
             title="নতুন রোগী ভর্তি"
             description="সিস্টেমে নতুন রোগীদের দ্রুত নিবন্ধন করুন।"
             icon={UserPlus}
             bgColorClass="bg-green-500 dark:bg-green-600"
             href={ROUTES.PATIENT_ENTRY}
           />
-          <QuickActionCard
+          <QuickActionCardMemoized
             title="রোগীর তালিকা"
             description="সকল নিবন্ধিত রোগীদের প্রোফাইল খুঁজুন ও দেখুন।"
             icon={Users}
             bgColorClass="bg-blue-500 dark:bg-blue-600"
             href={ROUTES.DICTIONARY}
           />
-          <QuickActionCard
+          <QuickActionCardMemoized
             title="দৈনিক প্রতিবেদন"
             description="দৈনিক কার্যক্রমের বিস্তারিত সারসংক্ষেপ দেখুন।"
             icon={FileText}
             bgColorClass="bg-purple-500 dark:bg-purple-600"
             href={ROUTES.DAILY_REPORT}
           />
-          <QuickActionCard
+          <QuickActionCardMemoized
             title="AI অভিযোগ সারাংশ"
             description="AI দ্বারা রোগীর অভিযোগ সারাংশ করুন।"
             icon={MessageSquareText}
@@ -385,7 +388,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 hide-on-print-dashboard">
-        <ActivityCard
+        <ActivityCardMemoized
           title="মাসিক কার্যকলাপ"
           icon={BarChart3}
           stats={[
@@ -396,7 +399,7 @@ export default function DashboardPage() {
           bgColorClass="bg-sky-500 dark:bg-sky-600"
           detailsLink={ROUTES.DAILY_REPORT}
         />
-        <ActivityCard
+        <ActivityCardMemoized
           title="দৈনিক কার্যকলাপ"
           icon={CalendarDays}
           stats={[

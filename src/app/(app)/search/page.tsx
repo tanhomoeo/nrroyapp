@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react'; // Added Suspense
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,12 +21,21 @@ import {
   BriefcaseMedical,
   CalendarPlus 
 } from 'lucide-react';
-import { PatientDetailsModal } from '@/components/patient/PatientDetailsModal'; 
+// import { PatientDetailsModal } from '@/components/patient/PatientDetailsModal'; // Removed direct import
 import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
-import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
+import { appendFinalTranscript } from '@/lib/utils';
+import dynamic from 'next/dynamic'; // Added dynamic
+
+const PatientDetailsModal = dynamic(() => 
+  import('@/components/patient/PatientDetailsModal').then(mod => mod.PatientDetailsModal),
+  { 
+    ssr: false,
+    loading: () => <div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Details...</span></div> 
+  }
+);
 
 export default function SearchPatientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -220,23 +229,28 @@ export default function SearchPatientsPage() {
         </div>
       )}
 
-      {selectedPatientForModal && (
-        <PatientDetailsModal
-          patient={selectedPatientForModal}
-          isOpen={isDetailsModalOpen}
-          onClose={() => setIsDetailsModalOpen(false)}
-          defaultTab={activeModalTab}
-          onPatientUpdate={handlePatientUpdatedInModal}
-        />
-      )}
-      {selectedPatientForModal && (
-        <CreatePaymentSlipModal
-          patient={selectedPatientForModal}
-          isOpen={isPaymentModalOpen}
-          onClose={() => setIsPaymentModalOpen(false)}
-          onSlipCreated={() => { /* Optionally refresh data if needed */ }}
-        />
-      )}
+      <Suspense fallback={<div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Details...</span></div>}>
+        {selectedPatientForModal && isDetailsModalOpen && ( // Ensure modal only renders when open
+          <PatientDetailsModal
+            patient={selectedPatientForModal}
+            isOpen={isDetailsModalOpen}
+            onClose={() => setIsDetailsModalOpen(false)}
+            defaultTab={activeModalTab}
+            onPatientUpdate={handlePatientUpdatedInModal}
+          />
+        )}
+      </Suspense>
+      
+      <Suspense fallback={<div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Payment Form...</span></div>}>
+        {selectedPatientForModal && isPaymentModalOpen && ( // Ensure modal only renders when open
+          <CreatePaymentSlipModal
+            patient={selectedPatientForModal}
+            isOpen={isPaymentModalOpen}
+            onClose={() => setIsPaymentModalOpen(false)}
+            onSlipCreated={() => { /* Optionally refresh data if needed */ }}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -10,7 +11,7 @@ interface PageHeaderCardProps {
   className?: string;
 }
 
-export function PageHeaderCard({ title, description, actions, children, className }: PageHeaderCardProps) {
+const PageHeaderCardComponent: React.FC<PageHeaderCardProps> = ({ title, description, actions, children, className }) => {
   return (
     <Card className={`mb-6 shadow-sm ${className}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -24,3 +25,6 @@ export function PageHeaderCard({ title, description, actions, children, classNam
     </Card>
   );
 }
+
+PageHeaderCardComponent.displayName = 'PageHeaderCard';
+export const PageHeaderCard = React.memo(PageHeaderCardComponent);
