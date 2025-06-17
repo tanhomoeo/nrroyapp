@@ -1,9 +1,9 @@
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // Added useState
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation'; // Added useRouter
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarHeader,
@@ -28,17 +28,17 @@ import {
   DollarSign,
   Building2,
   Settings,
-  LogIn, // Added LogIn icon
-  LogOut, // Added LogOut icon
-  UserCircle, // Added UserCircle icon
+  LogIn,
+  LogOut,
+  UserCircle,
 } from 'lucide-react';
 import { ROUTES, APP_NAME } from '@/lib/constants';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext'; // Added useAuth
-import { auth } from '@/lib/firebase'; // Added auth for signOut
-import { signOut } from 'firebase/auth'; // Added signOut
-import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { Button } from '@/components/ui/button'; // Ensure Button is imported if used directly for sign-out/sign-in
 import { useToast } from '@/hooks/use-toast';
 
 const mainNavItems = [
@@ -117,17 +117,18 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { state: sidebarState, setOpenMobile } = useSidebar(); // Added setOpenMobile
+  const { state: sidebarState, setOpenMobile } = useSidebar();
   const isSidebarIconOnly = sidebarState === 'collapsed';
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const [logoSrc, setLogoSrc] = useState("/icons/app-logo.svg");
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
-      setOpenMobile(false); // Close mobile sidebar on sign out
-      router.push(ROUTES.LOGIN); // Redirect to login page
+      setOpenMobile(false);
+      router.push(ROUTES.LOGIN);
     } catch (error) {
       console.error("Sign out error:", error);
       toast({ title: "Sign Out Failed", description: "Could not sign you out. Please try again.", variant: "destructive" });
@@ -143,14 +144,15 @@ export function AppSidebar() {
         <Link href={ROUTES.DASHBOARD} className="flex items-center">
           <Avatar className="h-10 w-10 rounded-md bg-sidebar-primary/20 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/50">
             <Image
-              src="/icons/app-logo.svg"
+              src={logoSrc}
               alt={`${APP_NAME} Logo`}
               width={32}
               height={32}
               className="object-contain"
               data-ai-hint="clinic health logo"
-              onError={(e) => {
-                console.warn('App logo failed to load from public/icons/app-logo.svg');
+              onError={() => {
+                console.warn('App logo failed to load from public/icons/app-logo.svg. Using placeholder.');
+                setLogoSrc("https://placehold.co/32x32.png?text=TAN"); 
               }}
             />
           </Avatar>
@@ -165,7 +167,7 @@ export function AppSidebar() {
                   asChild
                   isActive={pathname === item.href || (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href))}
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  onClick={() => setOpenMobile(false)} // Close mobile sidebar on item click
+                  onClick={() => setOpenMobile(false)}
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
@@ -191,7 +193,7 @@ export function AppSidebar() {
                     side: 'right',
                     align: 'center'
                   }}
-                  onClick={() => setOpenMobile(false)} // Close mobile sidebar on item click
+                  onClick={() => setOpenMobile(false)}
                 >
                   <Link href={item.href} >
                     <item.icon className="h-5 w-5" />
@@ -216,7 +218,7 @@ export function AppSidebar() {
                   asChild
                   isActive={pathname === item.href}
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  onClick={() => setOpenMobile(false)} // Close mobile sidebar on item click
+                  onClick={() => setOpenMobile(false)}
                 >
                   <Link href={item.href}>
                      <item.icon className="h-5 w-5" />
@@ -229,7 +231,6 @@ export function AppSidebar() {
         </CollapsibleSidebarSection>
       </SidebarContent>
 
-      {/* Authentication Section */}
       <div className={cn("p-2 border-t border-sidebar-border", isSidebarIconOnly && "flex flex-col items-center py-2")}>
         {!loading && user ? (
           <>
@@ -262,7 +263,7 @@ export function AppSidebar() {
             size={isSidebarIconOnly ? "icon" : "default"}
             tooltip={{ children: "Sign In", side: 'right', align: 'center' }}
             onClick={() => {
-              setOpenMobile(false); // Close mobile sidebar on sign-in click
+              setOpenMobile(false);
               router.push(ROUTES.LOGIN);
             }}
           >
