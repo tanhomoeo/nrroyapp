@@ -26,16 +26,7 @@ import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 export default function SearchPatientsPage() {
   const [searchTerm, setSearchTerm] = useState('');

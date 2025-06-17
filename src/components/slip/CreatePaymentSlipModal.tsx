@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState } from 'react'; // Added useState for microphone state
+import React, { useState } from 'react'; 
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,6 +14,7 @@ import { addPaymentSlip, formatCurrency } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Receipt } from 'lucide-react';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 interface CreatePaymentSlipModalProps {
   patient: Patient;
@@ -48,16 +49,6 @@ const paymentSlipSchema = z.object({
 });
 
 type PaymentSlipFormValues = z.infer<typeof paymentSlipSchema>;
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
 
 export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated, visitId }: CreatePaymentSlipModalProps) {
   const { toast } = useToast();

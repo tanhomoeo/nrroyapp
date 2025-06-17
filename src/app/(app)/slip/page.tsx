@@ -11,6 +11,7 @@ import { getPaymentSlips, getPatients, formatDate, formatCurrency, PAYMENT_METHO
 import type { PaymentSlip, Patient, PaymentMethod } from '@/lib/types';
 import { Eye, Loader2, SearchIcon as SearchIconLucide, Filter } from 'lucide-react';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 const PaymentSlipModal = dynamic(() =>
   import('@/components/slip/PaymentSlipModal').then((mod) => mod.PaymentSlipModal),
@@ -30,16 +31,6 @@ const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string 
     .filter(([key]) => key !== '')
     .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, ''>, label }))
 ];
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
 
 export default function SlipSearchPage() {
   const [searchTerm, setSearchTerm] = useState('');

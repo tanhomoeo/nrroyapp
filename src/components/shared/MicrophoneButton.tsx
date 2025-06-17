@@ -50,9 +50,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     if (!SpeechRecognitionAPI) {
       setIsBrowserSupported(false);
-      // Show toast only once, e.g., for the first mic button mounted or based on a global flag.
-      // This example simplifies by potentially showing it per instance if no global flag exists.
-      if (currentListeningField === null && !isListeningGlobal) { // Attempt to show only once
+      if (currentListeningField === null && !isListeningGlobal) { 
           const unsupportedMessage = 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। অনুগ্রহ করে Chrome এর মতো একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।';
           toast({
             title: 'ব্রাউজার সাপোর্ট করে না',
@@ -65,7 +63,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true; // Listen for longer periods, less likely to stop on short pauses
+    recognition.continuous = true; 
     recognition.interimResults = true;
     recognition.lang = 'bn-BD';
 
@@ -74,20 +72,32 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     };
 
     recognition.onresult = (event) => {
-      let interimTranscript = '';
+      let interimTranscriptSegment = '';
       let finalTranscriptSegment = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscriptSegment += event.results[i][0].transcript;
+          finalTranscriptSegment += transcriptPart;
         } else {
-          interimTranscript += event.results[i][0].transcript;
+          interimTranscriptSegment += transcriptPart;
         }
       }
-      if (interimTranscript.trim()) {
-        onTranscript(interimTranscript);
+      
+      if (interimTranscriptSegment.trim()) {
+        try {
+          onTranscript(interimTranscriptSegment);
+        } catch (e: any) {
+          console.error(`Error in onTranscript callback for field ${fieldKey}:`, e);
+          toast({ title: "ভয়েস ইনপুট ত্রুটি", description: `অন্তর্বর্তীকালীন টেক্সট প্রসেস করতে সমস্যা: ${e.message}`, variant: "destructive"});
+        }
       }
       if (finalTranscriptSegment.trim()) {
-        onFinalTranscript(finalTranscriptSegment.trim());
+        try {
+          onFinalTranscript(finalTranscriptSegment.trim());
+        } catch (e: any) {
+          console.error(`Error in onFinalTranscript callback for field ${fieldKey}:`, e);
+          toast({ title: "ভয়েস ইনপুট ত্রুটি", description: `চূড়ান্ত টেক্সট প্রসেস করতে সমস্যা: ${e.message}`, variant: "destructive"});
+        }
       }
     };
 
@@ -124,20 +134,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     };
 
     recognition.onend = () => {
-      // It might stop itself if continuous is true but speech ends for a while.
-      // We only forcefully change global state if this specific instance was supposed to be listening.
-      if (currentListeningField === fieldKey && speechRecognitionRef.current) {
-         // If it ended but was supposed to be listening for this field,
-         // it might be an unexpected stop, so reset.
-         // However, `recognition.stop()` also triggers onend.
-         // We need to differentiate. If `isCurrentlyListeningForThisField` is still true,
-         // it means `recognition.stop()` wasn't called by our toggle.
-         if(isListeningGlobal){ 
-            // This case might indicate an unexpected stop by the browser.
-            // Allow restarting by user.
-         }
-      }
-      // Always ensure global state is reset if this button *was* the active one.
       if (currentListeningField === fieldKey) {
         setIsListeningGlobal(false);
         setCurrentListeningField(null);
@@ -148,14 +144,14 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.stop(); // Ensure it stops cleanly
+        speechRecognitionRef.current.stop(); 
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
         speechRecognitionRef.current.onend = null;
       }
     };
-  }, [toast, onTranscript, onFinalTranscript, fieldKey, currentListeningField, isListeningGlobal, setIsListeningGlobal, setCurrentListeningField]); // Removed targetFieldDescription from deps as it's for UI
+  }, [toast, onTranscript, onFinalTranscript, fieldKey, currentListeningField, isListeningGlobal, setIsListeningGlobal, setCurrentListeningField]);
 
   const toggleListening = () => {
     if (!isBrowserSupported) {
@@ -177,18 +173,10 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     if (isCurrentlyListeningForThisField) {
       speechRecognitionRef.current.stop();
-      // onend will update global state
     } else {
-      // If another field is listening, stop it first.
       if (isListeningGlobal && currentListeningField && currentListeningField !== fieldKey) {
-          // This scenario is tricky with current design where each button has its own recognition instance.
-          // A truly global stop would require a central manager for the SpeechRecognition instance.
-          // For now, we'll rely on the user clicking the active one to stop it, or starting a new one
-          // might implicitly stop the old one if the browser enforces single active recognition.
-          // Or, we could just toast a message.
           toast({title: "সতর্কতা", description: `অন্য একটি ফিল্ড (${currentListeningField}) বর্তমানে শুনছে। প্রথমে সেটি বন্ধ করুন।`, variant: "default"});
-          // To be more robust, one could try to signal the other button to stop.
-          // For now, let's allow this new one to start, browsers usually handle one active session.
+          return; 
       }
       
       navigator.mediaDevices.getUserMedia({ audio: true })
@@ -245,7 +233,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         error && !isCurrentlyListeningForThisField && "text-yellow-600 hover:text-yellow-700",
         className
       )}
-      title={isCurrentlyListeningForThisField ? `${targetFieldDescription}-এর জন্য শোনা বন্ধ করুন` : (error ? `ত্রুটি (পুনরায় চেষ্টা করুন)` : `${targetFieldDescription}-এর জন্য ভয়েস টাইপিং শুরু করুন`)}
+      title={isCurrentlyListeningForThisField ? `${targetFieldDescription || 'এই ফিল্ড'}-এর জন্য শোনা বন্ধ করুন` : (error ? `ত্রুটি (পুনরায় চেষ্টা করুন)` : `${targetFieldDescription || 'এই ফিল্ড'}-এর জন্য ভয়েস টাইপিং শুরু করুন`)}
     >
       {isCurrentlyListeningForThisField ? (
         <Loader2 className="h-4 w-4 animate-spin" />

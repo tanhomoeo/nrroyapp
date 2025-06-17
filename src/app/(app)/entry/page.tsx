@@ -23,6 +23,7 @@ import { format, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 const patientFormSchema = z.object({
   registrationDate: z.date({ required_error: "নিবন্ধনের তারিখ আবশ্যক।" }),
@@ -40,16 +41,6 @@ const patientFormSchema = z.object({
 });
 
 type PatientFormValues = z.infer<typeof patientFormSchema>;
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
 
 export default function PatientEntryPage() {
   const { toast } = useToast();
@@ -137,12 +128,12 @@ export default function PatientEntryPage() {
           const currentSettings = await getClinicSettings();
           await saveClinicSettings({ ...currentSettings, nextDiaryNumber: nextDiaryNumberToSet });
           setCurrentNextDiaryNumber(nextDiaryNumberToSet);
-        } catch (settingsError) {
+        } catch (settingsError: any) {
           console.error("Failed to update next diary number in settings:", settingsError);
           toast({
             title: "সতর্কতা",
-            description: "রোগী নিবন্ধিত হয়েছে, কিন্তু পরবর্তী ডায়েরি নম্বর আপডেট করা যায়নি।",
-            variant: "default",
+            description: `রোগী নিবন্ধিত হয়েছে, কিন্তু পরবর্তী ডায়েরি নম্বর আপডেট করা যায়নি: ${settingsError.message || String(settingsError)}`,
+            variant: "default", // Use default or warning, not destructive
           });
         }
       }
@@ -170,9 +161,17 @@ export default function PatientEntryPage() {
 
     } catch (error: any) {
       console.error('Failed to register patient:', error);
+      let errorMessage = "An unknown error occurred during patient registration.";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        } else if (typeof error === 'string') {
+            errorMessage = error;
+        } else {
+            errorMessage = String(error);
+        }
       toast({
         title: 'নিবন্ধন ব্যর্থ হয়েছে',
-        description: `রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে: ${error.message || 'Unknown error'}`,
+        description: `রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে: ${errorMessage}`,
         variant: 'destructive',
       });
     }

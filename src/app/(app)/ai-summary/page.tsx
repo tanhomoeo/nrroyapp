@@ -1,27 +1,18 @@
 
 'use client';
-import React, { useState, useRef } from 'react'; // Added useState, useRef
+import React, { useState, useRef } from 'react'; 
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageSquareText, Construction } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
-import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // Added
-
-// Helper for appending final transcript (can be moved to a util if used in many places)
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 
 export default function AiSummaryPage() {
-  const [complaintText, setComplaintText] = useState(''); // Added state for textarea
+  const [complaintText, setComplaintText] = useState(''); 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
   
@@ -51,8 +42,8 @@ export default function AiSummaryPage() {
                   rows={6}
                   disabled // Feature is disabled
                   className="bg-muted/50 flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base placeholder-muted-foreground resize-y"
-                  value={complaintText} // Controlled component
-                  onChange={(e) => setComplaintText(e.target.value)} // Allow manual typing if needed
+                  value={complaintText} 
+                  onChange={(e) => setComplaintText(e.target.value)} 
                 />
                 <MicrophoneButton
                     onTranscript={(t) => setComplaintText(prev => prev + t)}
@@ -63,8 +54,7 @@ export default function AiSummaryPage() {
                     setIsListeningGlobal={setIsListeningGlobal}
                     currentListeningField={currentListeningField}
                     setCurrentListeningField={setCurrentListeningField}
-                    className="self-start mt-1 mr-1" // Adjusted margin
-                    // disabled={true} // Match textarea disabled state if strictly needed, but usually mic can still work
+                    className="self-start mt-1 mr-1" 
                 />
             </div>
             <div className="flex justify-end">

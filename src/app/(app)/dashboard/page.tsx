@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 const CreatePaymentSlipModal = dynamic(() =>
   import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
@@ -101,16 +102,6 @@ interface AppointmentDisplayItem {
   paymentAmount?: string;
   createdAt: string;
 }
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<ClinicStats>({

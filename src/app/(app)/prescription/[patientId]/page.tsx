@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 const prescriptionItemSchema = z.object({
   medicineName: z.string().min(1, "Medicine name is required"),
@@ -41,16 +42,6 @@ const prescriptionFormSchema = z.object({
 });
 
 type PrescriptionFormValues = z.infer<typeof prescriptionFormSchema>;
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
 
 export default function PrescriptionPage() {
   const params = useParams();
@@ -126,7 +117,7 @@ export default function PrescriptionPage() {
       } else if (visitId) {
         const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
         if (prescriptionsForVisit.length > 0) {
-          const currentPrescription = prescriptionsForVisit[0]; // Use the most recent one for the visit
+          const currentPrescription = prescriptionsForVisit[0]; 
           setExistingPrescription(currentPrescription);
           initialDiagnosis = currentPrescription.diagnosis || '';
           initialDoctorName = currentPrescription.doctorName || initialDoctorName;
@@ -140,25 +131,21 @@ export default function PrescriptionPage() {
           });
           setShowInstructionsButton(true);
         } else {
-          // No existing prescription for this visit, set initial values
           if (visitForDiagnosis?.symptoms) initialDiagnosis = visitForDiagnosis.symptoms;
-          if (visitForDiagnosis?.diagnosis) initialDiagnosis = visitForDiagnosis.diagnosis || initialDiagnosis; // Prefer existing diagnosis from visit
+          if (visitForDiagnosis?.diagnosis) initialDiagnosis = visitForDiagnosis.diagnosis || initialDiagnosis; 
           form.reset({
-            ...form.getValues(), // keep other form values like type, items, etc.
+            ...form.getValues(), 
             diagnosis: initialDiagnosis,
             doctorName: initialDoctorName,
-            // Reset items if it's a truly new prescription for this visit
             items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
             followUpDays: 7,
             advice: '',
           });
         }
       } else {
-        // No visitId, might be a general prescription (less common flow)
         form.setValue('doctorName', initialDoctorName);
       }
 
-      // Final check for diagnosis if still empty
       if (!form.getValues('diagnosis') && visitForDiagnosis?.symptoms) {
         form.setValue('diagnosis', visitForDiagnosis.symptoms);
       } else if (!form.getValues('diagnosis') && visitForDiagnosis?.diagnosis) {
@@ -200,7 +187,7 @@ export default function PrescriptionPage() {
       if (existingPrescription) {
         await updatePrescription(existingPrescription.id, {
           ...prescriptionDataPayload,
-          serialNumber: existingPrescription.serialNumber, // Keep existing serial
+          serialNumber: existingPrescription.serialNumber, 
         });
         toast({ title: 'প্রেসক্রিপশন আপডেট হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন আপডেট করা হয়েছে।` });
       } else {
@@ -210,10 +197,10 @@ export default function PrescriptionPage() {
         });
         if (!newId) throw new Error("Failed to add prescription");
         currentPrescriptionId = newId;
-        setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: `P${Date.now().toString().slice(-6)}` }); // Update local state with new prescription
+        setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: `P${Date.now().toString().slice(-6)}` }); 
         toast({ title: 'প্রেসক্রিপশন সংরক্ষণ করা হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন সংরক্ষণ করা হয়েছে।` });
       }
-      setShowInstructionsButton(true); // Show button after save/update
+      setShowInstructionsButton(true); 
       window.dispatchEvent(new CustomEvent('firestoreDataChange'));
     } catch (error) {
       console.error('Failed to save prescription:', error);

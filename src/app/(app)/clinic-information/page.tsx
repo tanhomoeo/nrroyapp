@@ -15,6 +15,7 @@ import type { ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Loader2, Save, Building } from 'lucide-react';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 const clinicInfoFormSchema = z.object({
   clinicName: z.string().min(1, "Clinic name is required."),
@@ -26,16 +27,6 @@ const clinicInfoFormSchema = z.object({
 });
 
 type ClinicInfoFormValues = z.infer<typeof clinicInfoFormSchema>;
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
 
 export default function ClinicInformationPage() {
   const { toast } = useToast();

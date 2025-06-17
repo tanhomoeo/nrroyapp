@@ -22,6 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { cn } from '@/lib/utils';
 import { isValid, format as formatDateFns } from 'date-fns';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
+import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
 
 interface PatientDetailsModalProps {
   patient: Patient;
@@ -81,16 +82,6 @@ const visitAndPaymentFormSchema = z.object({
   }
 });
 type VisitAndPaymentFormValues = z.infer<typeof visitAndPaymentFormSchema>;
-
-// Helper for appending final transcript
-const appendFinalTranscript = (currentValue: string | undefined, transcript: string): string => {
-  let textToSet = currentValue || "";
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-     textToSet += " ";
-  }
-  textToSet += transcript + " ";
-  return textToSet;
-};
 
 export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'info', onPatientUpdate }: PatientDetailsModalProps) {
   const [visits, setVisits] = useState<EnrichedVisit[]>([]);
