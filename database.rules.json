@@ -1,6 +1,42 @@
 {
   "rules": {
-    ".read": "now < 1752516000000",  // 2025-7-15
-    ".write": "now < 1752516000000",  // 2025-7-15
+    // By default, disallow all reads and writes
+    ".read": false,
+    ".write": false,
+
+    // Example: Allow authenticated users to read/write their own data
+    // under a "users" node, keyed by their UID.
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+        // You might add .validate rules here to ensure data structure
+        // e.g., ".validate": "newData.hasChildren(['email', 'name'])"
+      }
+    },
+
+    // Example: Allow anyone to read data under "public_content"
+    "public_content": {
+      ".read": true,
+      // Optionally, restrict writes to authenticated users or specific conditions
+      ".write": "auth != null" // Or specific admin UIDs, etc.
+    },
+
+    // Example: Rules for a specific feature, e.g., a "posts" collection
+    "posts": {
+      // Anyone can read posts
+      ".read": true,
+      "$postId": {
+        // Only the authenticated author can write/edit their post
+        // Assumes posts have an 'authorUid' field
+        ".write": "auth != null && (newData.child('authorUid').val() === auth.uid || data.child('authorUid').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['title', 'content', 'authorUid', 'timestamp']) && newData.child('title').isString() && newData.child('title').val().length > 0"
+      }
+    }
+    /*
+    // Your previous rule (for reference - it allows open access until a specific date):
+    // ".read": "now < 1752516000000",  // 2025-7-15
+    // ".write": "now < 1752516000000", // 2025-7-15
+    */
   }
 }
