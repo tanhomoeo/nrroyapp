@@ -7,23 +7,26 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration
-// IMPORTANT: Ensure ALL these details (especially projectId) EXACTLY match
+// TODO: Replace with your app's Firebase project configuration
+// See: https://firebase.google.com/docs/web/learn-more#config-object
+// Ensure these details (especially projectId) EXACTLY match
 // the Firebase project where you've set your Firestore security rules.
 const firebaseConfig = {
-  apiKey: "avjaM8057XSBsNHxr78Ogc45ysDpJio14t6j7iHj", // This was provided by you
-  authDomain: "nrroyapp.firebaseapp.com",
-  // databaseURL: "https://nrroyapp-default-rtdb.asia-southeast1.firebasedatabase.app", // Firestore typically doesn't use databaseURL for web SDK v9+
-  projectId: "nrroyapp", // CRITICAL: Must match the project in Firebase Console
-  storageBucket: "nrroyapp.appspot.com",
-  messagingSenderId: "550385387960",
-  appId: "1:550385387960:web:59ec369942f69e844ae74d",
-  measurementId: "G-CZSB1FRQBL"
+  apiKey: "avjaM8057XSBsNHxr78Ogc45ysDpJio14t6j7iHj", // Your provided API Key
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // Replace YOUR_PROJECT_ID
+  projectId: "YOUR_PROJECT_ID", // Replace YOUR_PROJECT_ID
+  storageBucket: "YOUR_PROJECT_ID.appspot.com", // Replace YOUR_PROJECT_ID
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with your Messaging Sender ID
+  appId: "YOUR_APP_ID", // Replace with your App ID
+  measurementId: "YOUR_MEASUREMENT_ID" // Optional: Replace with your Measurement ID
 };
 
 // Log the projectId to help with debugging connection issues
-if (typeof window !== 'undefined') { // Ensure this runs only in the browser
+if (typeof window !== 'undefined') {
   console.log("Firebase SDK Initializing with Project ID:", firebaseConfig.projectId);
+  if (firebaseConfig.projectId === "YOUR_PROJECT_ID") {
+    console.warn("Firebase config is using placeholder values. Replace them in src/lib/firebase.ts with your actual project details.");
+  }
 }
 
 // Initialize Firebase
@@ -44,15 +47,15 @@ const storage: FirebaseStorage = getStorage(app);
 let analytics: Analytics | undefined;
 if (typeof window !== 'undefined') {
   isSupported().then((supported) => {
-    if (supported && firebaseConfig.measurementId) {
+    if (supported && firebaseConfig.measurementId && firebaseConfig.measurementId !== "YOUR_MEASUREMENT_ID") {
       try {
         analytics = getAnalytics(app);
         console.log("Firebase Analytics Initialized.");
       } catch (error) {
         console.error("Error initializing Firebase Analytics:", error);
       }
-    } else if (firebaseConfig.measurementId) {
-      console.warn("Firebase Analytics is not supported in this environment or measurementId is missing.");
+    } else if (firebaseConfig.measurementId && firebaseConfig.measurementId !== "YOUR_MEASUREMENT_ID") {
+      console.warn("Firebase Analytics is not supported in this environment or measurementId is missing/placeholder.");
     }
   }).catch(error => {
     console.error("Firebase Analytics: Error checking support:", error);
