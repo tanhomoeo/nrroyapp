@@ -4,33 +4,29 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all access
-    // match /{document=**} {
-    //   allow read, write: if false;
-    // }
-
     // DEVELOPMENT/TESTING RULE: Allows all reads and writes.
     // WARNING: Secure these rules before deploying to a live production environment.
     match /{document=**} {
       allow read, write: if true;
     }
 
-    // Example: Allow only authenticated users to read and write their own data
-    // match /users/{userId}/{document=**} {
-    //   allow read, write: if request.auth != null && request.auth.uid == userId;
-    // }
-
-    // Example: Allow authenticated users to read 'patients' but only specific users to write
-    // match /patients/{patientId} {
-    //   allow read: if request.auth != null;
-    //   allow create, update, delete: if request.auth != null && request.auth.token.admin == true; // Requires custom claims
-    // }
-
-    // Secure your 'settings/clinic' document - perhaps only readable by authenticated users
-    // and writable by an admin user.
-    // match /settings/clinic {
-    //   allow read: if request.auth != null;
-    //   allow write: if request.auth != null && request.auth.token.admin == true; // Requires custom claims
-    // }
+    // Example of how to secure rules later (DO NOT USE THESE FOR DEBUGGING PERMISSIONS):
+    //
+    // // Allow only authenticated users to read and write their own data
+    // // match /users/{userId}/{document=**} {
+    // //   allow read, write: if request.auth != null && request.auth.uid == userId;
+    // // }
+    //
+    // // Example: Allow authenticated users to read 'patients' but only specific users to write
+    // // match /patients/{patientId} {
+    // //   allow read: if request.auth != null;
+    // //   allow create, update, delete: if request.auth != null && request.auth.token.admin == true; // Requires custom claims
+    // // }
+    //
+    // // Secure your 'settings/clinic' document
+    // // match /settings/clinic {
+    // //   allow read: if request.auth != null;
+    // //   allow write: if request.auth != null && request.auth.token.admin == true; // Requires custom claims
+    // // }
   }
 }

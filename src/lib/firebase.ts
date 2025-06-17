@@ -11,9 +11,9 @@ import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 // IMPORTANT: Ensure ALL these details (especially projectId) EXACTLY match
 // the Firebase project where you've set your Firestore security rules.
 const firebaseConfig = {
-  apiKey: "avjaM8057XSBsNHxr78Ogc45ysDpJio14t6j7iHj", // Updated with the provided key
+  apiKey: "avjaM8057XSBsNHxr78Ogc45ysDpJio14t6j7iHj", // This was provided by you
   authDomain: "nrroyapp.firebaseapp.com",
-  databaseURL: "https://nrroyapp-default-rtdb.asia-southeast1.firebasedatabase.app", // Note: Firestore typically doesn't use databaseURL for web SDK v9+
+  // databaseURL: "https://nrroyapp-default-rtdb.asia-southeast1.firebasedatabase.app", // Firestore typically doesn't use databaseURL for web SDK v9+
   projectId: "nrroyapp", // CRITICAL: Must match the project in Firebase Console
   storageBucket: "nrroyapp.appspot.com",
   messagingSenderId: "550385387960",
@@ -21,16 +21,20 @@ const firebaseConfig = {
   measurementId: "G-CZSB1FRQBL"
 };
 
+// Log the projectId to help with debugging connection issues
+if (typeof window !== 'undefined') { // Ensure this runs only in the browser
+  console.log("Firebase SDK Initializing with Project ID:", firebaseConfig.projectId);
+}
 
 // Initialize Firebase
 let app: FirebaseApp;
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
-  if (typeof window !== 'undefined') console.log("Firebase App Initialized (New Instance). Project ID:", firebaseConfig.projectId);
+  if (typeof window !== 'undefined') console.log("Firebase App Initialized (New Instance).");
 } else {
   app = getApp();
-  if (typeof window !== 'undefined') console.log("Firebase App Re-initialized (Existing Instance). Project ID:", firebaseConfig.projectId);
+  if (typeof window !== 'undefined') console.log("Firebase App Re-initialized (Existing Instance).");
 }
 
 const auth: Auth = getAuth(app);
