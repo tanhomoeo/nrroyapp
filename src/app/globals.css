@@ -51,13 +51,14 @@ body {
     --sidebar-section-management-bg: 160 50% 93%; /* Light Greenish */
     --sidebar-section-utility-bg: 50 70% 93%; /* Light Yellowish */
 
-    /* Default Submenu Button Styles - Light Theme (Solid) */
+    /* Default Submenu Button Styles - Light Theme (Solid) - Enhanced for 3D */
     --sidebar-button-bg-light: hsl(220 30% 92%);
     --sidebar-button-hover-bg-light: hsl(220 30% 88%);
     --sidebar-button-border: hsl(220 20% 85%);
-    --sidebar-button-shadow: 0 1px 1px hsla(220, 20%, 50%, 0.1), inset 0 1px 0px hsla(0, 0%, 100%, 0.2);
-    --sidebar-button-hover-shadow: 0 2px 3px hsla(220, 20%, 50%, 0.15), inset 0 1px 0px hsla(0, 0%, 100%, 0.2), 0 0 0 1px hsla(220, 20%, 80%, 0.5);
-    --sidebar-button-active-shadow: inset 0 1px 2px hsla(220, 20%, 50%, 0.15);
+    --sidebar-button-shadow: 0 1px 2px hsla(220, 20%, 50%, 0.15), inset 0 1px 0px hsla(0, 0%, 100%, 0.3);
+    --sidebar-button-hover-shadow: 0 2px 4px hsla(220, 20%, 50%, 0.2), inset 0 1px 0px hsla(0, 0%, 100%, 0.3), 0 0 0 1px hsla(220, 20%, 80%, 0.6);
+    --sidebar-button-active-shadow: inset 0 1px 3px hsla(220, 20%, 50%, 0.2);
+
 
     /* Custom Button Theme 1 (Green) - Light */
     --btn-theme1-bg-light: hsl(145 58% 55%);
@@ -133,13 +134,14 @@ body {
     --sidebar-section-management-bg: 160 30% 22%; /* Dark Greenish */
     --sidebar-section-utility-bg: 50 35% 22%; /* Dark Yellowish/Brownish */
     
-    /* Default Submenu Button Styles - Dark Theme (Solid) */
+    /* Default Submenu Button Styles - Dark Theme (Solid) - Enhanced for 3D */
     --sidebar-button-bg-dark: hsl(220 15% 28%);
     --sidebar-button-hover-bg-dark: hsl(220 15% 32%);
     --sidebar-button-border: hsl(220 10% 22%); /* Shared border for dark */
-    --sidebar-button-shadow: 0 1px 1px hsla(220, 10%, 5%, 0.4), inset 0 1px 0px hsla(220, 15%, 40%, 0.1);
-    --sidebar-button-hover-shadow: 0 2px 3px hsla(220, 10%, 5%, 0.5), inset 0 1px 0px hsla(220, 15%, 40%, 0.1), 0 0 0 1px hsla(220, 10%, 20%, 0.7);
-    --sidebar-button-active-shadow: inset 0 1px 2px hsla(220, 10%, 5%, 0.4);
+    --sidebar-button-shadow: 0 1px 2px hsla(220, 10%, 5%, 0.5), inset 0 1px 0px hsla(220, 15%, 40%, 0.15);
+    --sidebar-button-hover-shadow: 0 2px 4px hsla(220, 10%, 5%, 0.6), inset 0 1px 0px hsla(220, 15%, 40%, 0.15), 0 0 0 1px hsla(220, 10%, 20%, 0.8);
+    --sidebar-button-active-shadow: inset 0 1px 3px hsla(220, 10%, 5%, 0.5);
+
 
     /* Custom Button Theme 1 (Green) - Dark */
     --btn-theme1-bg-dark: hsl(145 50% 35%);
@@ -240,22 +242,22 @@ body {
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"] {
     @apply bg-sidebar-primary text-sidebar-primary-foreground;
     background-image: none !important; /* Override gradient/solid for active state */
-    box-shadow: var(--sidebar-button-active-shadow);
+    box-shadow: var(--sidebar-button-active-shadow) !important;
     transform: translateY(0.5px);
     border-color: hsl(var(--sidebar-primary)/0.8) !important;
   }
    [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"]:hover {
     @apply bg-sidebar-primary/90;
     background-image: none !important; /* Override for active state hover */
-    transform: translateY(0px);
-    box-shadow: var(--sidebar-button-hover-shadow);
+    transform: translateY(0.5px); /* Keep it pressed */
+    box-shadow: var(--sidebar-button-active-shadow) !important; /* Maintain active shadow */
   }
 
   /* Custom Button Themes - Solid Colors */
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
-    background-color: var(--btn-theme1-bg-light) !important; /* Use !important to override default button bg */
+    background-color: var(--btn-theme1-bg-light) !important; 
     border-color: var(--btn-theme1-border-light) !important;
-    color: hsl(var(--primary-foreground)) !important; /* Ensure text is readable on custom bg */
+    color: hsl(var(--primary-foreground)) !important; 
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
     background-color: var(--btn-theme1-bg-dark) !important;
@@ -427,4 +429,5 @@ body {
   size: A4 portrait;
   margin: 15mm;
 }
+
 

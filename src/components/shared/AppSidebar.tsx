@@ -42,7 +42,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 const mainNavItems = [
-  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: Home }, // Will use new default solid style
+  { href: ROUTES.DASHBOARD, label: 'ড্যাশবোর্ড', icon: Home, theme: 'theme6' }, 
   { href: ROUTES.PATIENT_ENTRY, label: 'নতুন রোগী ভর্তি', icon: UserPlus, theme: 'theme1' },
   { href: ROUTES.PATIENT_SEARCH, label: 'রোগী অনুসন্ধান', icon: Search, theme: 'theme2' },
   { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks, theme: 'theme3' },
@@ -284,4 +284,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
