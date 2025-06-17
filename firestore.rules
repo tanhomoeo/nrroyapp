@@ -2,42 +2,27 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // By default, deny all reads and writes
-    // This is a "null rule" - no client-side access is allowed.
+    // Allow all reads and writes to all documents for development purposes.
+    // WARNING: This is insecure for production.
+    // Replace with specific rules before going live.
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
 
-    // Example: To allow all authenticated users to read/write everything (DANGEROUS for production)
-    // match /{document=**} {
-    //   allow read, write: if request.auth != null;
-    // }
+    // Example: Allow only authenticated users to read and write their own data in a 'users' collection
+    /*
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+    */
 
-    // Example: To allow anyone to read, but only authenticated users to write (Still very open)
-    // match /{document=**} {
-    //   allow read: if true;
-    //   allow write: if request.auth != null;
-    // }
-
-    // --- MORE SECURE EXAMPLES (Adapt to your specific needs) ---
-
-    // Allow users to read and write their own profile document
-    // match /users/{userId} {
-    //   allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-    //   allow create: if request.auth != null;
-    // }
-
-    // Allow authenticated users to read all 'posts' but only create/update/delete their own
-    // match /posts/{postId} {
-    //   allow read: if request.auth != null;
-    //   allow create: if request.auth != null;
-    //   allow update, delete: if request.auth != null && resource.data.authorId == request.auth.uid;
-    // }
-
-    // For a 'settings' collection, perhaps only readable by all, writable by admin (requires custom claims)
-    // match /settings/{settingId} {
-    //  allow read: if true;
-    //  allow write: if request.auth != null && request.auth.token.admin == true;
-    // }
+    // Example: Allow public read for a 'publicContent' collection, but only authenticated writes
+    /*
+    match /publicContent/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    */
   }
 }
