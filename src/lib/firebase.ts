@@ -1,4 +1,3 @@
-
 // Import the functions you need from the Firebase SDKs you need
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 // Import Firebase services you will use
@@ -7,33 +6,35 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration based on your provided values
 const firebaseConfig = {
   apiKey: "AIzaSyApdat8HDcEQzxt-vDaMvUA41uY4F8fWI8",
   authDomain: "nrroyapp.firebaseapp.com",
   projectId: "nrroyapp",
-  storageBucket: "nrroyapp.firebasestorage.app",
+  storageBucket: "nrroyapp.firebasestorage.app", // Using the value you provided
   messagingSenderId: "550385387960",
   appId: "1:550385387960:web:59ec369942f69e844ae74d",
   measurementId: "G-CZSB1FRQBL"
 };
 
-// --- Log Firebase Configuration for easier debugging ---
+// --- Firebase SDK Configuration Check ---
 if (typeof window !== 'undefined') {
   console.log("====================================================================");
-  console.log("Firebase SDK Initializing with this configuration:");
+  console.log("Firebase SDK Configuration Check (src/lib/firebase.ts):");
   console.log("--------------------------------------------------------------------");
-  console.log("apiKey (first 5 chars):", firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) + "..." : "NOT SET");
-  console.log("authDomain:", firebaseConfig.authDomain);
-  console.log("projectId:", firebaseConfig.projectId);
-  console.log("storageBucket:", firebaseConfig.storageBucket);
-  console.log("messagingSenderId:", firebaseConfig.messagingSenderId);
-  console.log("appId:", firebaseConfig.appId);
-  console.log("measurementId:", firebaseConfig.measurementId);
+  console.log("Project ID:", firebaseConfig.projectId);
+  console.log("API Key (first 5 chars):", firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) + "..." : "NOT SET");
+  console.log("Auth Domain:", firebaseConfig.authDomain);
+  console.log("Storage Bucket:", firebaseConfig.storageBucket);
+  console.log("Messaging Sender ID:", firebaseConfig.messagingSenderId);
+  console.log("App ID:", firebaseConfig.appId);
+  console.log("Measurement ID:", firebaseConfig.measurementId);
   console.log("--------------------------------------------------------------------");
-  console.log("Ensure these details EXACTLY match your Firebase project settings where Firestore rules are published.");
+  console.log("ACTION REQUIRED: Please meticulously verify these values against your Firebase project settings in the Firebase Console (console.firebase.google.com) for the project you intend to use. They MUST match exactly.");
+  console.log("Ensure your Firestore security rules (firestore.rules) are published to THIS SAME project ID ('" + firebaseConfig.projectId + "').");
   console.log("====================================================================");
 }
+
 
 // Initialize Firebase
 let app: FirebaseApp;
@@ -59,7 +60,7 @@ if (typeof window !== 'undefined') {
         console.error("Error initializing Firebase Analytics:", error);
       }
     } else if (supported && !firebaseConfig.measurementId) {
-        console.warn("Firebase Analytics is supported by this browser, but no measurementId was provided in firebaseConfig. Analytics will not be initialized.");
+        console.warn("Firebase Analytics is supported, but no 'measurementId' was provided in firebaseConfig. Analytics will not be initialized.");
     } else {
         console.warn("Firebase Analytics is not supported by this browser or environment.");
     }

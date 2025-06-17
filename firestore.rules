@@ -1,11 +1,10 @@
-
 rules_version = '2';
 
-// Warning: These rules grant open access to your Firestore database.
-// This is suitable for initial development and testing ONLY.
-// For production, you MUST implement more restrictive security rules.
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow all reads and writes to all documents
+    // for development and testing purposes.
+    // WARNING: This is insecure for production.
     match /{document=**} {
       allow read, write: if true;
     }

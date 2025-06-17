@@ -1,9 +1,7 @@
-
 {
   "rules": {
-    // Warning: These rules grant open access to your Realtime Database.
-    // This is suitable for initial development and testing ONLY.
-    // For production, you MUST implement more restrictive security rules.
+    // Allow all reads and writes for development and testing.
+    // WARNING: This is insecure for production.
     ".read": true,
     ".write": true
   }
