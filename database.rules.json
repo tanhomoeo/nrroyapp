@@ -1,29 +1,10 @@
 
 {
   "rules": {
-    // Default development rule:
-    // Allows read and write access for authenticated users to the entire database.
-    // For production, you should define more granular rules.
-    ".read": "auth != null",
-    ".write": "auth != null"
-
-    /*
-    // Example: More granular rules
-    ".read": false,  // Default to no read access
-    ".write": false, // Default to no write access
-    "users": {
-      "$uid": {
-        // Allow a user to read and write their own data
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
-      }
-    },
-    "public_data": {
-      // Allow anyone to read data under "public_data"
-      ".read": true,
-      // Only authenticated users can write to "public_data"
-      ".write": "auth != null"
-    }
-    */
+    // Warning: These rules grant open access to your Realtime Database.
+    // This is suitable for initial development and testing ONLY.
+    // For production, you MUST implement more restrictive security rules.
+    ".read": true,
+    ".write": true
   }
 }
