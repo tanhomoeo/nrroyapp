@@ -3,49 +3,42 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // DEVELOPMENT/TESTING RULE: Allows all reads and writes.
-    // WARNING: THIS IS NOT SECURE FOR PRODUCTION.
-    // You MUST secure these rules before deploying to a live production environment.
+    // WARNING: This rule allows open access to your entire database.
+    // This is suitable for initial development and testing ONLY.
+    // Before deploying to production, you MUST secure your data.
+    // See: https://firebase.google.com/docs/firestore/security/get-started
     match /{document=**} {
       allow read, write: if true;
     }
 
-    // --- EXAMPLES OF SECURE RULES (Commented out) ---
-    // You will need to adapt these to your specific application needs.
+    // --- PRODUCTION RULE EXAMPLES (Commented out by default) ---
+    // You will need to uncomment and adapt these based on your app's needs.
 
-    // Example 1: Allow only authenticated users to read and write their own data
-    // Assumes you have a 'users' collection where document IDs are user UIDs.
-    // match /users/{userId}/{document=**} {
-    //   allow read, write: if request.auth != null && request.auth.uid == userId;
-    // }
+    // Example: Allow only authenticated users to read and write their own data
+    /*
+    match /users/{userId}/{documents=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    */
 
-    // Example 2: Allow authenticated users to read 'patients'
-    // but only specific users (e.g., admins with a custom claim) to write.
-    // match /patients/{patientId} {
-    //   allow read: if request.auth != null;
-    //   // For write operations (create, update, delete), require authentication AND an admin custom claim.
-    //   // You would set this custom claim (e.g., admin: true) for your admin users via Firebase Admin SDK.
-    //   allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
-    // }
-    // match /visits/{visitId} {
-    //   allow read: if request.auth != null;
-    //   allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
-    // }
-    // match /prescriptions/{prescriptionId} {
-    //   allow read: if request.auth != null;
-    //   allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
-    // }
-    // match /paymentSlips/{slipId} {
-    //   allow read: if request.auth != null;
-    //   allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
-    // }
+    // Example: Allow authenticated users to read all 'patients' but only create/update/delete their own
+    /*
+    match /patients/{patientId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null; // Add more specific rules, e.g., request.resource.data.createdBy == request.auth.uid
+      allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid; // Assuming a 'createdBy' field
+    }
+    */
 
-    // Example 3: Secure your 'settings/clinic' document
-    // Allow authenticated users to read, but only admins to write.
-    // match /settings/clinic {
-    //   allow read: if request.auth != null;
-    //   allow write: if request.auth != null && request.auth.token.admin == true;
-    // }
+    // Example: Allow only specific admin UIDs to manage 'settings'
+    /*
+    function isAdmin() {
+      return request.auth.uid in ['ADMIN_UID_1', 'ADMIN_UID_2'];
+    }
+    match /settings/{settingId} {
+      allow read: if request.auth != null; // Or make it public if settings are public
+      allow write: if isAdmin();
+    }
+    */
   }
 }
