@@ -1,11 +1,236 @@
+'use client';
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Mic, Loader2, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-// This component for AI-based text correction via Genkit has been removed.
-// It's being replaced by a browser-native voice-to-text feature
-// implemented in `FloatingVoiceInput.tsx`.
+interface MicrophoneButtonProps {
+  onTranscript: (transcript: string) => void;
+  onFinalTranscript: (transcript: string) => void; // Callback for final transcript segment
+  targetFieldDescription?: string; // e.g., "রোগীর নাম"
+  className?: string;
+  isListeningGlobal: boolean;
+  setIsListeningGlobal: (isListening: boolean) => void;
+  currentListeningField: string | null;
+  setCurrentListeningField: (field: string | null) => void;
+  fieldKey: string; // Unique key for this button's field
+}
 
-// This file can be deleted. It's emptied here to signify its removal
-// and prevent build errors if it's still imported elsewhere by mistake.
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
 
-console.warn("MicrophoneButton.tsx (for Genkit text correction) is deprecated and can be removed. Use FloatingVoiceInput.tsx for voice typing.");
+export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
+  onTranscript,
+  onFinalTranscript,
+  targetFieldDescription,
+  className,
+  isListeningGlobal,
+  setIsListeningGlobal,
+  currentListeningField,
+  setCurrentListeningField,
+  fieldKey,
+}) => {
+  const [isBrowserSupported, setIsBrowserSupported] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const { toast } = useToast();
 
-export {}; // Ensures the file is treated as a module if it's not deleted.
+  const isCurrentlyListeningForThisField = isListeningGlobal && currentListeningField === fieldKey;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      setIsBrowserSupported(false);
+      const unsupportedMessage = 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। অনুগ্রহ করে Chrome এর মতো একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।';
+      if (targetFieldDescription === "রোগীর নাম") { // Show toast only once, e.g., for the first mic button
+          toast({
+            title: 'ব্রাউজার সাপোর্ট করে না',
+            description: unsupportedMessage,
+            variant: 'destructive',
+            duration: 10000,
+          });
+      }
+      return;
+    }
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true; // Keep listening
+    recognition.interimResults = true; // Get results as they come
+    recognition.lang = 'bn-BD';
+
+    recognition.onstart = () => {
+      setError(null);
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscriptSegment = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscriptSegment += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      if (interimTranscript.trim()) {
+        onTranscript(interimTranscript); // Update with interim results
+      }
+      if (finalTranscriptSegment.trim()) {
+        onFinalTranscript(finalTranscriptSegment.trim()); // Send final segment
+      }
+    };
+
+    recognition.onerror = (event) => {
+      let errorMessage = 'একটি অজানা ভয়েস টাইপিং ত্রুটি হয়েছে।';
+      // ... (error messages as before)
+       switch (event.error) {
+        case 'no-speech':
+          errorMessage = 'কোনো কথা শোনা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+          break;
+        case 'audio-capture':
+          errorMessage = 'মাইক্রোফোন অ্যাক্সেস করা যায়নি। অনুগ্রহ করে আপনার মাইক্রোফোনের পারমিশন চেক করুন।';
+          break;
+        case 'not-allowed':
+        case 'service-not-allowed':
+          errorMessage = 'মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংস চেক করুন।';
+          break;
+        case 'network':
+          errorMessage = 'নেটওয়ার্ক সমস্যা। ভয়েস টাইপিংয়ের জন্য ইন্টারনেট সংযোগ প্রয়োজন।';
+          break;
+        default:
+          errorMessage = `একটি ত্রুটি হয়েছে: ${event.error}`;
+      }
+      setError(errorMessage);
+      toast({
+        title: 'ভয়েস টাইপিং ত্রুটি',
+        description: errorMessage,
+        variant: 'destructive',
+        duration: 7000,
+      });
+      if (currentListeningField === fieldKey) {
+        setIsListeningGlobal(false);
+        setCurrentListeningField(null);
+      }
+    };
+
+    recognition.onend = () => {
+      if (currentListeningField === fieldKey) { // Only act if this instance was the one listening
+        setIsListeningGlobal(false);
+        setCurrentListeningField(null);
+      }
+    };
+
+    speechRecognitionRef.current = recognition;
+
+    return () => {
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.abort();
+      }
+    };
+  }, [toast, onTranscript, onFinalTranscript, targetFieldDescription, fieldKey, currentListeningField, setIsListeningGlobal, setCurrentListeningField]);
+
+  const toggleListening = () => {
+    if (!isBrowserSupported) {
+      toast({
+        title: 'ব্রাউজার সাপোর্ট করে না',
+        description: 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই।',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!speechRecognitionRef.current) {
+       toast({
+        title: 'ভয়েস টাইপিং প্রস্তুত নয়',
+        description: error || 'একটি ত্রুটি হয়েছে। অনুগ্রহ করে পৃষ্ঠাটি রিফ্রেশ করুন।',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (isCurrentlyListeningForThisField) {
+      speechRecognitionRef.current.stop();
+      // onend will set global state
+    } else {
+      // Stop any other field if it's listening
+      if (isListeningGlobal && currentListeningField && currentListeningField !== fieldKey) {
+          // This might require a global way to stop the specific instance,
+          // for now, the active instance's onend should handle cleanup.
+          // Or, ensure only one recognition instance is active globally.
+          // The current approach is to have one instance per button but manage global listening state.
+          // Stopping a different instance might be complex. Let's rely on new start aborting others or user clicking active one.
+      }
+      
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          if (speechRecognitionRef.current) {
+            setIsListeningGlobal(true);
+            setCurrentListeningField(fieldKey);
+            speechRecognitionRef.current.start();
+          }
+        })
+        .catch(permissionError => {
+          let permErrorMessage = 'মাইক্রোফোন অ্যাক্সেস করা যায়নি।';
+            if (permissionError.name === 'NotAllowedError' || permissionError.name === 'PermissionDeniedError') {
+              permErrorMessage = 'মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংস চেক করুন।';
+            } else if (permissionError.name === 'NotFoundError' || permissionError.name === 'DevicesNotFoundError') {
+              permErrorMessage = 'কোনো মাইক্রোফোন খুঁজে পাওয়া যায়নি।';
+            }
+            setError(permErrorMessage);
+            toast({
+              title: 'মাইক্রোফোন সমস্যা',
+              description: permErrorMessage,
+              variant: 'destructive',
+            });
+            setIsListeningGlobal(false);
+            setCurrentListeningField(null);
+        });
+    }
+  };
+
+  if (!isBrowserSupported) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={cn("h-full w-auto px-2 text-muted-foreground opacity-50 cursor-not-allowed", className)}
+        disabled
+        title="ভয়েস টাইপিং এই ব্রাউজারে সাপোর্ট করে না"
+      >
+        <Mic className="h-4 w-4" />
+      </Button>
+    );
+  }
+  
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={toggleListening}
+      className={cn(
+        "h-full w-auto px-2",
+        isCurrentlyListeningForThisField && "text-red-500 animate-pulse",
+        error && !isCurrentlyListeningForThisField && "text-yellow-600",
+        className
+      )}
+      title={isCurrentlyListeningForThisField ? `${targetFieldDescription}-এর জন্য শোনা বন্ধ করুন` : (error ? `ত্রুটি (পুনরায় চেষ্টা করুন)` : `${targetFieldDescription}-এর জন্য ভয়েস টাইপিং শুরু করুন`)}
+    >
+      {isCurrentlyListeningForThisField ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : error && !isCurrentlyListeningForThisField ? (
+        <AlertCircle className="h-4 w-4" />
+      ) : (
+        <Mic className="h-4 w-4" />
+      )}
+    </Button>
+  );
+};

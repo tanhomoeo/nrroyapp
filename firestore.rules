@@ -1,45 +1,61 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow all reads and writes for development and testing.
-    // WARNING: Secure these rules before deploying to production!
-    // This rule allows anyone to read and write to any document in your database.
-    // It is highly insecure for a production environment.
+
+    // Default Deny: By default, deny all reads and writes.
+    // This is a good security practice. Specific rules below will grant access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // DEVELOPMENT/TESTING RULE: Allows all reads and writes.
+    // WARNING: Secure these rules before deploying to a live production environment!
+    // To use this, uncomment the block below and comment out or remove the "Default Deny" rule above.
+    /*
     match /{document=**} {
       allow read, write: if true;
     }
+    */
 
-    // Example of more secure rules (commented out):
-    // // Match any document in the 'patients' collection
-    // match /patients/{patientId} {
-    //   // Allow a user to read and write their own patient data
-    //   allow read, write: if request.auth != null && request.auth.uid == patientId;
-    //   // Allow authenticated users to create new patient records (e.g., for themselves)
+    // Example of more secure rules (customize as needed for production):
+    //
+    // // Allow logged-in users to read and write their own data in a 'users' collection
+    // match /users/{userId} {
+    //   allow read, update, delete: if request.auth != null && request.auth.uid == userId;
     //   allow create: if request.auth != null;
     // }
     //
-    // // Match any document in the 'visits' collection
-    // match /visits/{visitId} {
-    //   // Allow authenticated users to create visits
-    //   allow create: if request.auth != null;
-    //   // Allow users to read/write visits associated with their patientId (if patientId is a field in visit doc)
-    //   // Or, if you have a more complex role system, you might check for doctor roles.
-    //   allow read, write: if request.auth != null; // This is still broad, refine based on your app's logic
+    // // Public read for 'publicContent', authenticated write
+    // match /publicContent/{docId} {
+    //   allow read: if true;
+    //   allow write: if request.auth != null;
     // }
     //
-    // // Secure other collections similarly
-    // match /prescriptions/{prescriptionId} {
-    //   allow read, write: if request.auth != null; // Example: only authenticated users
-    // }
-    //
-    // match /paymentSlips/{slipId} {
-    //   allow read, write: if request.auth != null; // Example: only authenticated users
-    // }
-    //
-    // match /settings/clinic {
-    //  allow read: if true; // Clinic settings might be publicly readable
-    //  allow write: if request.auth != null; // Or some admin role: request.auth.token.admin == true
-    // }
+    // Allow authenticated users to read/write patients, visits, prescriptions, paymentSlips
+    // This is a basic example and might need further refinement based on your exact needs
+    // (e.g., only specific doctors can write/update certain fields).
+    match /patients/{patientId} {
+      allow read, write: if request.auth != null;
+    }
+    match /visits/{visitId} {
+      allow read, write: if request.auth != null;
+    }
+    match /prescriptions/{prescriptionId} {
+      allow read, write: if request.auth != null;
+    }
+    match /paymentSlips/{slipId} {
+      allow read, write: if request.auth != null;
+    }
+    match /settings/clinic {
+      allow read: if true; // Clinic settings might be publicly readable
+      allow write: if request.auth != null; // Or restrict to specific admin UIDs
+    }
+
+    // CURRENTLY ACTIVE RULE FOR DEVELOPMENT (allows all access):
+    // Remove or comment out the more specific rules above if you are using this one.
+     match /{document=**} {
+       allow read, write: if true;
+     }
   }
 }

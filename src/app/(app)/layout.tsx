@@ -1,9 +1,8 @@
-
 'use client';
 import React from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/shared/AppSidebar';
-import { FloatingVoiceInput } from '@/components/shared/FloatingVoiceInput'; // Added import
+// FloatingVoiceInput import removed
 
 export default function AppLayout({
   children,
@@ -17,7 +16,7 @@ export default function AppLayout({
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
           {children}
         </main>
-        <FloatingVoiceInput /> {/* Added floating voice input button */}
+        {/* FloatingVoiceInput component removed */}
       </SidebarInset>
     </SidebarProvider>
   );

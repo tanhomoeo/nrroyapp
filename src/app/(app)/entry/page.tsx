@@ -1,6 +1,5 @@
-
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { format, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { MicrophoneButton } from '@/components/shared/MicrophoneButton'; // Added
 
 const patientFormSchema = z.object({
   registrationDate: z.date({ required_error: "নিবন্ধনের তারিখ আবশ্যক।" }),
@@ -45,10 +45,16 @@ export default function PatientEntryPage() {
   const [currentNextDiaryNumber, setCurrentNextDiaryNumber] = useState<number | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
+  // State for global voice input management
+  const [isListeningGlobal, setIsListeningGlobal] = useState(false);
+  const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
+  const activeInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+
+
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
-      registrationDate: new Date(), 
+      registrationDate: new Date(),
       diaryNumberInput: '',
       name: '',
       age: '',
@@ -77,7 +83,6 @@ export default function PatientEntryPage() {
           description: "ক্লিনিকের সেটিংস লোড করা যায়নি। ডিফল্ট মান ব্যবহার করা হচ্ছে।",
           variant: "destructive",
         });
-        // Set a default if settings fail to load, though getClinicSettings should return defaults
         setCurrentNextDiaryNumber(1);
         form.setValue('diaryNumberInput', '1');
       } finally {
@@ -87,17 +92,30 @@ export default function PatientEntryPage() {
     fetchSettings();
   }, [form, toast]);
 
+  const handleVoiceInput = (fieldName: keyof PatientFormValues, transcript: string) => {
+    const currentVal = form.getValues(fieldName) || "";
+    form.setValue(fieldName, currentVal + transcript, { shouldValidate: true });
+  };
+  
+  const handleFinalVoiceInput = (fieldName: keyof PatientFormValues, transcript: string) => {
+    const currentVal = form.getValues(fieldName) || "";
+    // Replace interim results with the final one, or append if it makes more sense.
+    // For simplicity, appending here. You might want to replace the last interim part.
+    form.setValue(fieldName, currentVal.substring(0, currentVal.lastIndexOf(' ') + 1) + transcript + " ", { shouldValidate: true });
+  };
+
+
   const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
       const parsedDiaryNumber = data.diaryNumberInput ? parseInt(data.diaryNumberInput, 10) : undefined;
-      
-      if (data.diaryNumberInput && (isNaN(parsedDiaryNumber as number) || (parsedDiaryNumber as number) < 0) ) {
-          toast({
-            title: 'অবৈধ ডায়েরি নম্বর',
-            description: 'ডায়েরি নম্বর একটি সংখ্যা হতে হবে।',
-            variant: 'destructive',
-          });
-          return;
+
+      if (data.diaryNumberInput && (isNaN(parsedDiaryNumber as number) || (parsedDiaryNumber as number) < 0)) {
+        toast({
+          title: 'অবৈধ ডায়েরি নম্বর',
+          description: 'ডায়েরি নম্বর একটি সংখ্যা হতে হবে।',
+          variant: 'destructive',
+        });
+        return;
       }
 
       const newPatientData: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -114,56 +132,55 @@ export default function PatientEntryPage() {
         villageUnion: data.villageUnion,
         diaryNumber: parsedDiaryNumber,
       };
-      
-      const patientId = await addPatient(newPatientData); 
 
-      if (parsedDiaryNumber !== undefined && currentNextDiaryNumber !== null && parsedDiaryNumber === currentNextDiaryNumber) {
-        const newNextDiaryNumber = parsedDiaryNumber + 1;
+      const patientId = await addPatient(newPatientData);
+      // The error throwing is now inside addPatient, so no need for `if (!patientId)` check here
+
+      if (parsedDiaryNumber !== undefined && currentNextDiaryNumber !== null && parsedDiaryNumber >= currentNextDiaryNumber) {
+         const newNextDiaryNumber = parsedDiaryNumber + 1;
         try {
           const currentSettings = await getClinicSettings();
           await saveClinicSettings({ ...currentSettings, nextDiaryNumber: newNextDiaryNumber });
-          setCurrentNextDiaryNumber(newNextDiaryNumber);
+          setCurrentNextDiaryNumber(newNextDiaryNumber); // Update local state
         } catch (settingsError) {
-            console.error("Failed to update next diary number in settings:", settingsError);
-            toast({
-              title: "সতর্কতা",
-              description: "রোগী নিবন্ধিত হয়েছে, কিন্তু পরবর্তী ডায়েরি নম্বর আপডেট করা যায়নি।",
-              variant: "default", // Use default or warning variant
-            });
+          console.error("Failed to update next diary number in settings:", settingsError);
+          toast({
+            title: "সতর্কতা",
+            description: "রোগী নিবন্ধিত হয়েছে, কিন্তু পরবর্তী ডায়েরি নম্বর আপডেট করা যায়নি।",
+            variant: "default",
+          });
         }
       }
+
 
       toast({
         title: 'রোগী নিবন্ধিত',
         description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${parsedDiaryNumber?.toLocaleString('bn-BD') || 'N/A'}`,
       });
 
-      form.reset({ 
-          registrationDate: new Date(),
-          diaryNumberInput: (currentNextDiaryNumber !== null && parsedDiaryNumber !== undefined && parsedDiaryNumber === currentNextDiaryNumber) 
-                            ? (currentNextDiaryNumber + 1).toString() 
+      form.reset({
+        registrationDate: new Date(),
+        diaryNumberInput: (currentNextDiaryNumber !== null && parsedDiaryNumber !== undefined && parsedDiaryNumber >= (currentNextDiaryNumber -1) ) // if it was current, next one is +1
+                            ? (parsedDiaryNumber + 1).toString() 
                             : currentNextDiaryNumber?.toString() || '',
-          name: '',
-          age: '',
-          gender: '',
-          occupation: '',
-          phone: '',
-          guardianRelation: '',
-          guardianName: '',
-          district: '',
-          thanaUpazila: '',
-          villageUnion: '',
-      }); 
+        name: '',
+        age: '',
+        gender: '',
+        occupation: '',
+        phone: '',
+        guardianRelation: '',
+        guardianName: '',
+        district: '',
+        thanaUpazila: '',
+        villageUnion: '',
+      });
       router.push(`${ROUTES.PATIENT_SEARCH}?phone=${newPatientData.phone}`);
 
     } catch (error: any) {
       console.error('Failed to register patient:', error);
       let errorMessage = 'রোগী নিবন্ধন করার সময় একটি ত্রুটি ঘটেছে।';
       if (error.message) {
-          errorMessage = `নিবন্ধন ব্যর্থ: ${error.message}`;
-      }
-      if (error.code) { // Firebase errors often have a code
-          errorMessage += ` (Code: ${error.code})`;
+        errorMessage = `নিবন্ধন ব্যর্থ: ${error.message}`;
       }
       toast({
         title: 'নিবন্ধন ব্যর্থ হয়েছে',
@@ -175,19 +192,19 @@ export default function PatientEntryPage() {
 
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
-  
+
   if (isLoadingSettings) {
-      return (
-        <div className="flex h-screen items-center justify-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-3 text-lg text-foreground">সেটিংস লোড হচ্ছে...</p>
-        </div>
-      );
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-lg text-foreground">সেটিংস লোড হচ্ছে...</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <Form {...form}> 
+      <Form {...form}>
         <PageHeaderCard
           title="নতুন রোগী নিবন্ধন"
           description="নতুন রোগী নিবন্ধন করতে নিচের বিবরণগুলি পূরণ করুন। ডেটা সিস্টেমে সংরক্ষিত হবে।"
@@ -209,7 +226,7 @@ export default function PatientEntryPage() {
                           className={cn(
                             "w-full justify-start text-left font-normal",
                             !field.value && "text-muted-foreground",
-                            inputWrapperClass 
+                            inputWrapperClass
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
@@ -245,7 +262,7 @@ export default function PatientEntryPage() {
                     <FormLabel>ডায়েরি নম্বর (ঐচ্ছিক)</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="ডায়েরি নম্বর লিখুন" {...field} type="number" className={inputFieldClass} id="patientDiaryNumberEntry"/>
+                        <Input placeholder="ডায়েরি নম্বর লিখুন" {...field} type="number" className={inputFieldClass} id="patientDiaryNumberEntry" />
                       </FormControl>
                     </div>
                     <FormDescription className="text-xs">সিস্টেম পরবর্তী নম্বর: {currentNextDiaryNumber?.toLocaleString('bn-BD')}</FormDescription>
@@ -253,8 +270,7 @@ export default function PatientEntryPage() {
                   </FormItem>
                 )}
               />
-               <div className="md:col-span-1 hidden md:block"></div> {/* Spacer */}
-
+              <div className="md:col-span-1 hidden md:block"></div> {/* Spacer */}
 
               <FormField
                 control={form.control}
@@ -264,8 +280,19 @@ export default function PatientEntryPage() {
                     <FormLabel>পুরো নাম <span className="text-destructive">*</span></FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="পুরো নাম লিখুন" {...field} id="patientNameEntry" className={inputFieldClass} />
+                        <Input placeholder="পুরো নাম লিখুন" {...field} id="patientNameEntry" className={inputFieldClass} 
+                         onFocus={(e) => activeInputRef.current = e.target} />
                       </FormControl>
+                      <MicrophoneButton
+                        onTranscript={(t) => form.setValue('name', (form.getValues('name') || "") + t)}
+                        onFinalTranscript={(t) => handleFinalVoiceInput('name', t)}
+                        targetFieldDescription="রোগীর নাম"
+                        fieldKey="patientNameEntry"
+                        isListeningGlobal={isListeningGlobal}
+                        setIsListeningGlobal={setIsListeningGlobal}
+                        currentListeningField={currentListeningField}
+                        setCurrentListeningField={setCurrentListeningField}
+                      />
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -278,11 +305,11 @@ export default function PatientEntryPage() {
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
                     <FormLabel>বয়স</FormLabel>
-                     <div className={inputWrapperClass}>
-                        <FormControl className="flex-1">
-                          <Input placeholder="বয়স লিখুন" {...field} type="text" className={inputFieldClass} id="patientAgeEntry"/>
-                        </FormControl>
-                     </div>
+                    <div className={inputWrapperClass}>
+                      <FormControl className="flex-1">
+                        <Input placeholder="বয়স লিখুন" {...field} type="text" className={inputFieldClass} id="patientAgeEntry" />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -315,7 +342,7 @@ export default function PatientEntryPage() {
                 control={form.control}
                 name="occupation"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-1"> 
+                  <FormItem className="md:col-span-1">
                     <FormLabel>রোগীর পেশা (ঐচ্ছিক)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
@@ -347,26 +374,26 @@ export default function PatientEntryPage() {
                   <FormItem className="md:col-span-1">
                     <FormLabel>ফোন নম্বর <span className="text-destructive">*</span></FormLabel>
                     <div className={inputWrapperClass}>
-                        <FormControl className="flex-1">
-                            <Input type="tel" placeholder="যেমন: 01XXXXXXXXX" {...field} className={inputFieldClass} id="patientPhoneEntry"/>
-                        </FormControl>
+                      <FormControl className="flex-1">
+                        <Input type="tel" placeholder="যেমন: 01XXXXXXXXX" {...field} className={inputFieldClass} id="patientPhoneEntry" />
+                      </FormControl>
                     </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="guardianRelation"
                 render={({ field }) => (
-                  <FormItem className="space-y-3 md:col-span-1"> {/* Adjusted span */}
+                  <FormItem className="space-y-3 md:col-span-1">
                     <FormLabel>অভিভাবকের সম্পর্ক</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        value={field.value || ''} // ensure value is not undefined
-                        className="flex space-x-4 pt-1" 
+                        value={field.value || ''}
+                        className="flex space-x-4 pt-1"
                         id="patientGuardianRelationEntry"
                       >
                         <FormItem className="flex items-center space-x-2 space-y-0">
@@ -392,12 +419,23 @@ export default function PatientEntryPage() {
                 control={form.control}
                 name="guardianName"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2"> {/* Adjusted span */}
+                  <FormItem className="md:col-span-2">
                     <FormLabel>অভিভাবকের নাম (ঐচ্ছিক)</FormLabel>
-                     <div className={inputWrapperClass}>
-                        <FormControl className="flex-1">
-                          <Input placeholder="অভিভাবকের নাম লিখুন" {...field} id="guardianNameEntry" className={inputFieldClass}/>
-                        </FormControl>
+                    <div className={inputWrapperClass}>
+                      <FormControl className="flex-1">
+                        <Input placeholder="অভিভাবকের নাম লিখুন" {...field} id="guardianNameEntry" className={inputFieldClass}
+                         onFocus={(e) => activeInputRef.current = e.target} />
+                      </FormControl>
+                      <MicrophoneButton
+                        onTranscript={(t) => form.setValue('guardianName', (form.getValues('guardianName') || "") + t)}
+                        onFinalTranscript={(t) => handleFinalVoiceInput('guardianName', t)}
+                        targetFieldDescription="অভিভাবকের নাম"
+                        fieldKey="guardianNameEntry"
+                        isListeningGlobal={isListeningGlobal}
+                        setIsListeningGlobal={setIsListeningGlobal}
+                        currentListeningField={currentListeningField}
+                        setCurrentListeningField={setCurrentListeningField}
+                      />
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -410,25 +448,47 @@ export default function PatientEntryPage() {
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
                     <FormLabel>গ্রাম / ইউনিয়ন (ঐচ্ছিক)</FormLabel>
-                     <div className={inputWrapperClass}>
-                        <FormControl className="flex-1">
-                           <Input placeholder="গ্রাম বা ইউনিয়ন লিখুন" {...field} id="villageUnionEntry" className={inputFieldClass}/>
-                        </FormControl>
+                    <div className={inputWrapperClass}>
+                      <FormControl className="flex-1">
+                        <Input placeholder="গ্রাম বা ইউনিয়ন লিখুন" {...field} id="villageUnionEntry" className={inputFieldClass}
+                         onFocus={(e) => activeInputRef.current = e.target} />
+                      </FormControl>
+                      <MicrophoneButton
+                        onTranscript={(t) => form.setValue('villageUnion', (form.getValues('villageUnion') || "") + t)}
+                        onFinalTranscript={(t) => handleFinalVoiceInput('villageUnion', t)}
+                        targetFieldDescription="গ্রাম/ইউনিয়ন"
+                        fieldKey="villageUnionEntry"
+                        isListeningGlobal={isListeningGlobal}
+                        setIsListeningGlobal={setIsListeningGlobal}
+                        currentListeningField={currentListeningField}
+                        setCurrentListeningField={setCurrentListeningField}
+                      />
                     </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-               <FormField
+              <FormField
                 control={form.control}
                 name="thanaUpazila"
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
                     <FormLabel>থানা / উপজেলা (ঐচ্ছিক)</FormLabel>
-                     <div className={inputWrapperClass}>
-                        <FormControl className="flex-1">
-                           <Input placeholder="থানা বা উপজেলা লিখুন" {...field} id="thanaUpazilaEntry" className={inputFieldClass}/>
-                        </FormControl>
+                    <div className={inputWrapperClass}>
+                      <FormControl className="flex-1">
+                        <Input placeholder="থানা বা উপজেলা লিখুন" {...field} id="thanaUpazilaEntry" className={inputFieldClass}
+                         onFocus={(e) => activeInputRef.current = e.target} />
+                      </FormControl>
+                      <MicrophoneButton
+                        onTranscript={(t) => form.setValue('thanaUpazila', (form.getValues('thanaUpazila') || "") + t)}
+                        onFinalTranscript={(t) => handleFinalVoiceInput('thanaUpazila', t)}
+                        targetFieldDescription="থানা/উপজেলা"
+                        fieldKey="thanaUpazilaEntry"
+                        isListeningGlobal={isListeningGlobal}
+                        setIsListeningGlobal={setIsListeningGlobal}
+                        currentListeningField={currentListeningField}
+                        setCurrentListeningField={setCurrentListeningField}
+                      />
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -440,10 +500,21 @@ export default function PatientEntryPage() {
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
                     <FormLabel>জেলা (ঐচ্ছিক)</FormLabel>
-                     <div className={inputWrapperClass}>
-                        <FormControl className="flex-1">
-                           <Input placeholder="জেলা লিখুন" {...field} id="districtEntry" className={inputFieldClass}/>
-                        </FormControl>
+                    <div className={inputWrapperClass}>
+                      <FormControl className="flex-1">
+                        <Input placeholder="জেলা লিখুন" {...field} id="districtEntry" className={inputFieldClass}
+                         onFocus={(e) => activeInputRef.current = e.target} />
+                      </FormControl>
+                      <MicrophoneButton
+                        onTranscript={(t) => form.setValue('district', (form.getValues('district') || "") + t)}
+                        onFinalTranscript={(t) => handleFinalVoiceInput('district', t)}
+                        targetFieldDescription="জেলা"
+                        fieldKey="districtEntry"
+                        isListeningGlobal={isListeningGlobal}
+                        setIsListeningGlobal={setIsListeningGlobal}
+                        currentListeningField={currentListeningField}
+                        setCurrentListeningField={setCurrentListeningField}
+                      />
                     </div>
                     <FormMessage />
                   </FormItem>
