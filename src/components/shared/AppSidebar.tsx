@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
-import { Button } from '@/components/ui/button'; // Ensure Button is imported if used directly for sign-out/sign-in
+import { Button } from '@/components/ui/button'; 
 import { useToast } from '@/hooks/use-toast';
 
 const mainNavItems = [
@@ -80,11 +80,11 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
         className={cn(
           "flex items-center w-full p-2 rounded-md text-sidebar-foreground text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
           "transition-colors duration-150",
-          isSidebarIconOnly && "hidden",
-          isOpen && !isSidebarIconOnly && "bg-sidebar-accent/60",
-          !isOpen && headerClassName,
-          isOpen ? "hover:bg-sidebar-accent/70" : (headerClassName ? "" : "hover:bg-sidebar-accent"),
-          headerClassName
+          isSidebarIconOnly && "hidden", // Hide header button if sidebar is collapsed to icon only
+          isOpen && !isSidebarIconOnly && "bg-sidebar-accent/60", // Default open state background
+          !isOpen && headerClassName, // Apply custom header class when closed
+          isOpen ? "hover:bg-sidebar-accent/70" : (headerClassName ? "" : "hover:bg-sidebar-accent"), // Hover logic
+          headerClassName // Always apply custom header class
         )}
         aria-expanded={isOpen}
         aria-controls={`section-content-${title.replace(/\s+/g, '-').toLowerCase()}`}
@@ -121,7 +121,7 @@ export function AppSidebar() {
   const isSidebarIconOnly = sidebarState === 'collapsed';
   const { user, loading } = useAuth();
   const { toast } = useToast();
-  const [logoSrc, setLogoSrc] = useState("/icons/app-logo.svg");
+  const [logoSrc, setLogoSrc] = useState("/icons/icon.png"); // Use new logo path
 
   const handleSignOut = async () => {
     try {
@@ -151,7 +151,7 @@ export function AppSidebar() {
               className="object-contain"
               data-ai-hint="clinic health logo"
               onError={() => {
-                console.warn('App logo failed to load from public/icons/app-logo.svg. Using placeholder.');
+                console.warn('App logo failed to load from public/icons/icon.png. Using placeholder.');
                 setLogoSrc("https://placehold.co/32x32.png?text=TAN"); 
               }}
             />

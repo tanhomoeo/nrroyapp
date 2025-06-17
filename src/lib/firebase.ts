@@ -11,7 +11,7 @@ import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 // IMPORTANT: It's highly recommended to use environment variables for these values
 // instead of hardcoding them, especially for the API key.
-// Example using environment variables (requires .env.local file):
+// Example using environment variables (requires .env.local file and process.env.NEXT_PUBLIC_... prefix):
 // const firebaseConfig = {
 //   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
 //   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -19,7 +19,7 @@ import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 //   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 //   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
 //   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-//   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+//   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, // Optional
 // };
 
 const firebaseConfig = {
@@ -27,10 +27,10 @@ const firebaseConfig = {
   authDomain: "nrroyapp.firebaseapp.com",
   databaseURL: "https://nrroyapp-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "nrroyapp",
-  storageBucket: "nrroyapp.appspot.com", // Corrected to .appspot.com
+  storageBucket: "nrroyapp.appspot.com", // Corrected to .appspot.com standard
   messagingSenderId: "550385387960",
   appId: "1:550385387960:web:59ec369942f69e844ae74d",
-  measurementId: "G-CZSB1FRQBL"
+  measurementId: "G-CZSB1FRQBL" // Optional, but included if you use Analytics
 };
 
 
@@ -51,7 +51,7 @@ const storage: FirebaseStorage = getStorage(app);
 
 let analytics: Analytics | undefined;
 if (typeof window !== 'undefined') {
-  // Check if analytics is supported by the browser
+  // Check if analytics is supported by the browser and measurementId is present
   isSupported().then((supported) => {
     if (supported && firebaseConfig.measurementId) {
       try {
@@ -62,6 +62,8 @@ if (typeof window !== 'undefined') {
       }
     } else if (firebaseConfig.measurementId) {
       console.warn("Firebase Analytics is not supported in this environment or measurementId is missing.");
+    } else {
+      // console.log("Firebase Analytics not configured (no measurementId).");
     }
   }).catch(error => {
     console.error("Firebase Analytics: Error checking support:", error);

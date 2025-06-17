@@ -36,20 +36,20 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar specific colors - Light Theme */
-    --sidebar-background: hsl(217, 90%, 94%);
-    --sidebar-foreground: 220 25% 30%;
-    --sidebar-primary: hsl(var(--primary));
+    --sidebar-background: hsl(217, 90%, 94%); /* Light blue-ish gray */
+    --sidebar-foreground: 220 25% 30%; /* Darker text for readability */
+    --sidebar-primary: hsl(var(--primary)); /* Use main primary color */
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: 220 30% 90%;
-    --sidebar-accent-foreground: hsl(var(--primary));
-    --sidebar-border: 220 20% 88%;
+    --sidebar-accent: 220 30% 90%; /* Light grayish blue for general accents */
+    --sidebar-accent-foreground: hsl(var(--primary)); /* Primary color for text on accent */
+    --sidebar-border: 220 20% 88%; /* Slightly darker for borders */
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-light: hsl(217, 95%, 97%);
+    --sidebar-gradient-end-light: hsl(217, 95%, 97%); /* Slightly lighter end for gradient */
 
     /* Section Header Backgrounds - Light Theme */
-    --sidebar-section-main-bg: 210 80% 93%;
-    --sidebar-section-management-bg: 160 50% 93%;
-    --sidebar-section-utility-bg: 50 70% 93%;
+    --sidebar-section-main-bg: 210 80% 93%; /* Light Blue */
+    --sidebar-section-management-bg: 160 50% 93%; /* Light Greenish */
+    --sidebar-section-utility-bg: 50 70% 93%; /* Light Yellowish */
 
     /* Submenu Button Styles - Light Theme (Greenish) */
     --sidebar-button-gradient-start-light: hsl(145 55% 90%); /* Slightly darker light green for top */
@@ -90,21 +90,21 @@ body {
     --chart-5: 320 75% 60%;
 
     /* Sidebar specific colors for dark mode */
-    --sidebar-background: hsl(217, 30%, 18%);
-    --sidebar-foreground: 210 20% 85%;
+    --sidebar-background: hsl(217, 30%, 18%); /* Darker slate blue */
+    --sidebar-foreground: 210 20% 85%; /* Light gray for text */
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: 220 15% 25%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 15% 20%;
+    --sidebar-accent: 220 15% 25%; /* Slightly lighter dark slate for accents */
+    --sidebar-accent-foreground: 0 0% 100%; /* White text on accent */
+    --sidebar-border: 220 15% 20%; /* Darker border */
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-dark: hsl(217, 25%, 14%);
+    --sidebar-gradient-end-dark: hsl(217, 25%, 14%); /* Even darker end for gradient */
 
     /* Section Header Backgrounds - Dark Theme */
-    --sidebar-section-main-bg: 210 40% 22%;
-    --sidebar-section-management-bg: 160 30% 22%;
-    --sidebar-section-utility-bg: 50 35% 22%;
-
+    --sidebar-section-main-bg: 210 40% 22%; /* Dark Blue */
+    --sidebar-section-management-bg: 160 30% 22%; /* Dark Greenish */
+    --sidebar-section-utility-bg: 50 35% 22%; /* Dark Yellowish/Brownish */
+    
     /* Submenu Button Styles - Dark Theme (Greenish) */
     --sidebar-button-gradient-start-dark: hsl(145 35% 28%);
     --sidebar-button-gradient-end-dark: hsl(145 35% 32%);
