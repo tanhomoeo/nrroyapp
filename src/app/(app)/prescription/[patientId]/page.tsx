@@ -232,8 +232,8 @@ export default function PrescriptionPage() {
   }
 
   return (
-    <div className="space-y-6 print:space-y-2">
-      <PageHeaderCard
+ <div className="space-y-6 print:space-y-2">
+ <PageHeaderCard
         title="প্রেসক্রিপশন শিট"
         description={`রোগী: ${patient.name} | ডায়েরি: ${patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'} | তারিখ: ${currentVisit ? format(new Date(currentVisit.visitDate), "PP", {locale: bn}) : format(new Date(), "PP", {locale: bn})}`}
         className="hide-on-print"
@@ -243,7 +243,7 @@ export default function PrescriptionPage() {
           </div>
         }
       />
-
+      
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Form {...form}>

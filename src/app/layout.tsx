@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="bn" className={`${poppins.variable} ${pt_sans.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/icons/favicon.ico" sizes="any" />
+        {/* Favicon link removed, as it's handled by metadata.icons */}
       </head>
       <body className="font-body antialiased">
         <ThemeProvider
