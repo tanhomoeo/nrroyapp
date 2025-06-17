@@ -2,9 +2,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-// Import Firestore and db for the test
-import { doc, getDoc, setDoc } from 'firebase/firestore'; // Added setDoc for a write test
-import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { db, firebaseConfig } from '@/lib/firebase'; // Import firebaseConfig for alert
 
 export default function Home() {
   const router = useRouter();
@@ -13,47 +12,54 @@ export default function Home() {
     const testFirestoreAccess = async () => {
       const testDocPath = "__test_permissions__/testDoc";
       console.log(`Attempting Firestore access test for path: ${testDocPath}`);
-      alert(`Attempting a test read and write from Firestore to check permissions. Path: ${testDocPath}. Check the browser console (F12) for detailed logs.`);
+      const testDocId = "testDocument123";
+      const testDocRef = doc(db, "__test_permissions__", testDocId);
+
+      let alertMessage = "Firebase Connection & Permission Test:\n";
+      alertMessage += "Using Project ID from config: " + firebaseConfig.projectId + "\n\n";
 
       try {
         // Test Write
-        console.log("Attempting Firestore WRITE to:", testDocPath);
-        const testDocRefWrite = doc(db, "__test_permissions__", "testDoc_WriteTest");
-        await setDoc(testDocRefWrite, { timestamp: new Date().toISOString(), status: "Write test successful" });
-        const writeSuccessMsg = `Firestore WRITE test to ${testDocPath}_WriteTest: SUCCESSFUL.`;
+        console.log("Attempting Firestore WRITE to:", testDocRef.path);
+        await setDoc(testDocRef, {
+          timestamp: new Date().toISOString(),
+          status: "Write test successful",
+          random: Math.random()
+        });
+        const writeSuccessMsg = `Firestore WRITE test to ${testDocRef.path}: SUCCESSFUL.`;
         console.log(writeSuccessMsg);
-        alert(writeSuccessMsg);
+        alertMessage += writeSuccessMsg + "\n";
 
         // Test Read
-        console.log("Attempting Firestore READ from:", testDocPath); // Using a slightly different path for read test to ensure it's not a cached read if write failed silently
-        const testDocRefRead = doc(db, "__test_permissions__", "testDoc_ReadTest");
-        // Ensure document exists for read test, or create it if it doesn't
-        try {
-          await setDoc(testDocRefRead, { status: "Read test document pre-creation" }, { merge: true });
-        } catch (setupError) {
-          console.warn("Could not pre-create document for read test, continuing read attempt:", setupError);
-        }
-        const docSnap = await getDoc(testDocRefRead);
-        let readResult = "NOT FOUND (which is okay for this permission test, as long as no permission error occurred)";
+        console.log("Attempting Firestore READ from:", testDocRef.path);
+        const docSnap = await getDoc(testDocRef);
+        let readResult = "NOT FOUND (This is okay if write succeeded, means read also likely allowed)";
         if (docSnap.exists()) {
           readResult = `FOUND with data: ${JSON.stringify(docSnap.data())}`;
         }
-        const readSuccessMsg = `Firestore READ test from ${testDocPath}_ReadTest: SUCCESSFUL. Document ${readResult}.`;
+        const readSuccessMsg = `Firestore READ test from ${testDocRef.path}: SUCCESSFUL. Document ${readResult}.`;
         console.log(readSuccessMsg);
-        alert(readSuccessMsg);
-        
-        const finalSuccessMsg = "Firebase connection and basic Firestore read/write permissions appear to be working based on the homepage test. If errors persist elsewhere, they might be related to specific complex queries, rules on different paths, or other Firebase services.";
+        alertMessage += readSuccessMsg + "\n";
+
+        // Test Delete
+        console.log("Attempting Firestore DELETE for:", testDocRef.path);
+        await deleteDoc(testDocRef);
+        const deleteSuccessMsg = `Firestore DELETE test for ${testDocRef.path}: SUCCESSFUL.`;
+        console.log(deleteSuccessMsg);
+        alertMessage += deleteSuccessMsg + "\n";
+
+        const finalSuccessMsg = "\nAll Firestore test operations (WRITE, READ, DELETE) appear to be working based on the homepage test. If errors persist elsewhere, they might be related to specific complex queries, other Firebase services, or very subtle configuration issues not caught by this basic test.";
         console.log(finalSuccessMsg);
-        alert(finalSuccessMsg + "\n\nRedirecting to dashboard...");
+        alertMessage += finalSuccessMsg;
+        alert(alertMessage + "\n\nRedirecting to dashboard...");
         router.replace('/dashboard');
 
       } catch (error: any) {
         console.error("Firestore access test FAILED:", error);
-        let alertMessage = `Firestore access test FAILED: ${error.message}. Code: ${error.code || 'N/A'}.`;
+        alertMessage += `\nFirestore access test FAILED: ${error.message}. Code: ${error.code || 'N/A'}.\n`;
         if (error.message && error.message.toLowerCase().includes("missing or insufficient permissions")) {
           alertMessage += `
-
-This STRONGLY confirms a Firebase permission issue.
+This STRONGLY confirms a Firebase permission issue OR a mismatch between your client config and the project where rules are published.
 PLEASE VERY CAREFULLY:
 1. VERIFY that ALL Firebase configuration values logged in the console (from 'src/lib/firebase.ts') EXACTLY match your Firebase project ID '${firebaseConfig.projectId}' in the Firebase Console. Check apiKey, authDomain, storageBucket, messagingSenderId, appId.
 2. ENSURE you have PUBLISHED the OPEN Firestore rules ('allow read, write: if true;') to THAT EXACT project ID ('${firebaseConfig.projectId}') in the Firebase Console (Firestore Database -> Rules tab).
@@ -63,8 +69,8 @@ PLEASE VERY CAREFULLY:
           alertMessage += " An unexpected error occurred. Check the browser console (F12) for more details.";
         }
         alert(alertMessage);
-        // Optionally, you might still want to redirect to see if other parts work, or halt here.
-        // router.replace('/dashboard'); 
+        // Halt or redirect based on your preference for error handling
+        // router.replace('/dashboard'); // Or maybe not redirect on failure
       }
     };
 
@@ -81,7 +87,3 @@ PLEASE VERY CAREFULLY:
     </div>
   );
 }
-// Helper variable to access firebaseConfig for the alert message
-const firebaseConfig = {
-  projectId: "nrroyapp" // Ensure this matches the projectId in firebase.ts
-};

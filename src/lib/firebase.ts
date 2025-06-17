@@ -6,12 +6,12 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration (as provided by the user)
 const firebaseConfig = {
   apiKey: "AIzaSyApdat8HDcEQzxt-vDaMvUA41uY4F8fWI8",
   authDomain: "nrroyapp.firebaseapp.com",
   projectId: "nrroyapp",
-  storageBucket: "nrroyapp.firebasestorage.app", // Changed from .appspot.com as per your last full config
+  storageBucket: "nrroyapp.firebasestorage.app", // Corrected from previous thought, this matches user's last full config.
   messagingSenderId: "550385387960",
   appId: "1:550385387960:web:59ec369942f69e844ae74d",
   measurementId: "G-CZSB1FRQBL"
@@ -31,9 +31,14 @@ if (typeof window !== 'undefined') {
   console.log("App ID:", firebaseConfig.appId);
   console.log("Measurement ID:", firebaseConfig.measurementId || "NOT SET");
   console.log("--------------------------------------------------------------------");
-  console.log("ACTION REQUIRED: Please METICULOUSLY verify these values against your Firebase project settings in the Firebase Console (console.firebase.google.com) for the project you intend to use. They MUST match exactly.");
+  console.log("ACTION REQUIRED: Please METICULOUSLY verify these values against your Firebase project settings in the Firebase Console (console.firebase.google.com) for the project ID '" + firebaseConfig.projectId + "'. They MUST match exactly.");
   console.log("Ensure your Firestore security rules (firestore.rules) are published to THIS SAME project ID ('" + firebaseConfig.projectId + "').");
   console.log("====================================================================");
+
+  if (firebaseConfig.projectId !== "nrroyapp") {
+    console.error("CRITICAL ERROR: 'projectId' in src/lib/firebase.ts does NOT match 'nrroyapp'. This is likely the cause of permission errors if rules are set on 'nrroyapp'.");
+    alert("CRITICAL Firebase Configuration Error: 'projectId' in src/lib/firebase.ts does not match 'nrroyapp'. Please check the developer console (F12) for details and update src/lib/firebase.ts.");
+  }
 }
 
 // Initialize Firebase

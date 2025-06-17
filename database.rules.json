@@ -1,5 +1,7 @@
 {
   "rules": {
+    // Allow all reads and writes for development and testing.
+    // WARNING: This is insecure for production.
     ".read": true,
     ".write": true
   }
