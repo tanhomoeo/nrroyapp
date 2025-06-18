@@ -132,18 +132,20 @@ export default function SearchPatientsPage() {
         });
         setFilteredPatients(results);
     }
+     window.dispatchEvent(new CustomEvent('firestoreDataChange'));
   };
 
   const handleAddTodaysVisitAndPrescribe = async (patient: Patient) => {
     setIsCreatingVisit(patient.id);
     try {
-      const newVisitId = await createVisitForPrescription(patient.id, "পুনরায় সাক্ষাৎ / Follow-up");
+      const newVisitId = await createVisitForPrescription(patient.id, "পুনরায় সাক্ষাৎ / Follow-up", 'direct');
       if (newVisitId) {
         toast({
           title: "ভিজিট তৈরি হয়েছে",
           description: `${patient.name}-এর জন্য আজকের ভিজিট তৈরি করা হয়েছে। প্রেসক্রিপশন পৃষ্ঠায় নেয়া হচ্ছে।`,
         });
         router.push(`${ROUTES.PRESCRIPTION}/${patient.id}?visitId=${newVisitId}`);
+        window.dispatchEvent(new CustomEvent('firestoreDataChange')); // Notify dashboard
       } else {
         throw new Error("Failed to create visit ID.");
       }
@@ -285,7 +287,7 @@ export default function SearchPatientsPage() {
             patient={selectedPatientForModal}
             isOpen={isPaymentModalOpen}
             onClose={() => setIsPaymentModalOpen(false)}
-            onSlipCreated={() => { /* Optionally refresh data if needed */ }}
+            onSlipCreated={() => { window.dispatchEvent(new CustomEvent('firestoreDataChange')); }}
           />
         )}
       </Suspense>
