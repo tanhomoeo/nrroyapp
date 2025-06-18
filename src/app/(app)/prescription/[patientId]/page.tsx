@@ -95,7 +95,7 @@ export default function PrescriptionPage() {
       }
 
       let initialDiagnosis = '';
-      let initialDoctorName = form.getValues('doctorName') || currentClinicSettings.doctorName || '';
+      let initialDoctorName = form.getValues('doctorName') || currentClinicSettings?.doctorName || '';
       setShowInstructionsButton(false);
 
       if (prescriptionIdQuery) {
@@ -187,17 +187,18 @@ export default function PrescriptionPage() {
       if (existingPrescription) {
         await updatePrescription(existingPrescription.id, {
           ...prescriptionDataPayload,
-          serialNumber: existingPrescription.serialNumber,
+          serialNumber: existingPrescription.serialNumber, // Keep existing serial number on update
         });
         toast({ title: 'প্রেসক্রিপশন আপডেট হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন আপডেট করা হয়েছে।` });
       } else {
+        const newSerialNumber = `P${Date.now().toString().slice(-6)}`;
         const newId = await addPrescription({
           ...prescriptionDataPayload,
-          serialNumber: `P${Date.now().toString().slice(-6)}`,
+          serialNumber: newSerialNumber,
         });
         if (!newId) throw new Error("Failed to add prescription");
         currentPrescriptionId = newId;
-        setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: `P${Date.now().toString().slice(-6)}` });
+        setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: newSerialNumber });
         toast({ title: 'প্রেসক্রিপশন সংরক্ষণ করা হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন সংরক্ষণ করা হয়েছে।` });
       }
       setShowInstructionsButton(true);
@@ -694,4 +695,3 @@ export default function PrescriptionPage() {
     </div>
   );
 }
-
