@@ -1,6 +1,8 @@
-
 {
   "projects": {
-    "default": "nrroyapp"
-  }
+    "default": "dr-nihar",
+    "staging": "dr-nihar"
+  },
+  "targets": {},
+  "etags": {}
 }
