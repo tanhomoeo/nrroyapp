@@ -1,14 +1,14 @@
 
 export interface Patient {
-  id: string; 
-  diaryNumber?: number; 
+  id: string;
+  diaryNumber?: string; // Changed from number to string
   name: string;
-  phone: string; 
+  phone: string;
   district?: string;
-  createdAt: string; 
-  updatedAt: string; 
+  createdAt: string;
+  updatedAt: string;
 
-  registrationDate: string; 
+  registrationDate: string;
   age?: string;
   gender?: 'male' | 'female' | 'other' | '';
   occupation?: string;
@@ -19,53 +19,53 @@ export interface Patient {
 }
 
 export interface Visit {
-  id: string; 
+  id: string;
   patientId: string;
-  visitDate: string; 
+  visitDate: string;
   symptoms?: string;
-  diagnosis?: string; 
+  diagnosis?: string;
   notes?: string;
-  prescriptionId?: string; 
+  prescriptionId?: string;
   paymentSlipId?: string;
-  createdAt: string; 
-  medicineDeliveryMethod?: 'direct' | 'courier' | ''; 
+  createdAt: string;
+  medicineDeliveryMethod?: 'direct' | 'courier' | '';
 }
 
 export type PrescriptionItem = {
   medicineName: string;
-  dosage: string; 
-  frequency: string; 
-  duration: string; 
+  dosage: string;
+  frequency: string;
+  duration: string;
   notes?: string;
 };
 
 export interface Prescription {
-  id: string; 
+  id: string;
   patientId: string;
-  visitId: string; 
-  doctorName?: string; 
-  date: string; 
+  visitId: string;
+  doctorName?: string;
+  date: string;
   prescriptionType: 'adult' | 'child';
   items: PrescriptionItem[];
   followUpDays?: number;
   advice?: string;
-  serialNumber?: string; 
+  serialNumber?: string;
   createdAt: string;
-  diagnosis?: string; 
+  diagnosis?: string;
 }
 
 export type PaymentMethod = 'cash' | 'bkash' | 'nagad' | 'rocket' | 'courier_medicine' | 'other' | '';
 
 export interface PaymentSlip {
-  id: string; 
+  id: string;
   patientId: string;
-  visitId?: string; 
-  slipNumber: string; 
-  date: string; 
+  visitId?: string;
+  slipNumber: string;
+  date: string;
   amount: number;
-  purpose: string; 
+  purpose: string;
   receivedBy?: string;
-  paymentMethod?: PaymentMethod; 
+  paymentMethod?: PaymentMethod;
   createdAt: string;
 }
 
@@ -74,7 +74,7 @@ export interface ClinicStats {
   todayPatientCount: number;
   monthlyPatientCount: number;
   todayRevenue: number;
-  monthlyIncome?: number; 
+  monthlyIncome?: number;
   dailyActivePatients?: number;
   dailyOtherRegistered?: number;
   monthlyNewPatients?: number;
@@ -85,17 +85,17 @@ export interface ClinicStats {
 export interface DiagnosisSuggestion {
   id: string;
   suggestion: string;
-  confidence?: number; 
+  confidence?: number;
 }
 
 
 export interface ClinicSettings {
-  nextDiaryNumber: number; 
+  // nextDiaryNumber: number; // Removed as per new requirement
   clinicName?: string;
   doctorName?: string;
   clinicAddress?: string;
   clinicContact?: string;
-  bmRegNo?: string; 
+  bmRegNo?: string;
 }
 
 export interface EnrichedVisit extends Visit {
@@ -111,16 +111,16 @@ export interface ComplaintSummaryOutput {
 
 
 export interface MedicineInstruction {
-    id: string; 
+    id: string;
     patientName: string;
-    patientActualId?: string; 
-    visitId?: string;         
-    instructionDate: string; 
+    patientActualId?: string;
+    visitId?: string;
+    instructionDate: string;
     drops: string;
-    interval: string; 
-    intakeTime: string; 
-    followUpDays: string; 
+    interval: string;
+    intakeTime: string;
+    followUpDays: string;
     generatedInstructionText: string;
-    serialNumber: string; 
-    createdAt: string; 
+    serialNumber: string;
+    createdAt: string;
 }

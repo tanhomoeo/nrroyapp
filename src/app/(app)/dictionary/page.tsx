@@ -15,12 +15,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const getFirstChar = (name: string): string => {
   if (!name) return '';
-  return name.charAt(0).toUpperCase(); 
+  return name.charAt(0).toUpperCase();
 };
 
 export default function DictionaryPage() {
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
-  const [selectedLetter, setSelectedLetter] = useState<string | null>(BENGALI_VOWELS_FOR_FILTER[0]); 
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(BENGALI_VOWELS_FOR_FILTER[0]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +31,15 @@ export default function DictionaryPage() {
       setIsLoading(false);
     };
     fetchPatients();
+    
+    const handleDataChange = () => {
+      fetchPatients();
+    };
+    window.addEventListener('firestoreDataChange', handleDataChange);
+    return () => {
+      window.removeEventListener('firestoreDataChange', handleDataChange);
+    };
+
   }, []);
 
   const filteredPatients = useMemo(() => {
@@ -125,7 +134,7 @@ export default function DictionaryPage() {
                   <TableBody>
                     {filteredPatients.map(patient => (
                       <TableRow key={patient.id}>
-                        <TableCell>{patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
+                        <TableCell>{patient.diaryNumber || 'N/A'}</TableCell> {/* Direct string display */}
                         <TableCell className="font-medium">{patient.name}</TableCell>
                         <TableCell>{patient.phone}</TableCell>
                         <TableCell>{patient.villageUnion}{patient.district ? `, ${patient.district}` : ''}</TableCell>

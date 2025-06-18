@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { getClinicSettings, saveClinicSettings } from '@/lib/firestoreService';
 import type { ClinicSettings } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Loader2, Save, Building } from 'lucide-react';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
-import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
+import { appendFinalTranscript } from '@/lib/utils';
 
 const clinicInfoFormSchema = z.object({
   clinicName: z.string().min(1, "Clinic name is required."),
@@ -23,7 +23,7 @@ const clinicInfoFormSchema = z.object({
   clinicAddress: z.string().min(1, "Clinic address is required."),
   clinicContact: z.string().min(1, "Clinic contact is required."),
   bmRegNo: z.string().optional(),
-  nextDiaryNumber: z.coerce.number().int().nonnegative("ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।").optional(),
+  // nextDiaryNumber field removed
 });
 
 type ClinicInfoFormValues = z.infer<typeof clinicInfoFormSchema>;
@@ -42,7 +42,7 @@ export default function ClinicInformationPage() {
       clinicAddress: '',
       clinicContact: '',
       bmRegNo: '',
-      nextDiaryNumber: 1,
+      // nextDiaryNumber removed from defaultValues
     },
   });
 
@@ -57,7 +57,7 @@ export default function ClinicInformationPage() {
           clinicAddress: currentSettings.clinicAddress || '',
           clinicContact: currentSettings.clinicContact || '',
           bmRegNo: currentSettings.bmRegNo || '',
-          nextDiaryNumber: currentSettings.nextDiaryNumber || 1,
+          // nextDiaryNumber removed from reset
         });
       } catch (error) {
           console.error("Failed to fetch clinic settings for form:", error);
@@ -71,11 +71,9 @@ export default function ClinicInformationPage() {
 
   const onSubmit: SubmitHandler<ClinicInfoFormValues> = async (data) => {
     try {
-      const currentSettings = await getClinicSettings(); 
+      // No need to fetch currentSettings just for nextDiaryNumber
       const updatedSettings: ClinicSettings = {
-        ...currentSettings, 
-        ...data,
-        nextDiaryNumber: data.nextDiaryNumber || currentSettings.nextDiaryNumber || 1,
+        ...data, // Directly use form data
       };
       await saveClinicSettings(updatedSettings);
       toast({
@@ -92,7 +90,7 @@ export default function ClinicInformationPage() {
       });
     }
   };
-  
+
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
   const textareaWrapperClass = "flex items-start w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary min-h-[80px]";
@@ -228,22 +226,7 @@ export default function ClinicInformationPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="nextDiaryNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>পরবর্তী ডায়েরি নম্বর</FormLabel>
-                    <div className={inputWrapperClass}>
-                      <FormControl>
-                        <Input type="number" placeholder="1" {...field} className={inputFieldClass} />
-                      </FormControl>
-                    </div>
-                    <CardDescription className="text-xs">রোগী নিবন্ধনের সময় এই নম্বরটি প্রস্তাবিত হবে।</CardDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Removed nextDiaryNumber FormField */}
             </CardContent>
             <CardFooter className="flex justify-end border-t pt-6">
               <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[120px]">

@@ -37,7 +37,7 @@ const patientInfoSchema = z.object({
   phone: z.string().regex(/^(\+8801|01)\d{9}$/, "Valid BD phone number required"),
   villageUnion: z.string().optional(),
   district: z.string().optional(),
-  diaryNumber: z.coerce.number({invalid_type_error: "ডায়েরি নম্বর একটি সংখ্যা হতে হবে।"}).int("ডায়েরি নম্বর একটি পূর্ণসংখ্যা হতে হবে।").nonnegative("ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।").optional(),
+  diaryNumber: z.string().optional(), // Changed to string
   age: z.string().optional(),
   gender: z.enum(['male', 'female', 'other', '']).optional(),
   occupation: z.string().optional(),
@@ -98,7 +98,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         phone: '',
         villageUnion: '',
         district: '',
-        diaryNumber: undefined,
+        diaryNumber: '', // Default to empty string
         age: '',
         gender: '',
         occupation: '',
@@ -152,7 +152,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       setCurrentTab(defaultTab);
       patientInfoForm.reset({
         ...patient,
-        diaryNumber: patient.diaryNumber,
+        diaryNumber: patient.diaryNumber || '', // Ensure it's a string or empty
         villageUnion: patient.villageUnion || '',
         age: patient.age || '',
         gender: patient.gender || '',
@@ -192,7 +192,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         phone: data.phone,
         villageUnion: data.villageUnion,
         district: data.district,
-        diaryNumber: data.diaryNumber,
+        diaryNumber: data.diaryNumber || undefined, // Save as string or undefined
         age: data.age,
         gender: data.gender,
         occupation: data.occupation,
@@ -317,7 +317,6 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
             <TabsContent value="info">
               <Form {...patientInfoForm}>
                 <form onSubmit={patientInfoForm.handleSubmit(handlePatientInfoSubmit)} className="space-y-4">
-                {/* START: Patient Information Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={patientInfoForm.control}
@@ -342,11 +341,14 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <FormLabel htmlFor="diaryNumberModal">ডায়েরি নম্বর</FormLabel>
                           <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
                             <FormControl>
-                              <Input id="diaryNumberModal" type="number" {...field}
-                                onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-                                value={field.value ?? ''}
+                              <Input
+                                id="diaryNumberModal"
+                                type="text" // Changed to text
+                                {...field}
+                                value={field.value || ''} // Ensure it's a string or empty
                                 readOnly={!isEditingInfo}
                                 className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)}
+                                placeholder="যেমন: F/123"
                               />
                             </FormControl>
                           </div>
@@ -581,7 +583,6 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       )}
                     />
                   </div>
-                  {/* END: Patient Information Form Fields */}
                   <div className="flex justify-end gap-2 mt-4">
                     {isEditingInfo ? (
                       <>

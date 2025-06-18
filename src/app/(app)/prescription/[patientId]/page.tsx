@@ -117,7 +117,7 @@ export default function PrescriptionPage() {
       } else if (visitId) {
         const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
         if (prescriptionsForVisit.length > 0) {
-          const currentPrescription = prescriptionsForVisit[0]; 
+          const currentPrescription = prescriptionsForVisit[0];
           setExistingPrescription(currentPrescription);
           initialDiagnosis = currentPrescription.diagnosis || '';
           initialDoctorName = currentPrescription.doctorName || initialDoctorName;
@@ -132,9 +132,9 @@ export default function PrescriptionPage() {
           setShowInstructionsButton(true);
         } else {
           if (visitForDiagnosis?.symptoms) initialDiagnosis = visitForDiagnosis.symptoms;
-          if (visitForDiagnosis?.diagnosis) initialDiagnosis = visitForDiagnosis.diagnosis || initialDiagnosis; 
+          if (visitForDiagnosis?.diagnosis) initialDiagnosis = visitForDiagnosis.diagnosis || initialDiagnosis;
           form.reset({
-            ...form.getValues(), 
+            ...form.getValues(),
             diagnosis: initialDiagnosis,
             doctorName: initialDoctorName,
             items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
@@ -163,7 +163,7 @@ export default function PrescriptionPage() {
   useEffect(() => {
     fetchPrescriptionData();
   }, [fetchPrescriptionData]);
-  
+
   const onSubmit: SubmitHandler<PrescriptionFormValues> = async (data) => {
     if (!patient || !visitId) {
       toast({ title: "Error", description: "Patient or Visit information is missing.", variant: "destructive" });
@@ -187,7 +187,7 @@ export default function PrescriptionPage() {
       if (existingPrescription) {
         await updatePrescription(existingPrescription.id, {
           ...prescriptionDataPayload,
-          serialNumber: existingPrescription.serialNumber, 
+          serialNumber: existingPrescription.serialNumber,
         });
         toast({ title: 'প্রেসক্রিপশন আপডেট হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন আপডেট করা হয়েছে।` });
       } else {
@@ -197,10 +197,10 @@ export default function PrescriptionPage() {
         });
         if (!newId) throw new Error("Failed to add prescription");
         currentPrescriptionId = newId;
-        setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: `P${Date.now().toString().slice(-6)}` }); 
+        setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: `P${Date.now().toString().slice(-6)}` });
         toast({ title: 'প্রেসক্রিপশন সংরক্ষণ করা হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন সংরক্ষণ করা হয়েছে।` });
       }
-      setShowInstructionsButton(true); 
+      setShowInstructionsButton(true);
       window.dispatchEvent(new CustomEvent('firestoreDataChange'));
     } catch (error) {
       console.error('Failed to save prescription:', error);
@@ -240,7 +240,7 @@ export default function PrescriptionPage() {
     <div className="space-y-6 print:space-y-2">
       <PageHeaderCard
         title="প্রেসক্রিপশন শিট"
-        description={`রোগী: ${patient.name} | ডায়েরি নং: ${patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'} | তারিখ: ${currentVisit ? format(new Date(currentVisit.visitDate), "PP", { locale: bn }) : format(new Date(), "PP", { locale: bn })}`}
+        description={`রোগী: ${patient.name} | ডায়েরি নং: ${patient.diaryNumber || 'N/A'} | তারিখ: ${currentVisit ? format(new Date(currentVisit.visitDate), "PP", { locale: bn }) : format(new Date(), "PP", { locale: bn })}`}
         className="hide-on-print"
         actions={
           <div className="flex gap-2">
@@ -546,7 +546,7 @@ export default function PrescriptionPage() {
         <div className="patient-info-grid">
           <div><strong>রোগী:</strong> {patient.name}</div>
           <div><strong>বয়স/লিঙ্গ:</strong> {patient.age || 'N/A'} / {patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : 'N/A'}</div>
-          <div><strong>ডায়েরি নং:</strong> {patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</div>
+          <div><strong>ডায়েরি নং:</strong> {patient.diaryNumber || 'N/A'}</div> {/* Direct string display */}
           <div><strong>তারিখ:</strong> {format(new Date(form.getValues("items").length > 0 && existingPrescription?.date ? existingPrescription.date : (currentVisit?.visitDate || new Date().toISOString())), "dd MMM, yyyy", { locale: bn })}</div>
         </div>
 
@@ -618,16 +618,16 @@ export default function PrescriptionPage() {
         @media print {
           .hide-on-print { display: none !important; }
           .print-only-block { display: block !important; }
-          body.printing-prescription-active { 
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important; 
-            margin: 0; padding: 0; 
+          body.printing-prescription-active {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            margin: 0; padding: 0;
             background-color: #fff !important;
           }
           .print-prescription-container {
             width: 100%;
             margin: 0 auto;
-            padding: 10mm 12mm; 
+            padding: 10mm 12mm;
             box-sizing: border-box;
             font-family: 'PT Sans', Arial, sans-serif;
             font-size: 10pt;
@@ -638,7 +638,7 @@ export default function PrescriptionPage() {
           .print-header h1 { font-family: 'Poppins', 'PT Sans', sans-serif; margin: 0 0 1mm 0; }
           .print-header p { font-size: 9pt; margin: 0.5mm 0; }
           .print-title { margin-top: 3mm; }
-          
+
           .patient-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -654,41 +654,41 @@ export default function PrescriptionPage() {
           .section-title { font-weight: bold; font-size: 11pt; display: block; margin-bottom: 1mm; }
           .rx-section { margin-top: 2mm; }
           .rx-section .section-title { margin-bottom: 0.5mm; }
-          
+
           .medicines-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 2mm; table-layout: fixed; }
           .medicines-table th, .medicines-table td { border: 1px solid #777; padding: 1.5mm 2mm; text-align: left; vertical-align: top; word-wrap: break-word; }
           .medicines-table th { background-color: #f0f0f0 !important; font-weight: bold; font-size: 9.5pt; }
           .medicines-table .empty-row td { height: 1.8em; }
           .medicines-table .empty-cell { border-left: 1px solid #777; border-right: 1px solid #777; }
-          
+
           .whitespace-pre-line { white-space: pre-line; }
           .follow-up { font-size: 9.5pt; margin-top: 3mm; }
-          
+
           .print-footer {
-            margin-top: 12mm; 
+            margin-top: 12mm;
             padding-top: 4mm;
-            position: relative; 
-            height: 40mm; 
+            position: relative;
+            height: 40mm;
           }
           .signature-area {
             text-align: right;
             font-size: 9.5pt;
             position: absolute;
-            bottom: 5mm; 
-            right: 5mm; 
+            bottom: 5mm;
+            right: 5mm;
           }
-          .signature-line { 
+          .signature-line {
             display: block;
-            width: 150px; 
-            border-bottom: 1px solid #333; 
-            margin-bottom: 2mm; 
-            margin-left: auto; 
+            width: 150px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 2mm;
+            margin-left: auto;
           }
           .signature-area p { margin: 1mm 0; }
         }
         @page {
           size: A4 portrait;
-          margin: 15mm; 
+          margin: 15mm;
         }
       \`}</style>
     </div>

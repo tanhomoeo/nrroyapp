@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { addPatient, getClinicSettings, saveClinicSettings } from '@/lib/firestoreService';
+import { addPatient } from '@/lib/firestoreService';
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { useRouter } from 'next/navigation';
@@ -27,7 +27,7 @@ import { appendFinalTranscript } from '@/lib/utils';
 
 const patientFormSchema = z.object({
   registrationDate: z.date({ required_error: "নিবন্ধনের তারিখ আবশ্যক।" }),
-  diaryNumber: z.coerce.number({invalid_type_error: "ডায়েরি নম্বর একটি সংখ্যা হতে হবে।"}).int("ডায়েরি নম্বর একটি পূর্ণসংখ্যা হতে হবে।").nonnegative("ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।").optional(),
+  diaryNumber: z.string().optional(), // Changed to string, manual input
   name: z.string().min(1, { message: "পুরো নাম আবশ্যক।" }),
   age: z.string().optional(),
   gender: z.enum(['male', 'female', 'other', ''], { errorMap: () => ({ message: "লিঙ্গ নির্বাচন করুন।" }) }).optional(),
@@ -45,8 +45,7 @@ type PatientFormValues = z.infer<typeof patientFormSchema>;
 export default function PatientEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [currentNextDiaryNumber, setCurrentNextDiaryNumber] = useState<number | null>(null);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false); // No longer loading settings for diary number
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
@@ -55,7 +54,7 @@ export default function PatientEntryPage() {
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
       registrationDate: new Date(),
-      diaryNumber: undefined,
+      diaryNumber: '', // Default to empty string
       name: '',
       age: '',
       gender: '',
@@ -69,33 +68,10 @@ export default function PatientEntryPage() {
     },
   });
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoadingSettings(true);
-      try {
-        const settings = await getClinicSettings();
-        setCurrentNextDiaryNumber(settings.nextDiaryNumber);
-        form.setValue('diaryNumber', settings.nextDiaryNumber);
-      } catch (error) {
-        console.error("Failed to fetch clinic settings:", error);
-        toast({
-          title: "সেটিংস লোড ত্রুটি",
-          description: "ক্লিনিকের সেটিংস লোড করা যায়নি। ডিফল্ট মান ব্যবহার করা হচ্ছে।",
-          variant: "destructive",
-        });
-        setCurrentNextDiaryNumber(1);
-        form.setValue('diaryNumber', 1);
-      } finally {
-        setIsLoadingSettings(false);
-      }
-    };
-    fetchSettings();
-  }, [form, toast]);
+  // Removed useEffect for fetching clinic settings related to nextDiaryNumber
 
   const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
-      const enteredDiaryNumber = data.diaryNumber;
-
       const newPatientData: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'> = {
         name: data.name,
         phone: data.phone,
@@ -108,49 +84,21 @@ export default function PatientEntryPage() {
         district: data.district,
         thanaUpazila: data.thanaUpazila,
         villageUnion: data.villageUnion,
-        diaryNumber: enteredDiaryNumber, 
+        diaryNumber: data.diaryNumber || undefined, // Save as string or undefined
       };
-      
-      if (enteredDiaryNumber === undefined && currentNextDiaryNumber !== null) {
-        newPatientData.diaryNumber = currentNextDiaryNumber; 
-      }
-
 
       const patientId = await addPatient(newPatientData);
 
-      let nextDiaryNumberToSet = currentNextDiaryNumber;
-      if (currentNextDiaryNumber !== null) {
-        if (newPatientData.diaryNumber !== undefined && newPatientData.diaryNumber >= currentNextDiaryNumber) {
-          nextDiaryNumberToSet = newPatientData.diaryNumber + 1;
-        } else if (newPatientData.diaryNumber === undefined) { // No number entered, suggested was used
-           nextDiaryNumberToSet = currentNextDiaryNumber + 1;
-        }
-      }
-
-
-      if (nextDiaryNumberToSet !== null && nextDiaryNumberToSet !== currentNextDiaryNumber) {
-        try {
-          const currentSettings = await getClinicSettings();
-          await saveClinicSettings({ ...currentSettings, nextDiaryNumber: nextDiaryNumberToSet });
-          setCurrentNextDiaryNumber(nextDiaryNumberToSet);
-        } catch (settingsError: any) {
-          console.error("Failed to update next diary number in settings:", settingsError);
-          toast({
-            title: "সতর্কতা",
-            description: `রোগী নিবন্ধিত হয়েছে, কিন্তু পরবর্তী ডায়েরি নম্বর আপডেট করা যায়নি: ${settingsError.message || String(settingsError)}`,
-            variant: "default",
-          });
-        }
-      }
+      // Removed logic for updating nextDiaryNumber in clinic settings
 
       toast({
         title: 'রোগী নিবন্ধিত',
-        description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${newPatientData.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}`,
+        description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${newPatientData.diaryNumber || 'N/A'}`,
       });
 
       form.reset({
         registrationDate: new Date(),
-        diaryNumber: nextDiaryNumberToSet ?? undefined,
+        diaryNumber: '', // Reset to empty
         name: '',
         age: '',
         gender: '',
@@ -163,6 +111,7 @@ export default function PatientEntryPage() {
         villageUnion: '',
       });
       router.push(`${ROUTES.PATIENT_SEARCH}?q=${newPatientData.phone}`);
+      window.dispatchEvent(new CustomEvent('firestoreDataChange'));
 
     } catch (error: any) {
       console.error('Failed to register patient:', error);
@@ -185,11 +134,11 @@ export default function PatientEntryPage() {
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
 
-  if (isLoadingSettings) {
+  if (isLoadingSettings) { // Though settings are not directly used for diary numbers now, keep for potential future use
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-lg text-foreground">সেটিংস লোড হচ্ছে...</p>
+        <p className="ml-3 text-lg text-foreground">লোড হচ্ছে...</p>
       </div>
     );
   }
@@ -255,17 +204,15 @@ export default function PatientEntryPage() {
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
                         <Input
-                          placeholder="ডায়েরি নম্বর লিখুন"
+                          placeholder="যেমন: F/123, CH/456"
                           {...field}
-                          type="number"
-                          onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-                          value={field.value ?? ''}
+                          type="text" // Changed to text
                           className={inputFieldClass}
                           id="patientDiaryNumberEntry"
                         />
                       </FormControl>
                     </div>
-                    <FormDescription className="text-xs">সিস্টেম পরবর্তী প্রস্তাবিত নম্বর: {currentNextDiaryNumber?.toLocaleString('bn-BD')}</FormDescription>
+                    <FormDescription className="text-xs">এখানে ম্যানুয়ালি ডায়েরি নম্বর লিখুন।</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

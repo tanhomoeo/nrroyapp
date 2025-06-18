@@ -11,14 +11,14 @@ import {
     Users, UserPlus, FileText, BarChart3, TrendingUp, Search as SearchIcon, Printer, CalendarDays, X, Loader2,
     MessageSquareText, PlayCircle, CreditCard, ClipboardList, FilePlus2
 } from 'lucide-react';
-import { 
-    getPatients, 
-    getVisitsWithinDateRange, 
+import {
+    getPatients,
+    getVisitsWithinDateRange,
     getPaymentSlipsWithinDateRange,
     getPatientsRegisteredWithinDateRange,
-    formatCurrency, 
-    getPatientById, 
-    getPaymentMethodLabel 
+    formatCurrency,
+    getPatientById,
+    getPaymentMethodLabel
 } from '@/lib/firestoreService';
 import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/lib/types';
 import Link from 'next/link';
@@ -32,7 +32,7 @@ import { appendFinalTranscript } from '@/lib/utils';
 
 const CreatePaymentSlipModal = dynamic(() =>
   import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
-  { 
+  {
     ssr: false,
     loading: () => <div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div>
   }
@@ -104,14 +104,14 @@ interface AppointmentDisplayItem {
   visitId: string;
   patient: Patient;
   patientName: string;
-  diaryNumberDisplay: string;
+  diaryNumberDisplay: string; // Keep as string for alphanumeric display
   address: string;
   time: string;
   reason: string;
   status: 'Completed' | 'Pending';
   paymentMethod?: string;
   paymentAmount?: string;
-  createdAt: string; 
+  createdAt: string;
 }
 
 export default function DashboardPage() {
@@ -145,10 +145,10 @@ export default function DashboardPage() {
 
     const todayVisits = await getVisitsWithinDateRange(todayStart, todayEnd);
     const todaySlips = await getPaymentSlipsWithinDateRange(todayStart, todayEnd);
-    
+
     const patientIdsForTodayVisits = Array.from(new Set(todayVisits.map(v => v.patientId)));
     const patientsData: Record<string, Patient> = {};
-    
+
     for (const patientId of patientIdsForTodayVisits) {
         if (!patientsData[patientId]) {
             const patient = await getPatientById(patientId);
@@ -168,17 +168,17 @@ export default function DashboardPage() {
           visitId: visit.id,
           patient: patient,
           patientName: patient.name,
-          diaryNumberDisplay: `${(patient.diaryNumber ? patient.diaryNumber.toLocaleString('bn-BD') : 'N/A')}`,
+          diaryNumberDisplay: patient.diaryNumber || 'N/A', // Direct string display
           address: patient.villageUnion || 'N/A',
           time: format(new Date(visit.createdAt), "p", { locale: bn }),
-          reason: visit.symptoms || 'N/A', 
+          reason: visit.symptoms || 'N/A',
           status: currentStatus,
           paymentMethod: paymentSlipForVisit ? getPaymentMethodLabel(paymentSlipForVisit.paymentMethod) : 'N/A',
           paymentAmount: paymentSlipForVisit ? formatCurrency(paymentSlipForVisit.amount) : 'N/A',
-          createdAt: visit.createdAt, 
+          createdAt: visit.createdAt,
         };
       });
-    
+
     const resolvedAppointmentsData = (await Promise.all(appointmentsDataPromises)).filter(Boolean) as AppointmentDisplayItem[];
     setTodaysAppointments(resolvedAppointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
   }, []);
@@ -193,7 +193,7 @@ export default function DashboardPage() {
     const monthEnd = endOfMonth(today);
 
     const [
-        allPatients, 
+        allPatients,
         todayVisits,
         monthVisits,
         todaySlips,
@@ -212,7 +212,7 @@ export default function DashboardPage() {
 
     const todayRevenue = todaySlips.reduce((sum, s) => sum + s.amount, 0);
     const monthlyIncome = monthSlips.reduce((sum, s) => sum + s.amount, 0);
-    
+
     const dailyOtherRegisteredPatientIds = new Set(
         (await getPatientsRegisteredWithinDateRange(todayStart, todayEnd))
         .map(p => p.id)
@@ -223,13 +223,13 @@ export default function DashboardPage() {
     setStats({
       totalPatients: allPatients.length,
       todayPatientCount: uniqueTodayPatientIds.size,
-      monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size, 
+      monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size,
       todayRevenue: todayRevenue,
       monthlyIncome: monthlyIncome,
-      dailyActivePatients: uniqueTodayPatientIds.size, 
-      dailyOtherRegistered: dailyOtherRegisteredPatientIds.size, 
+      dailyActivePatients: uniqueTodayPatientIds.size,
+      dailyOtherRegistered: dailyOtherRegisteredPatientIds.size,
       monthlyNewPatients: patientsCreatedThisMonth.length,
-      monthlyTotalRegistered: allPatients.length, 
+      monthlyTotalRegistered: allPatients.length,
     });
 
     await loadAppointments();
@@ -241,7 +241,7 @@ export default function DashboardPage() {
     const handleExternalDataChange = () => {
         loadDashboardData();
     };
-    window.addEventListener('firestoreDataChange', handleExternalDataChange); 
+    window.addEventListener('firestoreDataChange', handleExternalDataChange);
     return () => {
         window.removeEventListener('firestoreDataChange', handleExternalDataChange);
     };
@@ -280,8 +280,8 @@ export default function DashboardPage() {
     setSelectedPatientForPaymentModal(null);
     setCurrentVisitIdForPaymentModal(null);
     if (slipCreated) {
-        await loadAppointments(); 
-        window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
+        await loadAppointments();
+        window.dispatchEvent(new CustomEvent('firestoreDataChange'));
     }
   };
 
@@ -470,7 +470,7 @@ export default function DashboardPage() {
                   <TableRow key={appt.visitId}>
                     <TableCell className="font-medium">{appt.patientName}</TableCell>
                     <TableCell>{appt.time}</TableCell>
-                    <TableCell>{appt.diaryNumberDisplay}</TableCell>
+                    <TableCell>{appt.diaryNumberDisplay}</TableCell> {/* Already a string */}
                     <TableCell>{appt.address}</TableCell>
                     <TableCell>{appt.paymentMethod}</TableCell>
                     <TableCell className="text-right">{appt.paymentAmount}</TableCell>

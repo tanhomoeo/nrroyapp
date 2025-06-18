@@ -55,8 +55,6 @@ const prepareDataForFirestore = (data: any): any => {
         result[key] = Timestamp.fromDate(dateObj);
       } else {
         console.warn(`Invalid date string for field ${key}: ${result[key]}`);
-        // Decide how to handle invalid dates: remove, set to null, or keep as is (might cause Firestore error)
-        // delete result[key]; // Option: remove invalid date field
       }
     } else if (result[key] instanceof Date) { // Handle if Date object is passed
         result[key] = Timestamp.fromDate(result[key]);
@@ -132,8 +130,8 @@ export const getPatientsRegisteredWithinDateRange = async (startDate: Date, endD
   try {
     const startTimestamp = Timestamp.fromDate(startOfDay(startDate));
     const endTimestamp = Timestamp.fromDate(endOfDay(endDate));
-    const q = query(patientsCollectionRef, 
-                    where('createdAt', '>=', startTimestamp), 
+    const q = query(patientsCollectionRef,
+                    where('createdAt', '>=', startTimestamp),
                     where('createdAt', '<=', endTimestamp),
                     orderBy('createdAt', 'desc')
                    );
@@ -150,7 +148,6 @@ const visitsCollectionRef = collection(db, 'visits');
 
 export const getVisits = async (): Promise<Visit[]> => {
   try {
-    // This fetches ALL visits, try to avoid using this if possible for performance.
     const q = query(visitsCollectionRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => convertDocument<Visit>(docSnap));
@@ -164,7 +161,7 @@ export const addVisit = async (visitData: Omit<Visit, 'id' | 'createdAt'>): Prom
   try {
     const newVisit = {
       ...visitData,
-      createdAt: Timestamp.now(), // Firestore server timestamp would be better but this is client-side
+      createdAt: Timestamp.now(),
     };
     const docRef = await addDoc(visitsCollectionRef, prepareDataForFirestore(newVisit));
     return docRef.id;
@@ -174,16 +171,15 @@ export const addVisit = async (visitData: Omit<Visit, 'id' | 'createdAt'>): Prom
   }
 };
 
-// New function to create a visit specifically for starting a prescription workflow
 export const createVisitForPrescription = async (
-  patientId: string, 
+  patientId: string,
   symptoms: string = "পুনরায় সাক্ষাৎ / Follow-up",
   medicineDeliveryMethod: 'direct' | 'courier' = 'direct'
 ): Promise<string | null> => {
   try {
     const visitData: Omit<Visit, 'id' | 'createdAt'> = {
       patientId,
-      visitDate: new Date().toISOString(), // Today's date
+      visitDate: new Date().toISOString(), 
       symptoms,
       medicineDeliveryMethod,
     };
@@ -226,8 +222,8 @@ export const getVisitsWithinDateRange = async (startDate: Date, endDate: Date): 
   try {
     const startTimestamp = Timestamp.fromDate(startOfDay(startDate));
     const endTimestamp = Timestamp.fromDate(endOfDay(endDate));
-    const q = query(visitsCollectionRef, 
-                    where('visitDate', '>=', startTimestamp), 
+    const q = query(visitsCollectionRef,
+                    where('visitDate', '>=', startTimestamp),
                     where('visitDate', '<=', endTimestamp),
                     orderBy('visitDate', 'desc'),
                     orderBy('createdAt', 'desc')
@@ -309,7 +305,6 @@ const paymentSlipsCollectionRef = collection(db, 'paymentSlips');
 
 export const getPaymentSlips = async (): Promise<PaymentSlip[]> => {
   try {
-    // This fetches ALL slips, try to avoid using this if possible for performance.
     const q = query(paymentSlipsCollectionRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => convertDocument<PaymentSlip>(docSnap));
@@ -348,8 +343,8 @@ export const getPaymentSlipsWithinDateRange = async (startDate: Date, endDate: D
   try {
     const startTimestamp = Timestamp.fromDate(startOfDay(startDate));
     const endTimestamp = Timestamp.fromDate(endOfDay(endDate));
-    const q = query(paymentSlipsCollectionRef, 
-                    where('date', '>=', startTimestamp), 
+    const q = query(paymentSlipsCollectionRef,
+                    where('date', '>=', startTimestamp),
                     where('date', '<=', endTimestamp),
                     orderBy('date', 'desc')
                    );
@@ -369,7 +364,6 @@ export const getClinicSettings = async (): Promise<ClinicSettings> => {
   try {
     const docSnap = await getDoc(settingsDocRef);
     const defaultSettings: ClinicSettings = {
-      nextDiaryNumber: 1,
       clinicName: 'ত্রিফুল আরোগ্য নিকেতন',
       doctorName: '',
       clinicAddress: '',
@@ -382,9 +376,7 @@ export const getClinicSettings = async (): Promise<ClinicSettings> => {
     return defaultSettings;
   } catch (error) {
     console.error("Error getting clinic settings: ", error);
-    // Return default on error
     return {
-      nextDiaryNumber: 1,
       clinicName: 'ত্রিফুল আরোগ্য নিকেতন',
       doctorName: '',
       clinicAddress: '',
@@ -396,7 +388,12 @@ export const getClinicSettings = async (): Promise<ClinicSettings> => {
 
 export const saveClinicSettings = async (settings: ClinicSettings): Promise<boolean> => {
   try {
-    await setDoc(settingsDocRef, settings); // Using setDoc to overwrite or create
+    // Ensure no nextDiaryNumber is saved
+    const { ...settingsToSave } = settings;
+    if ('nextDiaryNumber' in settingsToSave) {
+        delete (settingsToSave as any).nextDiaryNumber;
+    }
+    await setDoc(settingsDocRef, settingsToSave);
     return true;
   } catch (error) {
     console.error("Error saving clinic settings: ", error);
@@ -490,11 +487,10 @@ export const migrateLocalStorageToFirestore = async () => {
   let operationsCount = 0;
 
   try {
-    // Helper to add to batch and manage batch size
     const addToBatch = async (ref: any, data: any) => {
       batch.set(ref, data);
       operationsCount++;
-      if (operationsCount >= 490) { // Firestore batch limit is 500 operations
+      if (operationsCount >= 490) { 
         await batch.commit();
         console.log(`${operationsCount} operations committed. Starting new batch.`);
         operationsCount = 0;
@@ -503,7 +499,6 @@ export const migrateLocalStorageToFirestore = async () => {
     };
 
 
-    // Migrate Patients
     const localPatientsRaw = localStorage.getItem('triful_arogya_niketan_patients');
     if (localPatientsRaw) {
       const localPatients: Patient[] = JSON.parse(localPatientsRaw);
@@ -513,14 +508,12 @@ export const migrateLocalStorageToFirestore = async () => {
         const patientRef = doc(db, 'patients', id);
         await addToBatch(patientRef, prepareDataForFirestore({
           ...patientData,
-          // Ensure createdAt and updatedAt are handled correctly
           createdAt: patient.createdAt || new Date().toISOString(),
           updatedAt: patient.updatedAt || new Date().toISOString(),
         }));
       }
     }
 
-    // Migrate Visits
     const localVisitsRaw = localStorage.getItem('triful_arogya_niketan_visits');
     if (localVisitsRaw) {
         const localVisits: Visit[] = JSON.parse(localVisitsRaw);
@@ -535,7 +528,6 @@ export const migrateLocalStorageToFirestore = async () => {
         }
     }
 
-    // Migrate Prescriptions
     const localPrescriptionsRaw = localStorage.getItem('triful_arogya_niketan_prescriptions');
     if (localPrescriptionsRaw) {
         const localPrescriptions: Prescription[] = JSON.parse(localPrescriptionsRaw);
@@ -550,7 +542,6 @@ export const migrateLocalStorageToFirestore = async () => {
         }
     }
 
-    // Migrate Payment Slips
     const localPaymentSlipsRaw = localStorage.getItem('triful_arogya_niketan_payment_slips');
     if (localPaymentSlipsRaw) {
         const localPaymentSlips: PaymentSlip[] = JSON.parse(localPaymentSlipsRaw);
@@ -565,13 +556,17 @@ export const migrateLocalStorageToFirestore = async () => {
         }
     }
 
-    // Migrate Clinic Settings
     const localSettingsRaw = localStorage.getItem('triful_arogya_niketan_settings');
     if (localSettingsRaw) {
         const localSettings: ClinicSettings = JSON.parse(localSettingsRaw);
         console.log("Migrating clinic settings...");
         const settingsRef = doc(db, 'settings', 'clinic');
-        await addToBatch(settingsRef, localSettings);
+        // Ensure nextDiaryNumber is not migrated from old settings
+        const { ...settingsToMigrate } = localSettings;
+        if ('nextDiaryNumber' in settingsToMigrate) {
+            delete (settingsToMigrate as any).nextDiaryNumber;
+        }
+        await addToBatch(settingsRef, settingsToMigrate);
     }
 
     if (operationsCount > 0) {
@@ -586,7 +581,6 @@ export const migrateLocalStorageToFirestore = async () => {
   }
 };
 
-// --- Clear localStorage Data (USE WITH CAUTION) ---
 export const clearAllLocalStorageData = () => {
   if (typeof window === 'undefined') return;
   if (confirm("WARNING: This will delete ALL application data from your browser's localStorage. This action CANNOT BE UNDONE. Only proceed if you have successfully migrated your data to Firestore or have a backup. Are you absolutely sure?")) {
@@ -599,4 +593,3 @@ export const clearAllLocalStorageData = () => {
     window.location.reload();
   }
 };
-
