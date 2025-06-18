@@ -18,13 +18,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  allowedDevOrigins: [ // This is for development, not directly related to production deployment
-    '6000-firebase-studio-1749841923346.cluster-ikxjzjhlifcwuroomfkjrx437g.cloudworkstations.dev',
-    '9000-firebase-studio-1749841923346.cluster-ikxjzjhlifcwuroomfkjrx437g.cloudworkstations.dev',
-    '3000-firebase-studio-1749841923346.cluster-ikxjzjhlifcwuroomfkjrx437g.cloudworkstations.dev',
-  ],
-  experimental: {
-  },
 };
 
 export default nextConfig;
+
