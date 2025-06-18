@@ -15,10 +15,10 @@ import { getVisitsByPatientId, addVisit, formatDate, updatePatient, getPrescript
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { Pencil, Save, BriefcaseMedical, Loader2, CalendarDays, FileText, PackageCheck, Truck, User } from 'lucide-react'; 
+import { Pencil, Save, BriefcaseMedical, Loader2, CalendarDays, FileText, PackageCheck, Truck, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; 
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { isValid, format as formatDateFns } from 'date-fns';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
@@ -118,12 +118,12 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       visitDate: new Date().toISOString().split('T')[0],
       symptoms: '',
       amount: 0,
-      paymentMethod: 'cash', 
-      medicineDeliveryMethod: 'direct', 
+      paymentMethod: 'cash',
+      medicineDeliveryMethod: 'direct',
       receivedBy: '',
     },
   });
-  
+
   const fetchVisitsAndPrescriptions = useCallback(async (patientId: string) => {
       setIsLoadingVisits(true);
       try {
@@ -174,13 +174,13 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         receivedBy: '',
       });
       setIsEditingInfo(false);
-      
+
       if (currentTab === 'history' || defaultTab === 'history') {
         fetchVisitsAndPrescriptions(patient.id);
       }
     }
   }, [isOpen, patient, patientInfoForm, visitAndPaymentForm, defaultTab, currentTab, fetchVisitsAndPrescriptions]);
-  
+
   useEffect(() => {
     if (isOpen && patient && currentTab === 'history' && visits.length === 0 && !isLoadingVisits) {
         fetchVisitsAndPrescriptions(patient.id);
@@ -204,7 +204,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         thanaUpazila: data.thanaUpazila,
         registrationDate: new Date(data.registrationDate).toISOString(),
       };
-      
+
       const success = await updatePatient(patient.id, updatedPatientData);
       if (success) {
         onPatientUpdate({ ...patient, ...updatedPatientData, updatedAt: new Date().toISOString() });
@@ -224,8 +224,8 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     const newVisitData: Omit<Visit, 'id' | 'createdAt'> = {
         patientId: patient.id,
         visitDate: new Date(data.visitDate).toISOString(),
-        symptoms: data.symptoms, 
-        medicineDeliveryMethod: data.medicineDeliveryMethod, 
+        symptoms: data.symptoms,
+        medicineDeliveryMethod: data.medicineDeliveryMethod,
     };
     const visitId = await addVisit(newVisitData);
 
@@ -235,15 +235,15 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     }
     toast({ title: 'ভিজিট লগ হয়েছে', description: `রোগী: ${patient.name} এর জন্য ভিজিট যুক্ত করা হয়েছে।` });
 
-    if (data.amount > 0 && data.paymentMethod) { 
+    if (data.amount > 0 && data.paymentMethod) {
       const newSlipData: Omit<PaymentSlip, 'id' | 'createdAt'> = {
         patientId: patient.id,
         visitId: visitId,
-        slipNumber: `SLIP-${Date.now().toString().slice(-6)}`, 
-        date: new Date(data.visitDate).toISOString(), 
+        slipNumber: `SLIP-${Date.now().toString().slice(-6)}`,
+        date: new Date(data.visitDate).toISOString(),
         amount: data.amount,
-        purpose: data.symptoms, 
-        paymentMethod: data.paymentMethod as Exclude<PaymentMethod, ''>, 
+        purpose: data.symptoms,
+        paymentMethod: data.paymentMethod as Exclude<PaymentMethod, ''>,
         receivedBy: data.receivedBy,
       };
       const slipId = await addPaymentSlip(newSlipData);
@@ -256,7 +256,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
             toast({ title: 'ত্রুটি', description: 'পেমেন্ট স্লিপ তৈরি করতে সমস্যা হয়েছে।', variant: 'warning' });
         }
     }
-    
+
     visitAndPaymentForm.reset({
       visitDate: new Date().toISOString().split('T')[0],
       symptoms: '',
@@ -265,10 +265,10 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       medicineDeliveryMethod: 'direct',
       receivedBy: '',
     });
-    
-    await fetchVisitsAndPrescriptions(patient.id); 
-    window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
-    setCurrentTab('history'); 
+
+    await fetchVisitsAndPrescriptions(patient.id);
+    window.dispatchEvent(new CustomEvent('firestoreDataChange'));
+    setCurrentTab('history');
     router.push(`${ROUTES.PRESCRIPTION}/${patient.id}?visitId=${visitId}`);
   };
 
@@ -318,6 +318,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
           <ScrollArea className="h-[55vh] lg:h-[60vh]">
             <div className="p-6">
             <TabsContent value="info">
+              {/* Patient Information Form Fields Start Here */}
               <Form {...patientInfoForm}>
                 <form onSubmit={patientInfoForm.handleSubmit(handlePatientInfoSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -344,11 +345,11 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <FormLabel htmlFor="diaryNumberModal">ডায়েরি নম্বর</FormLabel>
                           <div className={cn(inputWrapperClass, !isEditingInfo && readOnlyInputFieldClass)}>
                             <FormControl>
-                              <Input id="diaryNumberModal" type="number" {...field} 
+                              <Input id="diaryNumberModal" type="number" {...field}
                                 onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                                 value={field.value ?? ''}
-                                readOnly={!isEditingInfo} 
-                                className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)} 
+                                readOnly={!isEditingInfo}
+                                className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)}
                               />
                             </FormControl>
                           </div>
@@ -583,6 +584,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       )}
                     />
                   </div>
+                  {/* Patient Information Form Fields End Here. All fields from schema should be between this comment and the one above. */}
                   <div className="flex justify-end gap-2 mt-4">
                     {isEditingInfo ? (
                       <>
@@ -624,7 +626,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                           <p className="text-sm"><strong className="font-medium text-muted-foreground">রোগ নির্ণয় (প্রেসক্রিপশন):</strong> {visit.prescription?.diagnosis || 'N/A'}</p>
                           {visit.medicineDeliveryMethod && (
                             <p className="text-sm">
-                                <strong className="font-medium text-muted-foreground">ঔষধ প্রদান:</strong> 
+                                <strong className="font-medium text-muted-foreground">ঔষধ প্রদান:</strong>
                                 {medicineDeliveryMethodOptions.find(opt => opt.value === visit.medicineDeliveryMethod)?.label || visit.medicineDeliveryMethod}
                                 {visit.medicineDeliveryMethod === 'direct' ? <PackageCheck className="inline-block ml-1 h-4 w-4 text-green-600" /> : <Truck className="inline-block ml-1 h-4 w-4 text-blue-600" />}
                             </p>
@@ -719,8 +721,8 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="paymentMethodModal">পেমেন্ট মাধ্যম</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
+                          <Select
+                            onValueChange={field.onChange}
                             value={field.value || ''}
                             defaultValue="cash"
                            >
@@ -745,9 +747,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel htmlFor="medicineDeliveryMethodModal">ঔষধ প্রদানের মাধ্যম</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            value={field.value} 
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
                             defaultValue="direct"
                           >
                             <FormControl>
