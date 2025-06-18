@@ -208,16 +208,16 @@ export default function SearchPatientsPage() {
                 <h4 className="font-semibold text-md mb-3 text-foreground">রোগীর কার্যক্রম</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'addVisitAndPayment')} className="justify-start">
-                    <CalendarPlus className="mr-2 h-5 w-5 text-green-600" /> ভিজিট ও পেমেন্ট যুক্ত করুন
+                    <CalendarPlus className="mr-2 h-5 w-5 text-green-600" /> নতুন ভিজিট ও পেমেন্ট যুক্ত করুন
                   </Button>
-                  <Button variant="outline" onClick={() => handleOpenPaymentModal(patient)} className="justify-start">
-                    <CreditCard className="mr-2 h-5 w-5 text-blue-600" /> পেমেন্ট স্লিপ তৈরি করুন
+                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'history')} className="justify-start sm:col-span-1 md:col-span-1">
+                    <History className="mr-2 h-5 w-5 text-purple-600" /> পূর্ববর্তী ভিজিটের বিবরণ
                   </Button>
                    <Button variant="outline" onClick={() => handleOpenMedicineInstructions(patient)} className="justify-start">
                     <ClipboardList className="mr-2 h-5 w-5 text-indigo-600" /> ঔষধের নিয়মাবলী
                   </Button>
-                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'history')} className="justify-start sm:col-span-1 md:col-span-1">
-                    <History className="mr-2 h-5 w-5 text-purple-600" /> পূর্ববর্তী ভিজিটের বিবরণ
+                  <Button variant="outline" onClick={() => handleOpenPaymentModal(patient)} className="justify-start">
+                    <CreditCard className="mr-2 h-5 w-5 text-blue-600" /> পেমেন্ট স্লিপ তৈরি করুন
                   </Button>
                   <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'info')} className="justify-start sm:col-span-2 md:col-span-2">
                     <Edit3 className="mr-2 h-5 w-5 text-orange-600" /> রোগীর তথ্য সম্পাদনা করুন
@@ -254,3 +254,4 @@ export default function SearchPatientsPage() {
     </div>
   );
 }
+
