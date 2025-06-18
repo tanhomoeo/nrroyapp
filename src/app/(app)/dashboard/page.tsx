@@ -11,12 +11,20 @@ import {
     Users, UserPlus, FileText, BarChart3, TrendingUp, Search as SearchIcon, Printer, CalendarDays, X, Loader2,
     MessageSquareText, PlayCircle, CreditCard, ClipboardList, FilePlus2
 } from 'lucide-react';
-import { getPatients, getVisits, getPaymentSlips, formatCurrency, isToday, isThisMonth, getPatientById, getPaymentMethodLabel } from '@/lib/firestoreService';
+import { 
+    getPatients, 
+    getVisitsWithinDateRange, 
+    getPaymentSlipsWithinDateRange,
+    getPatientsRegisteredWithinDateRange,
+    formatCurrency, 
+    getPatientById, 
+    getPaymentMethodLabel 
+} from '@/lib/firestoreService';
 import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/lib/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES, APP_NAME } from '@/lib/constants';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday as isTodayFns } from 'date-fns'; // Renamed isToday to avoid conflict
 import { bn } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
@@ -103,7 +111,7 @@ interface AppointmentDisplayItem {
   status: 'Completed' | 'Pending';
   paymentMethod?: string;
   paymentAmount?: string;
-  createdAt: string;
+  createdAt: string; // Keep this as string, original ISO string for sorting
 }
 
 export default function DashboardPage() {
@@ -132,18 +140,35 @@ export default function DashboardPage() {
 
 
   const loadAppointments = useCallback(async () => {
-    const allVisits = await getVisits();
-    const allSlips = await getPaymentSlips();
-    const allPatients = await getPatients(); 
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
 
-    const todayVisits = allVisits.filter(v => isToday(v.visitDate));
+    const todayVisits = await getVisitsWithinDateRange(todayStart, todayEnd);
+    const todaySlips = await getPaymentSlipsWithinDateRange(todayStart, todayEnd);
+    
+    // To avoid fetching all patients for just names, we can fetch them on demand or batch fetch if many unique patientIds
+    const patientIdsForTodayVisits = Array.from(new Set(todayVisits.map(v => v.patientId)));
+    const patientsData: Record<string, Patient> = {};
+    
+    // Batch fetching patient details if needed, or fetch one-by-one
+    // For simplicity, if patientIdsForTodayVisits is small, fetch one by one.
+    // For larger counts, consider a batch mechanism (e.g., `where('id', 'in', patientIdsForTodayVisits)`)
+    // Note: Firestore `in` operator is limited to 10 items per query. For more, multiple queries are needed.
+    // For now, let's assume a manageable number of patients per day and fetch individually for simplicity.
+    // A more optimized way would be to get all patients once if frequent re-renders are not an issue.
+    for (const patientId of patientIdsForTodayVisits) {
+        if (!patientsData[patientId]) {
+            const patient = await getPatientById(patientId);
+            if (patient) patientsData[patientId] = patient;
+        }
+    }
 
     const appointmentsDataPromises: Promise<AppointmentDisplayItem | null>[] = todayVisits
       .map(async visit => {
-        const patient = allPatients.find(p => p.id === visit.patientId); 
+        const patient = patientsData[visit.patientId];
         if (!patient) return null;
 
-        const paymentSlipForVisit = allSlips.find(s => s.visitId === visit.id && s.amount > 0);
+        const paymentSlipForVisit = todaySlips.find(s => s.visitId === visit.id && (s.amount ?? 0) > 0);
         const currentStatus: 'Completed' | 'Pending' = paymentSlipForVisit ? 'Completed' : 'Pending';
 
         return {
@@ -157,46 +182,60 @@ export default function DashboardPage() {
           status: currentStatus,
           paymentMethod: paymentSlipForVisit ? getPaymentMethodLabel(paymentSlipForVisit.paymentMethod) : 'N/A',
           paymentAmount: paymentSlipForVisit ? formatCurrency(paymentSlipForVisit.amount) : 'N/A',
-          createdAt: visit.createdAt,
+          createdAt: visit.createdAt, // Keep original ISO string from Firestore
         };
       });
     
     const resolvedAppointmentsData = (await Promise.all(appointmentsDataPromises)).filter(Boolean) as AppointmentDisplayItem[];
+    // Sort by original ISO string createdAt
     setTodaysAppointments(resolvedAppointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
   }, []);
 
 
   const loadDashboardData = useCallback(async () => {
     setLoading(true);
-    const [allPatients, allSlips, allVisits] = await Promise.all([
+    const today = new Date();
+    const todayStart = startOfDay(today);
+    const todayEnd = endOfDay(today);
+    const monthStart = startOfMonth(today);
+    const monthEnd = endOfMonth(today);
+
+    const [
+        allPatients, // Still need all patients for total count
+        todayVisits,
+        monthVisits,
+        todaySlips,
+        monthSlips,
+        patientsCreatedThisMonth
+    ] = await Promise.all([
         getPatients(),
-        getPaymentSlips(),
-        getVisits()
+        getVisitsWithinDateRange(todayStart, todayEnd),
+        getVisitsWithinDateRange(monthStart, monthEnd),
+        getPaymentSlipsWithinDateRange(todayStart, todayEnd),
+        getPaymentSlipsWithinDateRange(monthStart, monthEnd),
+        getPatientsRegisteredWithinDateRange(monthStart, monthEnd)
     ]);
 
-    const todayVisits = allVisits.filter(v => isToday(v.visitDate));
-    const uniqueTodayPatients = new Set(todayVisits.map(v => v.patientId));
+    const uniqueTodayPatientIds = new Set(todayVisits.map(v => v.patientId));
 
-    const monthVisits = allVisits.filter(v => isThisMonth(v.visitDate));
+    const todayRevenue = todaySlips.reduce((sum, s) => sum + s.amount, 0);
+    const monthlyIncome = monthSlips.reduce((sum, s) => sum + s.amount, 0);
+    
+    const dailyOtherRegisteredPatientIds = new Set(
+        (await getPatientsRegisteredWithinDateRange(todayStart, todayEnd))
+        .map(p => p.id)
+        .filter(id => !uniqueTodayPatientIds.has(id))
+    );
 
-    const todayRevenue = allSlips
-      .filter(s => isToday(s.date))
-      .reduce((sum, s) => sum + s.amount, 0);
-
-    const monthlyIncome = allSlips
-        .filter(s => isThisMonth(s.date))
-        .reduce((sum, s) => sum + s.amount, 0);
-
-    const patientsCreatedThisMonth = allPatients.filter(p => p.createdAt && isThisMonth(p.createdAt));
 
     setStats({
       totalPatients: allPatients.length,
-      todayPatientCount: uniqueTodayPatients.size,
+      todayPatientCount: uniqueTodayPatientIds.size,
       monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size, 
       todayRevenue: todayRevenue,
       monthlyIncome: monthlyIncome,
-      dailyActivePatients: uniqueTodayPatients.size,
-      dailyOtherRegistered: allPatients.filter(p => p.registrationDate && !uniqueTodayPatients.has(p.id) && isToday(p.registrationDate)).length,
+      dailyActivePatients: uniqueTodayPatientIds.size, // Patients who had a visit today
+      dailyOtherRegistered: dailyOtherRegisteredPatientIds.size, // Patients registered today but no visit today
       monthlyNewPatients: patientsCreatedThisMonth.length,
       monthlyTotalRegistered: allPatients.length, 
     });

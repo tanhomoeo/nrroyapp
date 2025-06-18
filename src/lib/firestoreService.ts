@@ -14,9 +14,10 @@ import {
   Timestamp,
   setDoc,
   writeBatch,
+  limit,
 } from 'firebase/firestore';
 import type { Patient, Visit, Prescription, PaymentSlip, ClinicSettings, PaymentMethod } from './types';
-import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, isValid } from 'date-fns';
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isValid } from 'date-fns';
 
 // --- Data Conversion Helpers ---
 
@@ -127,16 +128,34 @@ export const getPatientById = async (id: string): Promise<Patient | null> => {
   }
 };
 
+export const getPatientsRegisteredWithinDateRange = async (startDate: Date, endDate: Date): Promise<Patient[]> => {
+  try {
+    const startTimestamp = Timestamp.fromDate(startOfDay(startDate));
+    const endTimestamp = Timestamp.fromDate(endOfDay(endDate));
+    const q = query(patientsCollectionRef, 
+                    where('createdAt', '>=', startTimestamp), 
+                    where('createdAt', '<=', endTimestamp),
+                    orderBy('createdAt', 'desc')
+                   );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(docSnap => convertDocument<Patient>(docSnap));
+  } catch (error) {
+    console.error("Error getting patients registered within date range: ", error);
+    return [];
+  }
+};
+
 // --- Visits ---
 const visitsCollectionRef = collection(db, 'visits');
 
 export const getVisits = async (): Promise<Visit[]> => {
   try {
+    // This fetches ALL visits, try to avoid using this if possible for performance.
     const q = query(visitsCollectionRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => convertDocument<Visit>(docSnap));
   } catch (error) {
-    console.error("Error getting visits: ", error);
+    console.error("Error getting all visits: ", error);
     return [];
   }
 };
@@ -145,7 +164,7 @@ export const addVisit = async (visitData: Omit<Visit, 'id' | 'createdAt'>): Prom
   try {
     const newVisit = {
       ...visitData,
-      createdAt: Timestamp.now(),
+      createdAt: Timestamp.now(), // Firestore server timestamp would be better but this is client-side
     };
     const docRef = await addDoc(visitsCollectionRef, prepareDataForFirestore(newVisit));
     return docRef.id;
@@ -154,6 +173,32 @@ export const addVisit = async (visitData: Omit<Visit, 'id' | 'createdAt'>): Prom
     return null;
   }
 };
+
+// New function to create a visit specifically for starting a prescription workflow
+export const createVisitForPrescription = async (
+  patientId: string, 
+  symptoms: string = "পুনরায় সাক্ষাৎ / Follow-up",
+  medicineDeliveryMethod: 'direct' | 'courier' = 'direct'
+): Promise<string | null> => {
+  try {
+    const visitData: Omit<Visit, 'id' | 'createdAt'> = {
+      patientId,
+      visitDate: new Date().toISOString(), // Today's date
+      symptoms,
+      medicineDeliveryMethod,
+    };
+    const newVisit = {
+      ...visitData,
+      createdAt: Timestamp.now(),
+    };
+    const docRef = await addDoc(visitsCollectionRef, prepareDataForFirestore(newVisit));
+    return docRef.id;
+  } catch (error) {
+    console.error("Error creating visit for prescription: ", error);
+    return null;
+  }
+};
+
 
 export const getVisitsByPatientId = async (patientId: string): Promise<Visit[]> => {
   try {
@@ -174,6 +219,24 @@ export const getVisitById = async (id: string): Promise<Visit | null> => {
   } catch (error) {
     console.error("Error getting visit by ID: ", error);
     return null;
+  }
+};
+
+export const getVisitsWithinDateRange = async (startDate: Date, endDate: Date): Promise<Visit[]> => {
+  try {
+    const startTimestamp = Timestamp.fromDate(startOfDay(startDate));
+    const endTimestamp = Timestamp.fromDate(endOfDay(endDate));
+    const q = query(visitsCollectionRef, 
+                    where('visitDate', '>=', startTimestamp), 
+                    where('visitDate', '<=', endTimestamp),
+                    orderBy('visitDate', 'desc'),
+                    orderBy('createdAt', 'desc')
+                  );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(docSnap => convertDocument<Visit>(docSnap));
+  } catch (error) {
+    console.error("Error getting visits within date range: ", error);
+    return [];
   }
 };
 
@@ -246,11 +309,12 @@ const paymentSlipsCollectionRef = collection(db, 'paymentSlips');
 
 export const getPaymentSlips = async (): Promise<PaymentSlip[]> => {
   try {
+    // This fetches ALL slips, try to avoid using this if possible for performance.
     const q = query(paymentSlipsCollectionRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => convertDocument<PaymentSlip>(docSnap));
   } catch (error) {
-    console.error("Error getting payment slips: ", error);
+    console.error("Error getting all payment slips: ", error);
     return [];
   }
 };
@@ -279,6 +343,24 @@ export const getPaymentSlipsByPatientId = async (patientId: string): Promise<Pay
     return [];
   }
 };
+
+export const getPaymentSlipsWithinDateRange = async (startDate: Date, endDate: Date): Promise<PaymentSlip[]> => {
+  try {
+    const startTimestamp = Timestamp.fromDate(startOfDay(startDate));
+    const endTimestamp = Timestamp.fromDate(endOfDay(endDate));
+    const q = query(paymentSlipsCollectionRef, 
+                    where('date', '>=', startTimestamp), 
+                    where('date', '<=', endTimestamp),
+                    orderBy('date', 'desc')
+                   );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(docSnap => convertDocument<PaymentSlip>(docSnap));
+  } catch (error) {
+    console.error("Error getting payment slips within date range: ", error);
+    return [];
+  }
+};
+
 
 // --- Settings ---
 const settingsDocRef = doc(db, 'settings', 'clinic');
@@ -324,9 +406,9 @@ export const saveClinicSettings = async (settings: ClinicSettings): Promise<bool
 
 
 // --- Date & Utility helpers ---
-export const isToday = (dateString: string): boolean => {
-    if (!dateString) return false;
-    const date = new Date(dateString);
+export const isToday = (dateStringOrDate: string | Date): boolean => {
+    if (!dateStringOrDate) return false;
+    const date = typeof dateStringOrDate === 'string' ? new Date(dateStringOrDate) : dateStringOrDate;
     if (!isValid(date)) return false;
     const today = new Date();
     return date.getFullYear() === today.getFullYear() &&
@@ -334,26 +416,24 @@ export const isToday = (dateString: string): boolean => {
            date.getDate() === today.getDate();
 };
 
-export const isThisMonth = (dateString: string): boolean => {
-  if (!dateString) return false;
-  const date = new Date(dateString);
+export const isThisMonth = (dateStringOrDate: string | Date): boolean => {
+  if (!dateStringOrDate) return false;
+  const date = typeof dateStringOrDate === 'string' ? new Date(dateStringOrDate) : dateStringOrDate;
   if (!isValid(date)) return false;
   const today = new Date();
   return date.getFullYear() === today.getFullYear() &&
          date.getMonth() === today.getMonth();
 };
 
-export const formatDate = (dateString?: string, options?: Intl.DateTimeFormatOptions): string => {
+export const formatDate = (dateString?: string | Date, options?: Intl.DateTimeFormatOptions): string => {
   if (!dateString) return 'N/A';
-  const date = new Date(dateString);
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
   if (!isValid(date)) return 'Invalid Date';
   const defaultOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric', month: 'short', day: 'numeric',
     ...options
   };
   try {
-    // Using 'en-BD' locale can sometimes provide better consistency for Bangla numerals in dates
-    // depending on system setup, though 'bn-BD' is the standard.
     return date.toLocaleDateString('bn-BD', defaultOptions);
   } catch (e) {
     console.warn(`Error formatting date: ${dateString}`, e);
@@ -416,16 +496,7 @@ export const migrateLocalStorageToFirestore = async () => {
       operationsCount++;
       if (operationsCount >= 490) { // Firestore batch limit is 500 operations
         await batch.commit();
-        // Reset batch and counter: Note - this will create a new batch, previous batch is gone.
-        // This basic implementation might not be ideal for very large datasets.
-        // A more robust solution would involve a new batch object or a queue system.
-        // For this app's scale, it might be okay.
         console.log(`${operationsCount} operations committed. Starting new batch.`);
-        // batch = writeBatch(db); // This line would be problematic as batch is const.
-        // A full re-init of batch is needed which is complex here.
-        // This function should ideally be refactored if datasets are huge.
-        // For simplicity, we assume one large batch or that the user runs this multiple times
-        // if it fails due to size. A better approach for large migrations is server-side scripts.
         operationsCount = 0;
          alert("A batch of data has been committed. If you have a very large dataset, you might need to re-run the migration if it times out or shows errors for subsequent data types. This is a simplified client-side migration.");
       }
@@ -500,9 +571,6 @@ export const migrateLocalStorageToFirestore = async () => {
         const localSettings: ClinicSettings = JSON.parse(localSettingsRaw);
         console.log("Migrating clinic settings...");
         const settingsRef = doc(db, 'settings', 'clinic');
-        // Settings don't typically have createdAt/updatedAt in the same way,
-        // so directly use prepareDataForFirestore if it handles general objects,
-        // or just pass localSettings if no date conversion is needed for it.
         await addToBatch(settingsRef, localSettings);
     }
 
@@ -531,3 +599,4 @@ export const clearAllLocalStorageData = () => {
     window.location.reload();
   }
 };
+

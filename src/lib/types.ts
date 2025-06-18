@@ -29,7 +29,7 @@ export interface Visit {
   notes?: string;
   prescriptionId?: string; 
   paymentSlipId?: string;
-  createdAt: string;
+  createdAt: string; // Keep this for ordering, it's set by Firestore automatically or by us in addVisit
   medicineDeliveryMethod?: 'direct' | 'courier' | ''; 
 }
 

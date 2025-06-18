@@ -1,11 +1,11 @@
 
 'use client';
-import React, { useState, useEffect, useRef, Suspense } from 'react'; // Added Suspense
+import React, { useState, useEffect, useRef, Suspense } from 'react'; 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getPatients } from '@/lib/firestoreService';
+import { getPatients, createVisitForPrescription } from '@/lib/firestoreService'; // Added createVisitForPrescription
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { 
@@ -19,15 +19,16 @@ import {
   X,
   ClipboardList, 
   BriefcaseMedical,
-  CalendarPlus 
+  CalendarPlus,
+  PlayCircle // For starting workflow for new visit
 } from 'lucide-react';
-// import { PatientDetailsModal } from '@/components/patient/PatientDetailsModal'; // Removed direct import
 import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 import { appendFinalTranscript } from '@/lib/utils';
-import dynamic from 'next/dynamic'; // Added dynamic
+import dynamic from 'next/dynamic'; 
+import { useToast } from '@/hooks/use-toast'; // Added useToast
 
 const PatientDetailsModal = dynamic(() => 
   import('@/components/patient/PatientDetailsModal').then(mod => mod.PatientDetailsModal),
@@ -46,8 +47,10 @@ export default function SearchPatientsPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [activeModalTab, setActiveModalTab] = useState<'info' | 'history' | 'addVisitAndPayment'>('info');
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingVisit, setIsCreatingVisit] = useState<string | null>(null); // Store patientId being processed
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast(); // Initialize toast
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
@@ -131,6 +134,32 @@ export default function SearchPatientsPage() {
     }
   };
 
+  const handleAddTodaysVisitAndPrescribe = async (patient: Patient) => {
+    setIsCreatingVisit(patient.id);
+    try {
+      const newVisitId = await createVisitForPrescription(patient.id, "পুনরায় সাক্ষাৎ / Follow-up");
+      if (newVisitId) {
+        toast({
+          title: "ভিজিট তৈরি হয়েছে",
+          description: `${patient.name}-এর জন্য আজকের ভিজিট তৈরি করা হয়েছে। প্রেসক্রিপশন পৃষ্ঠায় নেয়া হচ্ছে।`,
+        });
+        router.push(`${ROUTES.PRESCRIPTION}/${patient.id}?visitId=${newVisitId}`);
+      } else {
+        throw new Error("Failed to create visit ID.");
+      }
+    } catch (error) {
+      console.error("Error creating today's visit:", error);
+      toast({
+        title: "ত্রুটি",
+        description: "আজকের ভিজিট তৈরি করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingVisit(null);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <PageHeaderCard
@@ -199,7 +228,7 @@ export default function SearchPatientsPage() {
                   <div>
                     <CardTitle className="font-headline text-xl text-primary">{patient.name}</CardTitle>
                     <p className="text-xs text-muted-foreground">
-                      আইডি: {patient.id} | ডায়েরি নং: {patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}
+                      ডায়েরি নং: {patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'} | ফোন: {patient.phone}
                     </p>
                   </div>
                 </div>
@@ -207,20 +236,29 @@ export default function SearchPatientsPage() {
               <CardContent>
                 <h4 className="font-semibold text-md mb-3 text-foreground">রোগীর কার্যক্রম</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'addVisitAndPayment')} className="justify-start">
-                    <CalendarPlus className="mr-2 h-5 w-5 text-green-600" /> নতুন ভিজিট ও পেমেন্ট যুক্ত করুন
+                  <Button 
+                    variant="default" 
+                    onClick={() => handleAddTodaysVisitAndPrescribe(patient)} 
+                    className="justify-start bg-green-600 hover:bg-green-700 text-white"
+                    disabled={isCreatingVisit === patient.id}
+                  >
+                    {isCreatingVisit === patient.id ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlayCircle className="mr-2 h-5 w-5" />}
+                    {isCreatingVisit === patient.id ? 'প্রসেসিং...' : 'আজকের ভিজিট ও কার্যক্রম শুরু'}
                   </Button>
-                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'history')} className="justify-start sm:col-span-1 md:col-span-1">
+                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'addVisitAndPayment')} className="justify-start">
+                    <CalendarPlus className="mr-2 h-5 w-5 text-teal-600" /> পুরোনো ভিজিটের সাথে পেমেন্ট
+                  </Button>
+                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'history')} className="justify-start">
                     <History className="mr-2 h-5 w-5 text-purple-600" /> পূর্ববর্তী ভিজিটের বিবরণ
                   </Button>
                    <Button variant="outline" onClick={() => handleOpenMedicineInstructions(patient)} className="justify-start">
                     <ClipboardList className="mr-2 h-5 w-5 text-indigo-600" /> ঔষধের নিয়মাবলী
                   </Button>
                   <Button variant="outline" onClick={() => handleOpenPaymentModal(patient)} className="justify-start">
-                    <CreditCard className="mr-2 h-5 w-5 text-blue-600" /> পেমেন্ট স্লিপ তৈরি করুন
+                    <CreditCard className="mr-2 h-5 w-5 text-blue-600" /> সাধারণ পেমেন্ট স্লিপ
                   </Button>
-                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'info')} className="justify-start sm:col-span-2 md:col-span-2">
-                    <Edit3 className="mr-2 h-5 w-5 text-orange-600" /> রোগীর তথ্য সম্পাদনা করুন
+                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'info')} className="justify-start">
+                    <Edit3 className="mr-2 h-5 w-5 text-orange-600" /> রোগীর তথ্য সম্পাদনা
                   </Button>
                 </div>
               </CardContent>
@@ -230,7 +268,7 @@ export default function SearchPatientsPage() {
       )}
 
       <Suspense fallback={<div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Details...</span></div>}>
-        {selectedPatientForModal && isDetailsModalOpen && ( // Ensure modal only renders when open
+        {selectedPatientForModal && isDetailsModalOpen && ( 
           <PatientDetailsModal
             patient={selectedPatientForModal}
             isOpen={isDetailsModalOpen}
@@ -242,7 +280,7 @@ export default function SearchPatientsPage() {
       </Suspense>
       
       <Suspense fallback={<div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Payment Form...</span></div>}>
-        {selectedPatientForModal && isPaymentModalOpen && ( // Ensure modal only renders when open
+        {selectedPatientForModal && isPaymentModalOpen && ( 
           <CreatePaymentSlipModal
             patient={selectedPatientForModal}
             isOpen={isPaymentModalOpen}
