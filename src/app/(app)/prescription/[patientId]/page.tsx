@@ -529,7 +529,7 @@ export default function PrescriptionPage() {
               <p><strong>নাম:</strong> {patient.name}</p>
               <p><strong>ফোন:</strong> {patient.phone}</p>
               <p><strong>গ্রাম:</strong> {patient.villageUnion || 'N/A'}</p>
-              <p><strong>নিবন্ধিত:</strong> {formatDate(patient.createdAt)}</p>
+              <p><strong>নিবন্ধিত:</strong> {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}</p>
             </CardContent>
           </Card>
         </div>
@@ -546,7 +546,7 @@ export default function PrescriptionPage() {
         <div className="patient-info-grid">
           <div><strong>রোগী:</strong> {patient.name}</div>
           <div><strong>বয়স/লিঙ্গ:</strong> {patient.age || 'N/A'} / {patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : 'N/A'}</div>
-          <div><strong>ডায়েরি নং:</strong> {patient.diaryNumber || 'N/A'}</div> {/* Direct string display */}
+          <div><strong>ডায়েরি নং:</strong> {patient.diaryNumber || 'N/A'}</div>
           <div><strong>তারিখ:</strong> {format(new Date(form.getValues("items").length > 0 && existingPrescription?.date ? existingPrescription.date : (currentVisit?.visitDate || new Date().toISOString())), "dd MMM, yyyy", { locale: bn })}</div>
         </div>
 
@@ -694,3 +694,4 @@ export default function PrescriptionPage() {
     </div>
   );
 }
+

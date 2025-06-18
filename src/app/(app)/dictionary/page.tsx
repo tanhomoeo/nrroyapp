@@ -134,7 +134,7 @@ export default function DictionaryPage() {
                   <TableBody>
                     {filteredPatients.map(patient => (
                       <TableRow key={patient.id}>
-                        <TableCell>{patient.diaryNumber || 'N/A'}</TableCell> {/* Direct string display */}
+                        <TableCell>{patient.diaryNumber || 'N/A'}</TableCell>
                         <TableCell className="font-medium">{patient.name}</TableCell>
                         <TableCell>{patient.phone}</TableCell>
                         <TableCell>{patient.villageUnion}{patient.district ? `, ${patient.district}` : ''}</TableCell>
@@ -162,3 +162,4 @@ export default function DictionaryPage() {
     </div>
   );
 }
+

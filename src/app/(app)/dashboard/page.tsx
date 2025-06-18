@@ -24,7 +24,7 @@ import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES, APP_NAME } from '@/lib/constants';
-import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday as isTodayFns } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday as isTodayFns, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
@@ -104,7 +104,7 @@ interface AppointmentDisplayItem {
   visitId: string;
   patient: Patient;
   patientName: string;
-  diaryNumberDisplay: string; // Keep as string for alphanumeric display
+  diaryNumberDisplay: string;
   address: string;
   time: string;
   reason: string;
@@ -163,14 +163,19 @@ export default function DashboardPage() {
 
         const paymentSlipForVisit = todaySlips.find(s => s.visitId === visit.id && (s.amount ?? 0) > 0);
         const currentStatus: 'Completed' | 'Pending' = paymentSlipForVisit ? 'Completed' : 'Pending';
+        
+        const visitCreatedAtDate = visit.createdAt ? new Date(visit.createdAt) : null;
+        const timeString = visitCreatedAtDate && isValid(visitCreatedAtDate)
+          ? format(visitCreatedAtDate, "p", { locale: bn })
+          : 'N/A';
 
         return {
           visitId: visit.id,
           patient: patient,
           patientName: patient.name,
-          diaryNumberDisplay: patient.diaryNumber || 'N/A', // Direct string display
+          diaryNumberDisplay: patient.diaryNumber || 'N/A',
           address: patient.villageUnion || 'N/A',
-          time: format(new Date(visit.createdAt), "p", { locale: bn }),
+          time: timeString,
           reason: visit.symptoms || 'N/A',
           status: currentStatus,
           paymentMethod: paymentSlipForVisit ? getPaymentMethodLabel(paymentSlipForVisit.paymentMethod) : 'N/A',
@@ -470,7 +475,7 @@ export default function DashboardPage() {
                   <TableRow key={appt.visitId}>
                     <TableCell className="font-medium">{appt.patientName}</TableCell>
                     <TableCell>{appt.time}</TableCell>
-                    <TableCell>{appt.diaryNumberDisplay}</TableCell> {/* Already a string */}
+                    <TableCell>{appt.diaryNumberDisplay}</TableCell>
                     <TableCell>{appt.address}</TableCell>
                     <TableCell>{appt.paymentMethod}</TableCell>
                     <TableCell className="text-right">{appt.paymentAmount}</TableCell>
@@ -530,3 +535,4 @@ export default function DashboardPage() {
     </TooltipProvider>
   );
 }
+
