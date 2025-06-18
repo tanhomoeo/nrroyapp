@@ -117,39 +117,48 @@ export default function PrescriptionPage() {
       } else if (visitId) {
         const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
         if (prescriptionsForVisit.length > 0) {
-          const currentPrescription = prescriptionsForVisit[0];
-          setExistingPrescription(currentPrescription);
-          initialDiagnosis = currentPrescription.diagnosis || '';
-          initialDoctorName = currentPrescription.doctorName || initialDoctorName;
+          const currentPrescriptionForVisit = prescriptionsForVisit[0];
+          setExistingPrescription(currentPrescriptionForVisit);
+          initialDiagnosis = currentPrescriptionForVisit.diagnosis || '';
+          initialDoctorName = currentPrescriptionForVisit.doctorName || initialDoctorName;
           form.reset({
-            prescriptionType: currentPrescription.prescriptionType,
-            items: currentPrescription.items,
-            followUpDays: currentPrescription.followUpDays,
-            advice: currentPrescription.advice,
+            prescriptionType: currentPrescriptionForVisit.prescriptionType,
+            items: currentPrescriptionForVisit.items,
+            followUpDays: currentPrescriptionForVisit.followUpDays,
+            advice: currentPrescriptionForVisit.advice,
             diagnosis: initialDiagnosis,
             doctorName: initialDoctorName,
           });
           setShowInstructionsButton(true);
-        } else {
-          if (visitForDiagnosis?.symptoms) initialDiagnosis = visitForDiagnosis.symptoms;
-          if (visitForDiagnosis?.diagnosis) initialDiagnosis = visitForDiagnosis.diagnosis || initialDiagnosis;
+        } else { // No existing prescription for this visit
+          if (visitForDiagnosis) {
+            initialDiagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
+          }
           form.reset({
-            ...form.getValues(),
-            diagnosis: initialDiagnosis,
-            doctorName: initialDoctorName,
+            prescriptionType: form.getValues('prescriptionType') || 'adult',
             items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
             followUpDays: 7,
             advice: '',
+            diagnosis: initialDiagnosis,
+            doctorName: initialDoctorName,
           });
         }
-      } else {
-        form.setValue('doctorName', initialDoctorName);
+      } else { // No prescriptionIdQuery and no visitId
+        form.reset({
+            prescriptionType: 'adult',
+            items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
+            followUpDays: 7,
+            advice: '',
+            diagnosis: '',
+            doctorName: initialDoctorName,
+        });
       }
 
-      if (!form.getValues('diagnosis') && visitForDiagnosis?.symptoms) {
-        form.setValue('diagnosis', visitForDiagnosis.symptoms);
-      } else if (!form.getValues('diagnosis') && visitForDiagnosis?.diagnosis) {
-        form.setValue('diagnosis', visitForDiagnosis.diagnosis);
+      if (!form.getValues('diagnosis') && visitForDiagnosis) {
+        const diagnosisFromVisit = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
+        if (diagnosisFromVisit) {
+            form.setValue('diagnosis', diagnosisFromVisit);
+        }
       }
     } catch (error) {
         console.error("Error fetching prescription data:", error);
@@ -171,7 +180,6 @@ export default function PrescriptionPage() {
     }
 
     try {
-      let currentPrescriptionId = existingPrescription?.id;
       const prescriptionDataPayload = {
         patientId: patient.id,
         visitId: visitId,
@@ -187,7 +195,7 @@ export default function PrescriptionPage() {
       if (existingPrescription) {
         await updatePrescription(existingPrescription.id, {
           ...prescriptionDataPayload,
-          serialNumber: existingPrescription.serialNumber, // Keep existing serial number on update
+          serialNumber: existingPrescription.serialNumber,
         });
         toast({ title: 'প্রেসক্রিপশন আপডেট হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন আপডেট করা হয়েছে।` });
       } else {
@@ -197,7 +205,6 @@ export default function PrescriptionPage() {
           serialNumber: newSerialNumber,
         });
         if (!newId) throw new Error("Failed to add prescription");
-        currentPrescriptionId = newId;
         setExistingPrescription({ ...prescriptionDataPayload, id: newId, createdAt: new Date().toISOString(), serialNumber: newSerialNumber });
         toast({ title: 'প্রেসক্রিপশন সংরক্ষণ করা হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন সংরক্ষণ করা হয়েছে।` });
       }
