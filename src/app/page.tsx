@@ -11,10 +11,11 @@ export default function Home() {
 
   useEffect(() => {
     const testFirestoreAccess = async () => {
-      const testDocPath = "__test_permissions__/testDoc";
-      console.log(`Attempting Firestore access test for path: ${testDocPath} in project ${firebaseConfig.projectId}`);
+      const testCollectionId = "app_permissions_test"; // Changed from "__test_permissions__"
       const testDocId = "testDocument123";
-      const testDocRef = doc(db, "__test_permissions__", testDocId);
+      const testDocPath = `${testCollectionId}/${testDocId}`;
+      console.log(`Attempting Firestore access test for path: ${testDocPath} in project ${firebaseConfig.projectId}`);
+      const testDocRef = doc(db, testCollectionId, testDocId);
 
       let alertMessage = "Firebase Connection & Permission Test (Project: " + firebaseConfig.projectId + "):\n";
       alertMessage += "Using Full Config: " + JSON.stringify(firebaseConfig) + "\n\n";
@@ -49,7 +50,7 @@ export default function Home() {
         console.log(deleteSuccessMsg);
         alertMessage += deleteSuccessMsg + "\n";
 
-        const finalSuccessMsg = "\nAll Firestore test operations (WRITE, READ, DELETE) appear to be working based on the homepage test for project '" + firebaseConfig.projectId + "'. If errors persist elsewhere, they might be related to specific complex queries, other Firebase services, or very subtle configuration issues not caught by this basic test.";
+        const finalSuccessMsg = "\nAll Firestore test operations (WRITE, READ, DELETE) appear to be working based on the homepage test for project '" + firebaseConfig.projectId + "'. If errors persist elsewhere, they might be related to specific complex queries or other Firebase services.";
         console.log(finalSuccessMsg);
         alertMessage += finalSuccessMsg;
         alert(alertMessage + "\n\nRedirecting to dashboard...");
@@ -57,21 +58,24 @@ export default function Home() {
 
       } catch (error: any) {
         console.error(`Firestore access test FAILED for project ${firebaseConfig.projectId}:`, error);
-        alertMessage += `\nFirestore access test FAILED: ${error.message}. Code: ${error.code || 'N/A'}.\n`;
+        let detailedErrorMessage = `Firestore access test FAILED: ${error.message}. Code: ${error.code || 'N/A'}.\n`;
         if (error.message && error.message.toLowerCase().includes("missing or insufficient permissions")) {
-          alertMessage += `
+          detailedErrorMessage += `
 This STRONGLY confirms a Firebase permission issue OR a mismatch between your client config and the project where rules are published.
 PLEASE VERY CAREFULLY:
 1. VERIFY that ALL Firebase configuration values logged in the console (from 'src/lib/firebase.ts') EXACTLY match your Firebase project ID '${firebaseConfig.projectId}' in the Firebase Console.
 2. ENSURE you have PUBLISHED the OPEN Firestore rules ('allow read, write: if true;') to THAT EXACT project ID ('${firebaseConfig.projectId}') in the Firebase Console (Firestore Database -> Rules tab).
 3. Check if the Firestore API is enabled for the project in Google Cloud Console.
 4. Check for any billing issues with your Firebase project.`;
+        } else if (error.message && error.message.toLowerCase().includes("is invalid because it is reserved")) {
+            detailedErrorMessage += `\nThe collection ID "${testCollectionId}" used for the test is invalid because it's reserved by Firebase. This is an error in the test code itself.`;
         } else {
-          alertMessage += " An unexpected error occurred. Check the browser console (F12) for more details.";
+          detailedErrorMessage += " An unexpected error occurred. Check the browser console (F12) for more details.";
         }
+        alertMessage += detailedErrorMessage;
         alert(alertMessage);
-        // Halt or redirect based on your preference for error handling
-        // router.replace('/dashboard'); // Or maybe not redirect on failure
+        // Optionally, redirect to dashboard even on failure, or handle differently
+        // router.replace('/dashboard'); 
       }
     };
 
@@ -84,7 +88,7 @@ PLEASE VERY CAREFULLY:
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-lg text-foreground">Initializing & Testing Firebase Connection (Project: ${firebaseConfig.projectId})...</p>
+        <p className="ml-3 text-lg text-foreground">Initializing & Testing Firebase Connection (Project: {firebaseConfig.projectId})...</p>
     </div>
   );
 }
