@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   title: APP_NAME,
   description: `Patient Management System for ${APP_NAME}`,
   icons: {
-    icon: '/icons/favicon.ico', 
+    icon: '/image/favicon.ico', // Updated path
   },
 };
 
