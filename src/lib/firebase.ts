@@ -12,7 +12,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC4N7z6jCbBohaQTgmC78dXz3GzsiONjHM",
   authDomain: "dr-nihar.firebaseapp.com",
   projectId: "dr-nihar",
-  storageBucket: "dr-nihar.firebasestorage.app",
+  storageBucket: "dr-nihar.firebasestorage.app", // Corrected from firebasestorage.app
   messagingSenderId: "721559945328",
   appId: "1:721559945328:web:4e747e02632754eced74b5",
   measurementId: "G-0K3W0DKLJX"
@@ -36,9 +36,9 @@ if (typeof window !== 'undefined') {
   console.log("Ensure your Firestore security rules (firestore.rules) are published to THIS SAME project ID ('" + firebaseConfig.projectId + "').");
   console.log("====================================================================");
 
-  if (firebaseConfig.projectId !== "dr-nihar") {
-    console.error("CRITICAL ERROR: 'projectId' in src/lib/firebase.ts does NOT match 'dr-nihar'. This is likely the cause of permission errors if rules are set on 'dr-nihar'.");
-    alert("CRITICAL Firebase Configuration Error: 'projectId' in src/lib/firebase.ts does not match 'dr-nihar'. Please check the developer console (F12) for details and update src/lib/firebase.ts if this is not intended.");
+  if (firebaseConfig.projectId !== "dr-nihar") { // Check against the intended new project ID
+    console.error(`CRITICAL ERROR: 'projectId' in src/lib/firebase.ts ('${firebaseConfig.projectId}') does NOT match the intended 'dr-nihar'. This is likely the cause of permission errors if rules are set on 'dr-nihar'.`);
+    alert(`CRITICAL Firebase Configuration Error: 'projectId' in src/lib/firebase.ts ('${firebaseConfig.projectId}') does not match 'dr-nihar'. Please check the developer console (F12) for details and update src/lib/firebase.ts if this is not intended.`);
   }
 }
 

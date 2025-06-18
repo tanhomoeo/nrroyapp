@@ -11,7 +11,7 @@ export default function Home() {
 
   useEffect(() => {
     const testFirestoreAccess = async () => {
-      const testCollectionId = "app_permissions_test"; // Changed from "__test_permissions__"
+      const testCollectionId = "app_permissions_test"; 
       const testDocId = "testDocument123";
       const testDocPath = `${testCollectionId}/${testDocId}`;
       console.log(`Attempting Firestore access test for path: ${testDocPath} in project ${firebaseConfig.projectId}`);
