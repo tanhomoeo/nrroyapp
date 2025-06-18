@@ -7,6 +7,14 @@
         { "fieldPath": "patientId", "order": "ASCENDING" },
         { "fieldPath": "visitDate", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionId": "prescriptions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "patientId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
