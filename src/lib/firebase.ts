@@ -1,3 +1,4 @@
+
 // Import the functions you need from the Firebase SDKs you need
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 // Import Firebase services you will use
@@ -6,15 +7,15 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 import { getAnalytics, type Analytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration (as provided by the user)
+// Your web app's NEW Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyApdat8HDcEQzxt-vDaMvUA41uY4F8fWI8",
-  authDomain: "nrroyapp.firebaseapp.com",
-  projectId: "nrroyapp",
-  storageBucket: "nrroyapp.firebasestorage.app", // Corrected from previous thought, this matches user's last full config.
-  messagingSenderId: "550385387960",
-  appId: "1:550385387960:web:59ec369942f69e844ae74d",
-  measurementId: "G-CZSB1FRQBL"
+  apiKey: "AIzaSyC4N7z6jCbBohaQTgmC78dXz3GzsiONjHM",
+  authDomain: "dr-nihar.firebaseapp.com",
+  projectId: "dr-nihar",
+  storageBucket: "dr-nihar.firebasestorage.app",
+  messagingSenderId: "721559945328",
+  appId: "1:721559945328:web:4e747e02632754eced74b5",
+  measurementId: "G-0K3W0DKLJX"
 };
 
 // --- Firebase SDK Configuration Check ---
@@ -35,9 +36,9 @@ if (typeof window !== 'undefined') {
   console.log("Ensure your Firestore security rules (firestore.rules) are published to THIS SAME project ID ('" + firebaseConfig.projectId + "').");
   console.log("====================================================================");
 
-  if (firebaseConfig.projectId !== "nrroyapp") {
-    console.error("CRITICAL ERROR: 'projectId' in src/lib/firebase.ts does NOT match 'nrroyapp'. This is likely the cause of permission errors if rules are set on 'nrroyapp'.");
-    alert("CRITICAL Firebase Configuration Error: 'projectId' in src/lib/firebase.ts does not match 'nrroyapp'. Please check the developer console (F12) for details and update src/lib/firebase.ts.");
+  if (firebaseConfig.projectId !== "dr-nihar") {
+    console.error("CRITICAL ERROR: 'projectId' in src/lib/firebase.ts does NOT match 'dr-nihar'. This is likely the cause of permission errors if rules are set on 'dr-nihar'.");
+    alert("CRITICAL Firebase Configuration Error: 'projectId' in src/lib/firebase.ts does not match 'dr-nihar'. Please check the developer console (F12) for details and update src/lib/firebase.ts if this is not intended.");
   }
 }
 
@@ -79,5 +80,6 @@ export {
   auth,
   db,
   storage,
-  analytics
+  analytics,
+  firebaseConfig // Exporting config for easy access in test page
 };

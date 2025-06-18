@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,12 +12,12 @@ export default function Home() {
   useEffect(() => {
     const testFirestoreAccess = async () => {
       const testDocPath = "__test_permissions__/testDoc";
-      console.log(`Attempting Firestore access test for path: ${testDocPath}`);
+      console.log(`Attempting Firestore access test for path: ${testDocPath} in project ${firebaseConfig.projectId}`);
       const testDocId = "testDocument123";
       const testDocRef = doc(db, "__test_permissions__", testDocId);
 
-      let alertMessage = "Firebase Connection & Permission Test:\n";
-      alertMessage += "Using Project ID from config: " + firebaseConfig.projectId + "\n\n";
+      let alertMessage = "Firebase Connection & Permission Test (Project: " + firebaseConfig.projectId + "):\n";
+      alertMessage += "Using Full Config: " + JSON.stringify(firebaseConfig) + "\n\n";
 
       try {
         // Test Write
@@ -48,20 +49,20 @@ export default function Home() {
         console.log(deleteSuccessMsg);
         alertMessage += deleteSuccessMsg + "\n";
 
-        const finalSuccessMsg = "\nAll Firestore test operations (WRITE, READ, DELETE) appear to be working based on the homepage test. If errors persist elsewhere, they might be related to specific complex queries, other Firebase services, or very subtle configuration issues not caught by this basic test.";
+        const finalSuccessMsg = "\nAll Firestore test operations (WRITE, READ, DELETE) appear to be working based on the homepage test for project '" + firebaseConfig.projectId + "'. If errors persist elsewhere, they might be related to specific complex queries, other Firebase services, or very subtle configuration issues not caught by this basic test.";
         console.log(finalSuccessMsg);
         alertMessage += finalSuccessMsg;
         alert(alertMessage + "\n\nRedirecting to dashboard...");
         router.replace('/dashboard');
 
       } catch (error: any) {
-        console.error("Firestore access test FAILED:", error);
+        console.error(`Firestore access test FAILED for project ${firebaseConfig.projectId}:`, error);
         alertMessage += `\nFirestore access test FAILED: ${error.message}. Code: ${error.code || 'N/A'}.\n`;
         if (error.message && error.message.toLowerCase().includes("missing or insufficient permissions")) {
           alertMessage += `
 This STRONGLY confirms a Firebase permission issue OR a mismatch between your client config and the project where rules are published.
 PLEASE VERY CAREFULLY:
-1. VERIFY that ALL Firebase configuration values logged in the console (from 'src/lib/firebase.ts') EXACTLY match your Firebase project ID '${firebaseConfig.projectId}' in the Firebase Console. Check apiKey, authDomain, storageBucket, messagingSenderId, appId.
+1. VERIFY that ALL Firebase configuration values logged in the console (from 'src/lib/firebase.ts') EXACTLY match your Firebase project ID '${firebaseConfig.projectId}' in the Firebase Console.
 2. ENSURE you have PUBLISHED the OPEN Firestore rules ('allow read, write: if true;') to THAT EXACT project ID ('${firebaseConfig.projectId}') in the Firebase Console (Firestore Database -> Rules tab).
 3. Check if the Firestore API is enabled for the project in Google Cloud Console.
 4. Check for any billing issues with your Firebase project.`;
@@ -83,7 +84,7 @@ PLEASE VERY CAREFULLY:
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-lg text-foreground">Initializing & Testing Firebase Connection...</p>
+        <p className="ml-3 text-lg text-foreground">Initializing & Testing Firebase Connection (Project: ${firebaseConfig.projectId})...</p>
     </div>
   );
 }
