@@ -23,11 +23,11 @@ import { format, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
-import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
+import { appendFinalTranscript } from '@/lib/utils';
 
 const patientFormSchema = z.object({
   registrationDate: z.date({ required_error: "নিবন্ধনের তারিখ আবশ্যক।" }),
-  diaryNumberInput: z.string().optional(),
+  diaryNumber: z.coerce.number({invalid_type_error: "ডায়েরি নম্বর একটি সংখ্যা হতে হবে।"}).int("ডায়েরি নম্বর একটি পূর্ণসংখ্যা হতে হবে।").nonnegative("ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।").optional(),
   name: z.string().min(1, { message: "পুরো নাম আবশ্যক।" }),
   age: z.string().optional(),
   gender: z.enum(['male', 'female', 'other', ''], { errorMap: () => ({ message: "লিঙ্গ নির্বাচন করুন।" }) }).optional(),
@@ -55,7 +55,7 @@ export default function PatientEntryPage() {
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
       registrationDate: new Date(),
-      diaryNumberInput: '',
+      diaryNumber: undefined,
       name: '',
       age: '',
       gender: '',
@@ -75,7 +75,7 @@ export default function PatientEntryPage() {
       try {
         const settings = await getClinicSettings();
         setCurrentNextDiaryNumber(settings.nextDiaryNumber);
-        form.setValue('diaryNumberInput', settings.nextDiaryNumber.toString());
+        form.setValue('diaryNumber', settings.nextDiaryNumber);
       } catch (error) {
         console.error("Failed to fetch clinic settings:", error);
         toast({
@@ -84,7 +84,7 @@ export default function PatientEntryPage() {
           variant: "destructive",
         });
         setCurrentNextDiaryNumber(1);
-        form.setValue('diaryNumberInput', '1');
+        form.setValue('diaryNumber', 1);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -94,12 +94,7 @@ export default function PatientEntryPage() {
 
   const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
-      const parsedDiaryNumber = data.diaryNumberInput ? parseInt(data.diaryNumberInput, 10) : undefined;
-
-      if (data.diaryNumberInput && (isNaN(parsedDiaryNumber as number) || (parsedDiaryNumber as number) < 0)) {
-        form.setError("diaryNumberInput", { type: "manual", message: "ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।" });
-        return;
-      }
+      const enteredDiaryNumber = data.diaryNumber;
 
       const newPatientData: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'> = {
         name: data.name,
@@ -113,17 +108,27 @@ export default function PatientEntryPage() {
         district: data.district,
         thanaUpazila: data.thanaUpazila,
         villageUnion: data.villageUnion,
-        diaryNumber: parsedDiaryNumber,
+        diaryNumber: enteredDiaryNumber, 
       };
+      
+      if (enteredDiaryNumber === undefined && currentNextDiaryNumber !== null) {
+        newPatientData.diaryNumber = currentNextDiaryNumber; 
+      }
+
 
       const patientId = await addPatient(newPatientData);
 
       let nextDiaryNumberToSet = currentNextDiaryNumber;
-      if (parsedDiaryNumber !== undefined && currentNextDiaryNumber !== null && parsedDiaryNumber >= currentNextDiaryNumber) {
-         nextDiaryNumberToSet = parsedDiaryNumber + 1;
+      if (currentNextDiaryNumber !== null) {
+        if (newPatientData.diaryNumber !== undefined && newPatientData.diaryNumber >= currentNextDiaryNumber) {
+          nextDiaryNumberToSet = newPatientData.diaryNumber + 1;
+        } else if (newPatientData.diaryNumber === undefined) { // No number entered, suggested was used
+           nextDiaryNumberToSet = currentNextDiaryNumber + 1;
+        }
       }
 
-      if (nextDiaryNumberToSet !== currentNextDiaryNumber && nextDiaryNumberToSet !== null) {
+
+      if (nextDiaryNumberToSet !== null && nextDiaryNumberToSet !== currentNextDiaryNumber) {
         try {
           const currentSettings = await getClinicSettings();
           await saveClinicSettings({ ...currentSettings, nextDiaryNumber: nextDiaryNumberToSet });
@@ -133,19 +138,19 @@ export default function PatientEntryPage() {
           toast({
             title: "সতর্কতা",
             description: `রোগী নিবন্ধিত হয়েছে, কিন্তু পরবর্তী ডায়েরি নম্বর আপডেট করা যায়নি: ${settingsError.message || String(settingsError)}`,
-            variant: "default", // Use default or warning, not destructive
+            variant: "default",
           });
         }
       }
 
       toast({
         title: 'রোগী নিবন্ধিত',
-        description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${parsedDiaryNumber?.toLocaleString('bn-BD') || 'N/A'}`,
+        description: `${data.name} সফলভাবে নিবন্ধিত হয়েছেন। ডায়েরি নং: ${newPatientData.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}`,
       });
 
       form.reset({
         registrationDate: new Date(),
-        diaryNumberInput: nextDiaryNumberToSet?.toString() || '',
+        diaryNumber: nextDiaryNumberToSet ?? undefined,
         name: '',
         age: '',
         gender: '',
@@ -243,16 +248,24 @@ export default function PatientEntryPage() {
               />
               <FormField
                 control={form.control}
-                name="diaryNumberInput"
+                name="diaryNumber"
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
-                    <FormLabel>ডায়েরি নম্বর (ঐচ্ছিক)</FormLabel>
+                    <FormLabel>ডায়েরি নম্বর</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
-                        <Input placeholder="ডায়েরি নম্বর লিখুন" {...field} type="number" className={inputFieldClass} id="patientDiaryNumberEntry" />
+                        <Input
+                          placeholder="ডায়েরি নম্বর লিখুন"
+                          {...field}
+                          type="number"
+                          onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                          value={field.value ?? ''}
+                          className={inputFieldClass}
+                          id="patientDiaryNumberEntry"
+                        />
                       </FormControl>
                     </div>
-                    <FormDescription className="text-xs">সিস্টেম পরবর্তী নম্বর: {currentNextDiaryNumber?.toLocaleString('bn-BD')}</FormDescription>
+                    <FormDescription className="text-xs">সিস্টেম পরবর্তী প্রস্তাবিত নম্বর: {currentNextDiaryNumber?.toLocaleString('bn-BD')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

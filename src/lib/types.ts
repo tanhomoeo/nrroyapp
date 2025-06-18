@@ -1,8 +1,6 @@
 
-
 export interface Patient {
   id: string; 
-  diaryPrefix?: string; // Made optional to handle existing data, new entries won't use it.
   diaryNumber?: number; 
   name: string;
   phone: string; 
@@ -29,7 +27,7 @@ export interface Visit {
   notes?: string;
   prescriptionId?: string; 
   paymentSlipId?: string;
-  createdAt: string; // Keep this for ordering, it's set by Firestore automatically or by us in addVisit
+  createdAt: string; 
   medicineDeliveryMethod?: 'direct' | 'courier' | ''; 
 }
 
@@ -126,4 +124,3 @@ export interface MedicineInstruction {
     serialNumber: string; 
     createdAt: string; 
 }
-

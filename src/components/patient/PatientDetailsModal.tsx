@@ -22,7 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { cn } from '@/lib/utils';
 import { isValid, format as formatDateFns } from 'date-fns';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
-import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
+import { appendFinalTranscript } from '@/lib/utils';
 
 interface PatientDetailsModalProps {
   patient: Patient;
@@ -37,10 +37,7 @@ const patientInfoSchema = z.object({
   phone: z.string().regex(/^(\+8801|01)\d{9}$/, "Valid BD phone number required"),
   villageUnion: z.string().optional(),
   district: z.string().optional(),
-  diaryNumber: z.preprocess(
-    (val) => (typeof val === 'string' && val.trim() !== '' ? Number(val) : undefined),
-    z.number().int().nonnegative("ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।").optional()
-  ),
+  diaryNumber: z.coerce.number({invalid_type_error: "ডায়েরি নম্বর একটি সংখ্যা হতে হবে।"}).int("ডায়েরি নম্বর একটি পূর্ণসংখ্যা হতে হবে।").nonnegative("ডায়েরি নম্বর একটি অ-ঋণাত্মক সংখ্যা হতে হবে।").optional(),
   age: z.string().optional(),
   gender: z.enum(['male', 'female', 'other', '']).optional(),
   occupation: z.string().optional(),
@@ -318,9 +315,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
           <ScrollArea className="h-[55vh] lg:h-[60vh]">
             <div className="p-6">
             <TabsContent value="info">
-              {/* Patient Information Form Fields Start Here */}
               <Form {...patientInfoForm}>
                 <form onSubmit={patientInfoForm.handleSubmit(handlePatientInfoSubmit)} className="space-y-4">
+                {/* START: Patient Information Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={patientInfoForm.control}
@@ -584,7 +581,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                       )}
                     />
                   </div>
-                  {/* Patient Information Form Fields End Here. All fields from schema should be between this comment and the one above. */}
+                  {/* END: Patient Information Form Fields */}
                   <div className="flex justify-end gap-2 mt-4">
                     {isEditingInfo ? (
                       <>

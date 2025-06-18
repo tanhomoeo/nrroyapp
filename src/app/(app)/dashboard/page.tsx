@@ -24,7 +24,7 @@ import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES, APP_NAME } from '@/lib/constants';
-import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday as isTodayFns } from 'date-fns'; // Renamed isToday to avoid conflict
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday as isTodayFns } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
@@ -111,7 +111,7 @@ interface AppointmentDisplayItem {
   status: 'Completed' | 'Pending';
   paymentMethod?: string;
   paymentAmount?: string;
-  createdAt: string; // Keep this as string, original ISO string for sorting
+  createdAt: string; 
 }
 
 export default function DashboardPage() {
@@ -146,16 +146,9 @@ export default function DashboardPage() {
     const todayVisits = await getVisitsWithinDateRange(todayStart, todayEnd);
     const todaySlips = await getPaymentSlipsWithinDateRange(todayStart, todayEnd);
     
-    // To avoid fetching all patients for just names, we can fetch them on demand or batch fetch if many unique patientIds
     const patientIdsForTodayVisits = Array.from(new Set(todayVisits.map(v => v.patientId)));
     const patientsData: Record<string, Patient> = {};
     
-    // Batch fetching patient details if needed, or fetch one-by-one
-    // For simplicity, if patientIdsForTodayVisits is small, fetch one by one.
-    // For larger counts, consider a batch mechanism (e.g., `where('id', 'in', patientIdsForTodayVisits)`)
-    // Note: Firestore `in` operator is limited to 10 items per query. For more, multiple queries are needed.
-    // For now, let's assume a manageable number of patients per day and fetch individually for simplicity.
-    // A more optimized way would be to get all patients once if frequent re-renders are not an issue.
     for (const patientId of patientIdsForTodayVisits) {
         if (!patientsData[patientId]) {
             const patient = await getPatientById(patientId);
@@ -182,12 +175,11 @@ export default function DashboardPage() {
           status: currentStatus,
           paymentMethod: paymentSlipForVisit ? getPaymentMethodLabel(paymentSlipForVisit.paymentMethod) : 'N/A',
           paymentAmount: paymentSlipForVisit ? formatCurrency(paymentSlipForVisit.amount) : 'N/A',
-          createdAt: visit.createdAt, // Keep original ISO string from Firestore
+          createdAt: visit.createdAt, 
         };
       });
     
     const resolvedAppointmentsData = (await Promise.all(appointmentsDataPromises)).filter(Boolean) as AppointmentDisplayItem[];
-    // Sort by original ISO string createdAt
     setTodaysAppointments(resolvedAppointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
   }, []);
 
@@ -201,7 +193,7 @@ export default function DashboardPage() {
     const monthEnd = endOfMonth(today);
 
     const [
-        allPatients, // Still need all patients for total count
+        allPatients, 
         todayVisits,
         monthVisits,
         todaySlips,
@@ -234,8 +226,8 @@ export default function DashboardPage() {
       monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size, 
       todayRevenue: todayRevenue,
       monthlyIncome: monthlyIncome,
-      dailyActivePatients: uniqueTodayPatientIds.size, // Patients who had a visit today
-      dailyOtherRegistered: dailyOtherRegisteredPatientIds.size, // Patients registered today but no visit today
+      dailyActivePatients: uniqueTodayPatientIds.size, 
+      dailyOtherRegistered: dailyOtherRegisteredPatientIds.size, 
       monthlyNewPatients: patientsCreatedThisMonth.length,
       monthlyTotalRegistered: allPatients.length, 
     });
@@ -360,7 +352,7 @@ export default function DashboardPage() {
             <Input
               id="dashboardSearchInput"
               type="search"
-              placeholder="রোগী অনুসন্ধান করুন (নাম, আইডি, ফোন...)"
+              placeholder="রোগী অনুসন্ধান করুন (নাম, ডায়েরি নং, ফোন...)"
               className="flex-1 h-full border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-2 text-base placeholder-muted-foreground"
               value={dashboardSearchTerm}
               onChange={(e) => setDashboardSearchTerm(e.target.value)}

@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
-import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
+import { appendFinalTranscript } from '@/lib/utils';
 
 const prescriptionItemSchema = z.object({
   medicineName: z.string().min(1, "Medicine name is required"),
@@ -240,7 +240,7 @@ export default function PrescriptionPage() {
     <div className="space-y-6 print:space-y-2">
       <PageHeaderCard
         title="প্রেসক্রিপশন শিট"
-        description={`রোগী: ${patient.name} | ডায়েরি: ${patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'} | তারিখ: ${currentVisit ? format(new Date(currentVisit.visitDate), "PP", { locale: bn }) : format(new Date(), "PP", { locale: bn })}`}
+        description={`রোগী: ${patient.name} | ডায়েরি নং: ${patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'} | তারিখ: ${currentVisit ? format(new Date(currentVisit.visitDate), "PP", { locale: bn }) : format(new Date(), "PP", { locale: bn })}`}
         className="hide-on-print"
         actions={
           <div className="flex gap-2">
@@ -613,7 +613,7 @@ export default function PrescriptionPage() {
         </div>
       </div>
 
-      <style jsx global>{`
+      <style jsx global>{\`
         .print-only-block { display: none; }
         @media print {
           .hide-on-print { display: none !important; }
@@ -690,7 +690,7 @@ export default function PrescriptionPage() {
           size: A4 portrait;
           margin: 15mm; 
         }
-      `}</style>
+      \`}</style>
     </div>
   );
 }

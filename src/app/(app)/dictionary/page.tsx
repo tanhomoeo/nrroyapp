@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { getPatients } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getPatients } from '@/lib/firestoreService';
 import type { Patient } from '@/lib/types';
 import { BENGALI_VOWELS_FOR_FILTER, BENGALI_CONSONANTS_FOR_FILTER } from '@/lib/constants';
 import { Loader2, Users } from 'lucide-react';

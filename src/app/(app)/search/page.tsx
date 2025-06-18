@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getPatients, createVisitForPrescription } from '@/lib/firestoreService'; // Added createVisitForPrescription
+import { getPatients, createVisitForPrescription } from '@/lib/firestoreService';
 import type { Patient } from '@/lib/types';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { 
@@ -20,7 +20,7 @@ import {
   ClipboardList, 
   BriefcaseMedical,
   CalendarPlus,
-  PlayCircle // For starting workflow for new visit
+  PlayCircle 
 } from 'lucide-react';
 import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -28,7 +28,7 @@ import { ROUTES } from '@/lib/constants';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
 import { appendFinalTranscript } from '@/lib/utils';
 import dynamic from 'next/dynamic'; 
-import { useToast } from '@/hooks/use-toast'; // Added useToast
+import { useToast } from '@/hooks/use-toast';
 
 const PatientDetailsModal = dynamic(() => 
   import('@/components/patient/PatientDetailsModal').then(mod => mod.PatientDetailsModal),
@@ -47,10 +47,10 @@ export default function SearchPatientsPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [activeModalTab, setActiveModalTab] = useState<'info' | 'history' | 'addVisitAndPayment'>('info');
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreatingVisit, setIsCreatingVisit] = useState<string | null>(null); // Store patientId being processed
+  const [isCreatingVisit, setIsCreatingVisit] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast(); // Initialize toast
+  const { toast } = useToast();
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
@@ -168,7 +168,7 @@ export default function SearchPatientsPage() {
         actions={<SearchIconLucide className="h-8 w-8 text-primary" />}
       >
         <p className="text-sm text-muted-foreground mt-1">
-          নাম, আইডি, ফোন, ডায়েরি নম্বর, ঠিকানা বা অভিভাবকের নাম দ্বারা বিদ্যমান রোগীর রেকর্ড খুঁজতে নীচের অনুসন্ধান বার ব্যবহার করুন।
+          নাম, ডায়েরি নম্বর, ফোন, ঠিকানা বা অভিভাবকের নাম দ্বারা বিদ্যমান রোগীর রেকর্ড খুঁজতে নীচের অনুসন্ধান বার ব্যবহার করুন।
         </p>
       </PageHeaderCard>
 
@@ -178,7 +178,7 @@ export default function SearchPatientsPage() {
         </div>
         <Input
           type="text"
-          placeholder="রোগীর নাম, আইডি, ফোন, ডায়েরি নং, ঠিকানা দিয়ে খুঁজুন..."
+          placeholder="রোগীর নাম, ডায়েরি নং, ফোন, ঠিকানা দিয়ে খুঁজুন..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-2 text-base placeholder-muted-foreground"
@@ -245,9 +245,6 @@ export default function SearchPatientsPage() {
                     {isCreatingVisit === patient.id ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlayCircle className="mr-2 h-5 w-5" />}
                     {isCreatingVisit === patient.id ? 'প্রসেসিং...' : 'আজকের ভিজিট ও কার্যক্রম শুরু'}
                   </Button>
-                  <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'addVisitAndPayment')} className="justify-start">
-                    <CalendarPlus className="mr-2 h-5 w-5 text-teal-600" /> পুরোনো ভিজিটের সাথে পেমেন্ট
-                  </Button>
                   <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'history')} className="justify-start">
                     <History className="mr-2 h-5 w-5 text-purple-600" /> পূর্ববর্তী ভিজিটের বিবরণ
                   </Button>
@@ -256,6 +253,9 @@ export default function SearchPatientsPage() {
                   </Button>
                   <Button variant="outline" onClick={() => handleOpenPaymentModal(patient)} className="justify-start">
                     <CreditCard className="mr-2 h-5 w-5 text-blue-600" /> সাধারণ পেমেন্ট স্লিপ
+                  </Button>
+                   <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'addVisitAndPayment')} className="justify-start">
+                    <CalendarPlus className="mr-2 h-5 w-5 text-teal-600" /> পুরোনো ভিজিটের সাথে পেমেন্ট
                   </Button>
                   <Button variant="outline" onClick={() => handleOpenDetailsModal(patient, 'info')} className="justify-start">
                     <Edit3 className="mr-2 h-5 w-5 text-orange-600" /> রোগীর তথ্য সম্পাদনা
@@ -292,4 +292,3 @@ export default function SearchPatientsPage() {
     </div>
   );
 }
-
