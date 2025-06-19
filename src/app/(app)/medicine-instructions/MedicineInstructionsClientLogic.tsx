@@ -124,7 +124,7 @@ export default function MedicineInstructionsClientLogic() {
           setSelectedPatient(patient);
           form.setValue('patientName', patient.name);
           form.setValue('patientActualId', patient.id);
-          form.setValue('serialNumber', patient.diaryNumber ? String(patient.diaryNumber).toLocaleString('bn-BD') : 'N/A');
+          form.setValue('serialNumber', patient.diaryNumber ? String(patient.diaryNumber) : 'N/A');
         } else if (patientNameFromQuery) {
            form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
            form.setValue('serialNumber', 'N/A'); // No patient, so no diary number for serial
@@ -136,7 +136,8 @@ export default function MedicineInstructionsClientLogic() {
         setSelectedPatient(null);
       } else {
         setSelectedPatient(null);
-        form.setValue('serialNumber', `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`); // Fallback if no patient context
+        // Fallback if no patient context - ensure it's a string
+        form.setValue('serialNumber', `MI-${String(Date.now()).slice(-6)}`); 
       }
       setPaymentCompleted(false);
       setIsLoadingPageData(false);
@@ -210,7 +211,7 @@ export default function MedicineInstructionsClientLogic() {
   }
   
   const pageHeaderDescription = selectedPatient 
-    ? `রোগী: ${selectedPatient.name}${selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber).toLocaleString('bn-BD')})` : ''}`
+    ? `রোগী: ${selectedPatient.name}${selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : ''}`
     : "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
 
 
@@ -457,7 +458,7 @@ export default function MedicineInstructionsClientLogic() {
               <div className="text-xs mb-1">নামঃ {currentValues.patientName || "রোগীর নাম"}</div>
               {selectedPatient?.diaryNumber && (
                  <div className="text-xs mb-3 leading-tight">
-                    ডায়েরি নং: {String(selectedPatient.diaryNumber).toLocaleString('bn-BD')}
+                    ডায়েরি নং: {String(selectedPatient.diaryNumber)}
                 </div>
               )}
 
@@ -501,7 +502,7 @@ export default function MedicineInstructionsClientLogic() {
         <div className="patient-name">নামঃ {currentValues.patientName}</div>
          {selectedPatient?.diaryNumber &&
             <div className="patient-diary-no-print text-xs">
-                ডায়েরি নং: {String(selectedPatient.diaryNumber).toLocaleString('bn-BD')}
+                ডায়েরি নং: {String(selectedPatient.diaryNumber)}
             </div>
         }
 
@@ -543,7 +544,7 @@ export default function MedicineInstructionsClientLogic() {
         )}
       </Suspense>
 
-      <style jsx global>{`
+      <style jsx global>{\`
         .print-only-block { display: none; }
         @media print {
           .hide-on-print { display: none !important; }
@@ -598,8 +599,7 @@ export default function MedicineInstructionsClientLogic() {
           size: A4 portrait;
           margin: 15mm;
         }
-      `}</style>
+      \`}</style>
     </div>
   );
 }
-
