@@ -43,7 +43,7 @@ body {
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
     --sidebar-accent: 210 50% 92%; /* Slightly darker/more saturated accent for active sub-menu */
-    --sidebar-accent-foreground: hsl(var(--primary)); /* Primary color for active sub-menu text */
+    /* --sidebar-accent-foreground: hsl(var(--primary)); /* Primary color for active sub-menu text - Replaced by direct styling for active sub-menu */
     --sidebar-border: 210 30% 90%;
     --sidebar-ring: hsl(var(--primary));
 
@@ -74,10 +74,10 @@ body {
     /* Default Submenu Button Styles - Light */
     --sidebar-button-bg-light: hsl(210 50% 98%); /* Lighter default bg */
     --sidebar-button-hover-bg-light: hsl(210 50% 95%); /* Lighter hover bg */
-    --sidebar-button-border: hsl(210 30% 88% / 0); /* Transparent Border */
-    --sidebar-button-shadow: 0 1px 2px hsl(210 20% 50% / 0.06), 0 1px 1px hsl(210 20% 50% / 0.03); /* Softer 3D Shadow */
-    --sidebar-button-hover-shadow: 0 2px 4px hsl(210 20% 50% / 0.08), 0 1px 2px hsl(210 20% 50% / 0.05); /* Enhanced Hover Shadow */
-    --sidebar-button-active-shadow: inset 0 1px 1px hsl(210 20% 50% / 0.08); /* Softer Pressed-in Shadow */
+    --sidebar-button-border: transparent; /* Removed border for 3D shadow effect */
+    --sidebar-button-shadow: 0 1px 2px hsl(210 20% 50% / 0.10), 0 2px 4px hsl(210 20% 50% / 0.08); /* Adjusted 3D Shadow */
+    --sidebar-button-hover-shadow: 0 2px 4px hsl(210 20% 50% / 0.12), 0 3px 6px hsl(210 20% 50% / 0.10); /* Enhanced Hover Shadow */
+    --sidebar-button-active-shadow: inset 0 1px 2px hsl(210 20% 50% / 0.10); /* Adjusted Pressed-in Shadow */
   }
 
   .dark {
@@ -115,7 +115,7 @@ body {
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(0 0% 0%);
     --sidebar-accent: 215 20% 28%; /* Slightly lighter accent for dark mode active sub-menu */
-    --sidebar-accent-foreground: 0 0% 100%; /* White text for active sub-menu */
+    /* --sidebar-accent-foreground: 0 0% 100%; /* White text for active sub-menu - Replaced by direct styling */
     --sidebar-border: 215 15% 20%;
     --sidebar-ring: hsl(var(--primary));
 
@@ -140,10 +140,10 @@ body {
     /* Default Submenu Button Styles - Dark Theme */
     --sidebar-button-bg-dark: hsl(215 20% 20%); /* Darker default bg */
     --sidebar-button-hover-bg-dark: hsl(215 20% 24%); /* Darker hover bg */
-    --sidebar-button-border: hsl(215 15% 15% / 0); /* Transparent Border */
-    --sidebar-button-shadow: 0 1px 2px hsl(210 10% 5% / 0.1), 0 1px 1px hsl(210 10% 5% / 0.05); /* Softer 3D Shadow */
-    --sidebar-button-hover-shadow: 0 2px 4px hsl(210 10% 5% / 0.15), 0 1px 2px hsl(210 10% 5% / 0.1); /* Enhanced Hover Shadow */
-    --sidebar-button-active-shadow: inset 0 1px 1px hsl(210 10% 5% / 0.2); /* Softer Pressed-in Shadow */
+    --sidebar-button-border: transparent; /* Removed border for 3D shadow effect */
+    --sidebar-button-shadow: 0 1px 2px hsl(210 10% 5% / 0.15), 0 2px 4px hsl(210 10% 5% / 0.1); /* Adjusted 3D Shadow for Dark */
+    --sidebar-button-hover-shadow: 0 2px 4px hsl(210 10% 5% / 0.2), 0 3px 6px hsl(210 10% 5% / 0.15); /* Enhanced Hover Shadow for Dark */
+    --sidebar-button-active-shadow: inset 0 1px 2px hsl(210 10% 5% / 0.25); /* Adjusted Pressed-in Shadow for Dark */
   }
 
   [data-variant="sidebar"] [data-sidebar="sidebar"] {
@@ -371,14 +371,23 @@ body {
     color: hsl(var(--foreground)) !important; /* Darker text for active theme1 */
   }
 
-
   /* Submenu active button color fix */
   [data-sidebar="menu-sub-button"][data-active="true"] {
     background-color: hsl(var(--sidebar-accent)) !important;
-    color: hsl(var(--sidebar-accent-foreground)) !important;
+    /* Explicit text color for active sub-menu in light theme for max contrast */
+    color: hsl(var(--foreground)) !important; 
   }
   [data-sidebar="menu-sub-button"][data-active="true"] svg {
-    color: hsl(var(--sidebar-accent-foreground)) !important;
+     /* Explicit SVG color for active sub-menu in light theme */
+    color: hsl(var(--foreground)) !important;
+  }
+  .dark [data-sidebar="menu-sub-button"][data-active="true"] {
+     /* Explicit text color for active sub-menu in dark theme */
+    color: hsl(var(--primary-foreground)) !important;
+  }
+  .dark [data-sidebar="menu-sub-button"][data-active="true"] svg {
+    /* Explicit SVG color for active sub-menu in dark theme */
+    color: hsl(var(--primary-foreground)) !important;
   }
 }
 
