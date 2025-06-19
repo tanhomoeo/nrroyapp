@@ -25,7 +25,12 @@ export const metadata: Metadata = {
   title: APP_NAME,
   description: `Patient Management System for ${APP_NAME}`,
   icons: {
-    icon: '/image/favicon.ico', // Updated path
+    icon: [
+      { url: '/image/favicon.ico', sizes: 'any', rel: 'icon', type: 'image/x-icon' },
+      { url: '/image/icon-16x16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/image/icon-32x32.png', type: 'image/png', sizes: '32x32' },
+    ],
+    apple: '/image/apple-touch-icon.png', // Standard name for Apple touch icon
   },
 };
 
@@ -37,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="bn" className={`${poppins.variable} ${pt_sans.variable}`} suppressHydrationWarning>
       <head>
-        {/* Favicon link removed, as it's handled by metadata.icons */}
+        {/* Favicon links are now handled by Next.js metadata.icons */}
       </head>
       <body className="font-body antialiased">
         <ThemeProvider
