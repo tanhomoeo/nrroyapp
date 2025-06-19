@@ -90,7 +90,6 @@ export interface DiagnosisSuggestion {
 
 
 export interface ClinicSettings {
-  // nextDiaryNumber: number; // Removed as per new requirement
   clinicName?: string;
   doctorName?: string;
   clinicAddress?: string;
@@ -102,11 +101,21 @@ export interface EnrichedVisit extends Visit {
   prescription?: Prescription | null;
 }
 
+// Old Complaint Summary Types - will be replaced by ComplaintAnalyzer types
 export interface ComplaintSummaryInput {
   complaintText: string;
 }
 export interface ComplaintSummaryOutput {
   summary: string;
+}
+
+// New types for the enhanced complaint analyzer flow
+export interface ComplaintAnalyzerInput {
+  complaintText: string;
+}
+export interface ComplaintAnalyzerOutput {
+  summaryPoints: string[];
+  medicineSuggestions: string[];
 }
 
 
