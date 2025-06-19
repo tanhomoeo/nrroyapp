@@ -52,6 +52,11 @@ export default function EnhancedReportPage() {
   const [summary, setSummary] = useState({ totalVisits: 0, totalRevenue: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
+  const [clientRenderedTimestamp, setClientRenderedTimestamp] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setClientRenderedTimestamp(new Date());
+  }, []);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -362,7 +367,7 @@ export default function EnhancedReportPage() {
             </Table>
         </div>
          <div className="print-footer">
-            <p>রিপোর্ট তৈরির সময়: {format(new Date(), "PPpp", { locale: bn })}</p>
+            <p>রিপোর্ট তৈরির সময়: {clientRenderedTimestamp ? format(clientRenderedTimestamp, "PPpp", { locale: bn }) : 'সময় লোড হচ্ছে...'}</p>
             <p>স্বাক্ষর: _________________________</p>
         </div>
       </div>
@@ -483,3 +488,4 @@ export default function EnhancedReportPage() {
     </div>
   );
 }
+
