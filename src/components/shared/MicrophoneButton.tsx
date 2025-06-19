@@ -40,7 +40,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   const [error, setError] = useState<string | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
-  const finalTranscriptBuffer = useRef<string>("");
+  const finalTranscriptBuffer = useRef<string>(""); // Buffer for accumulating final transcript parts
 
   const isCurrentlyListeningForThisField = isListeningGlobal && currentListeningField === fieldKey;
 
@@ -51,62 +51,65 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     if (!SpeechRecognitionAPI) {
       setIsBrowserSupported(false);
-      if (!sessionStorage.getItem('voiceSupportToastShown')) {
-          const unsupportedMessage = 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। অনুগ্রহ করে Chrome এর মতো একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।';
+      if (!sessionStorage.getItem('voiceSupportToastShownInline')) {
+          const unsupportedMessage = 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। Chrome ব্যবহার করুন।';
           toast({
             title: 'ব্রাউজার সাপোর্ট করে না',
             description: unsupportedMessage,
             variant: 'destructive',
             duration: 10000,
           });
-          sessionStorage.setItem('voiceSupportToastShown', 'true');
+          sessionStorage.setItem('voiceSupportToastShownInline', 'true');
       }
       return;
     }
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    recognition.continuous = true; // Continuous for field dictation
+    recognition.interimResults = true; // Allow interim results
     recognition.lang = 'bn-BD';
 
     recognition.onstart = () => {
       setError(null);
-      finalTranscriptBuffer.current = "";
+      finalTranscriptBuffer.current = ""; // Clear buffer on new start
     };
 
     recognition.onresult = (event) => {
-      let interimTranscriptSegment = '';
+      let interimTranscript = '';
+      let finalTranscriptSegment = '';
+
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscriptBuffer.current += transcriptPart;
+          finalTranscriptSegment += transcriptPart;
         } else {
-          interimTranscriptSegment += transcriptPart;
+          interimTranscript += transcriptPart;
         }
       }
-
-      if (interimTranscriptSegment.trim()) {
+      
+      if (interimTranscript.trim()) {
         try {
-          onTranscript(interimTranscriptSegment);
+          onTranscript(interimTranscript);
         } catch (e: any) {
           console.error(`Error in onTranscript callback for field ${fieldKey}:`, e);
         }
       }
+      if (finalTranscriptSegment.trim()) {
+        finalTranscriptBuffer.current += finalTranscriptSegment + " "; // Accumulate final parts
+      }
     };
 
     recognition.onend = () => {
-      if (currentListeningField === fieldKey) {
+      if (currentListeningField === fieldKey) { // Ensure this onEnd is for the current field
         if (finalTranscriptBuffer.current.trim()) {
           try {
-            onFinalTranscript(finalTranscriptBuffer.current.trim());
+            // Send the entire accumulated final transcript
+            onFinalTranscript(finalTranscriptBuffer.current.trim()); 
           } catch (e: any) {
-            console.error(
-              `Error in onFinalTranscript callback for field ${fieldKey}:`,
-              e
-            );
+            console.error(`Error in onFinalTranscript callback for field ${fieldKey}:`, e);
           }
         }
-        finalTranscriptBuffer.current = "";
+        finalTranscriptBuffer.current = ""; // Clear buffer after sending
         setIsListeningGlobal(false);
         setCurrentListeningField(null);
       }
@@ -132,7 +135,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           errorMessage = `একটি ত্রুটি হয়েছে: ${event.error}`;
       }
       setError(errorMessage);
-      if (currentListeningField === fieldKey) {
+      if (currentListeningField === fieldKey) { // Only show toast if error is for this field
         toast({
             title: 'ভয়েস টাইপিং ত্রুটি',
             description: errorMessage,
@@ -149,14 +152,16 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.stop();
+        speechRecognitionRef.current.stop(); // Gracefully stop
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
         speechRecognitionRef.current.onend = null;
       }
     };
-  }, [toast, onTranscript, onFinalTranscript, fieldKey, currentListeningField, setIsListeningGlobal, setCurrentListeningField]); // Removed isListeningGlobal from dependency array as it's managed by setCurrentListeningField
+  // Dependencies are crucial for re-initializing recognition if props change
+  }, [toast, onTranscript, onFinalTranscript, fieldKey, currentListeningField, setIsListeningGlobal, setCurrentListeningField]);
+
 
   const toggleListening = () => {
     if (!isBrowserSupported) {
@@ -177,10 +182,12 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
 
     if (isCurrentlyListeningForThisField) {
-      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current.stop(); // Will trigger onend
     } else {
+      // Check if another field or the global floating input is listening
       if (isListeningGlobal && currentListeningField && currentListeningField !== fieldKey) {
-          toast({title: `অন্য ফিল্ড (${targetFieldDescription || currentListeningField}) শুনছে`, description: `একই সময়ে একাধিক ফিল্ডের জন্য ভয়েস ইনপুট চালু করা যাবে না।`, variant: "default"});
+          const otherFieldDesc = currentListeningField === 'FloatingVoiceInputActive' ? 'ফ্লোটিং ইনপুট' : `অন্য একটি ফিল্ড (${currentListeningField})`;
+          toast({title: `${otherFieldDesc} শুনছে`, description: `একই সময়ে একাধিক ফিল্ডের জন্য ভয়েস ইনপুট চালু করা যাবে না।`, variant: "default"});
           return;
       }
 
@@ -189,7 +196,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           if (speechRecognitionRef.current) {
             setIsListeningGlobal(true);
             setCurrentListeningField(fieldKey);
-            finalTranscriptBuffer.current = "";
+            finalTranscriptBuffer.current = ""; // Clear buffer before new start
             speechRecognitionRef.current.start();
           }
         })
@@ -236,15 +243,15 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       className={cn(
         "h-full w-auto px-2 text-primary hover:text-primary/80 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1",
         isCurrentlyListeningForThisField && "text-red-500 hover:text-red-600 animate-pulse",
-        error && !isCurrentlyListeningForThisField && !isListeningGlobal && "text-yellow-600 hover:text-yellow-700",
+        error && !isCurrentlyListeningForThisField && !isListeningGlobal && "text-yellow-600 hover:text-yellow-700", // Show error color only if not listening for THIS field and no GLOBAL listening
         className
       )}
-      title={isCurrentlyListeningForThisField ? `${targetFieldDescription || 'এই ফিল্ডের'} জন্য শোনা বন্ধ করুন` : (error ? `ত্রুটি (পুনরায় চেষ্টা করুন)` : `${targetFieldDescription || 'এই ফিল্ডের'} জন্য ভয়েস টাইপিং শুরু করুন`)}
+      title={isCurrentlyListeningForThisField ? `${targetFieldDescription || 'এই ফিল্ডের'} জন্য শোনা বন্ধ করুন` : (error && !isListeningGlobal ? `ত্রুটি (পুনরায় চেষ্টা করুন)` : `${targetFieldDescription || 'এই ফিল্ডের'} জন্য ভয়েস টাইপিং শুরু করুন`)}
       aria-label={isCurrentlyListeningForThisField ? "Stop voice input" : "Start voice input"}
     >
       {isCurrentlyListeningForThisField ? (
         <Loader2 className="h-4 w-4 animate-spin" />
-      ) : error && !isCurrentlyListeningForThisField && !isListeningGlobal ? (
+      ) : error && !isListeningGlobal && !isCurrentlyListeningForThisField ? ( // Show error icon only if no field is globally listening and this one isn't either
         <AlertCircle className="h-4 w-4" />
       ) : (
         <Mic className="h-4 w-4" />

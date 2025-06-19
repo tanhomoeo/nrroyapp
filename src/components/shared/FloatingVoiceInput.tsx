@@ -21,9 +21,9 @@ export const FloatingVoiceInput: React.FC = () => {
   const [isBrowserSupported, setIsBrowserSupported] = useState(true);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const activeElementRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
-  const finalTranscriptBuffer = useRef<string>("");
+  const finalTranscriptRef = useRef<string>(""); // Used to accumulate final transcript
   const { toast } = useToast();
-
+  
   const isActuallyListening = isListeningByClick || isListeningByKeyboard;
 
   const insertTextIntoActiveElement = useCallback((textToInsert: string) => {
@@ -31,12 +31,12 @@ export const FloatingVoiceInput: React.FC = () => {
     if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')) {
       const inputElement = element as HTMLInputElement | HTMLTextAreaElement;
       const currentValue = inputElement.value;
-      
-      const newText = appendFinalTranscript(currentValue, textToInsert.trim());
+      const newText = appendFinalTranscript(currentValue, textToInsert);
 
+      // Directly setting value and dispatching events to mimic user input for React state update
       const originalValueSetter = Object.getOwnPropertyDescriptor(inputElement.constructor.prototype, 'value')?.set;
       originalValueSetter?.call(inputElement, newText);
-
+      
       const newCursorPosition = newText.length;
       inputElement.selectionStart = newCursorPosition;
       inputElement.selectionEnd = newCursorPosition;
@@ -44,7 +44,7 @@ export const FloatingVoiceInput: React.FC = () => {
       const eventOptions = { bubbles: true, cancelable: true };
       inputElement.dispatchEvent(new Event('input', eventOptions));
       inputElement.dispatchEvent(new Event('change', eventOptions));
-    } else if (isActuallyListening) {
+    } else if (isActuallyListening) { // Only show toast if listening was intended
       toast({
         title: 'কোনো ইনপুট ফিল্ড ফোকাস করা নেই',
         description: 'ভয়েস টাইপিং ব্যবহার করার জন্য একটি টেক্সটবক্স বা ইনপুট ফিল্ডে ক্লিক করুন।',
@@ -83,7 +83,7 @@ export const FloatingVoiceInput: React.FC = () => {
 
     recognition.onstart = () => {
       setError(null);
-      finalTranscriptBuffer.current = ""; // Clear buffer on start
+      finalTranscriptRef.current = ""; 
     };
 
     recognition.onresult = (event) => {
@@ -94,8 +94,7 @@ export const FloatingVoiceInput: React.FC = () => {
         }
       }
       if (recognizedTextForThisSegment.trim()) {
-        // Accumulate final transcript segments. Will be inserted on 'onend'.
-        finalTranscriptBuffer.current += recognizedTextForThisSegment + " "; 
+        finalTranscriptRef.current += recognizedTextForThisSegment + " "; 
       }
     };
     
@@ -125,18 +124,20 @@ export const FloatingVoiceInput: React.FC = () => {
         variant: 'destructive',
         duration: 7000,
       });
-      // Ensure listening states are reset if an error occurs during recognition
+      
+      // Explicitly reset states if error occurs while listening
       if (isListeningByClick) setIsListeningByClick(false);
       if (isListeningByKeyboard) setIsListeningByKeyboard(false);
-      finalTranscriptBuffer.current = "";
+      finalTranscriptRef.current = "";
     };
 
     recognition.onend = () => {
-      if (finalTranscriptBuffer.current.trim()) {
-        insertTextIntoActiveElement(finalTranscriptBuffer.current.trim());
+      if (finalTranscriptRef.current.trim()) {
+        insertTextIntoActiveElement(finalTranscriptRef.current.trim());
       }
-      finalTranscriptBuffer.current = "";
-      // These states should be reset here regardless of how stop was triggered
+      finalTranscriptRef.current = ""; // Clear buffer after processing
+      
+      // Ensure states are reset when recognition ends, regardless of how it was triggered
       setIsListeningByClick(false);
       setIsListeningByKeyboard(false);
     };
@@ -145,14 +146,15 @@ export const FloatingVoiceInput: React.FC = () => {
 
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.abort(); // Use abort to forcefully stop and discard results
+        speechRecognitionRef.current.abort(); // Use abort to stop and discard results
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
         speechRecognitionRef.current.onend = null;
       }
     };
-  }, [toast, insertTextIntoActiveElement]); // Removed isListeningByClick and isListeningByKeyboard
+  // Removed isListeningByClick and isListeningByKeyboard from deps as they cause re-runs that reset the ref
+  }, [toast, insertTextIntoActiveElement]); 
 
   const startRecognition = useCallback(() => {
     if (!speechRecognitionRef.current || !isBrowserSupported) return;
@@ -161,10 +163,10 @@ export const FloatingVoiceInput: React.FC = () => {
       ? document.activeElement 
       : null;
 
-    if (!activeElementRef.current && (isListeningByClick || isListeningByKeyboard)) { // Check if we intended to listen
+    if (!activeElementRef.current) {
       toast({
         title: 'ইনপুট ফিল্ড নির্বাচন করুন',
-        description: 'ভয়েস টাইপিং শুরু করার আগে একটি টেক্সট ফিল্ডে ক্লিক করুন।',
+        description: 'ভয়েস টাইপিং শুরু করার আগে একটি টেক্সト ফিল্ডে ক্লিক করুন।',
         variant: 'default'
       });
       // Reset listening state if no field is active
@@ -173,11 +175,12 @@ export const FloatingVoiceInput: React.FC = () => {
       return;
     }
     
-    finalTranscriptBuffer.current = ""; // Clear buffer before starting
+    finalTranscriptRef.current = ""; // Clear buffer before starting
 
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(() => {
         if (speechRecognitionRef.current) {
+           // States are set right before calling start()
           speechRecognitionRef.current.start();
         }
       })
@@ -193,27 +196,29 @@ export const FloatingVoiceInput: React.FC = () => {
         setIsListeningByClick(false);
         setIsListeningByKeyboard(false);
       });
-  }, [isBrowserSupported, toast, isListeningByClick, isListeningByKeyboard]);
+  }, [isBrowserSupported, toast, isListeningByClick, isListeningByKeyboard]); // Added isListeningByClick & isListeningByKeyboard
 
   const stopRecognition = useCallback(() => {
-    if (speechRecognitionRef.current && isActuallyListening) {
+    if (speechRecognitionRef.current && (isListeningByClick || isListeningByKeyboard)) {
       speechRecognitionRef.current.stop(); // This will trigger onend
     } else {
-      // If not actually listening, ensure states are reset
+      // If not actually listening, ensure states are reset (onend should also do this)
       setIsListeningByClick(false);
       setIsListeningByKeyboard(false);
     }
-  }, [isActuallyListening]);
+  }, [isListeningByClick, isListeningByKeyboard]); // Added dependencies
 
   const toggleListeningByClick = () => {
     if (!isBrowserSupported) return;
-    if (isListeningByKeyboard) { 
+    if (isListeningByKeyboard) { // If keyboard is active, click shouldn't interfere beyond stopping
       stopRecognition();
       return;
     }
+
     if (isListeningByClick) {
       stopRecognition();
     } else {
+      // Set state *before* calling startRecognition
       setIsListeningByClick(true); 
       startRecognition();
     }
@@ -221,7 +226,7 @@ export const FloatingVoiceInput: React.FC = () => {
   
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Control' && !event.repeat && !isActuallyListening) {
+      if (event.key === 'Control' && !event.repeat && !isListeningByClick && !isListeningByKeyboard) {
         setIsListeningByKeyboard(true);
         startRecognition();
       }
@@ -229,6 +234,7 @@ export const FloatingVoiceInput: React.FC = () => {
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key === 'Control' && isListeningByKeyboard) {
+        // stopRecognition will set isListeningByKeyboard to false via onend
         stopRecognition();
       }
     };
@@ -239,15 +245,15 @@ export const FloatingVoiceInput: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      if (isListeningByKeyboard && speechRecognitionRef.current) {
+      if (isListeningByKeyboard && speechRecognitionRef.current) { // Ensure to stop if component unmounts while key is held
           speechRecognitionRef.current.abort();
       }
     };
-  }, [isActuallyListening, isListeningByKeyboard, startRecognition, stopRecognition]);
+  }, [isListeningByClick, isListeningByKeyboard, startRecognition, stopRecognition]); // Added dependencies
 
 
   if (!isBrowserSupported) {
-    return null;
+    return null; // Or a fallback UI element indicating no support
   }
 
   const buttonTitle = isActuallyListening 
@@ -270,7 +276,7 @@ export const FloatingVoiceInput: React.FC = () => {
     >
       {isActuallyListening ? (
         <Loader2 className="h-7 w-7 animate-spin" />
-      ) : error && !isActuallyListening ? (
+      ) : error && !isActuallyListening ? ( // Show error icon only if not currently listening
         <AlertCircle className="h-7 w-7" />
       ) : (
         <Keyboard className="h-6 w-6" /> 
@@ -278,3 +284,4 @@ export const FloatingVoiceInput: React.FC = () => {
     </Button>
   );
 };
+
