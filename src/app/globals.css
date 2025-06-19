@@ -9,25 +9,26 @@ body {
 
 @layer base {
   :root {
-    --background: 220 60% 97%; /* Very light cool gray #F7F9FC */
-    --foreground: 220 25% 25%; /* Dark grayish blue for text #333C4D */
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 220 25% 25%;
+    /* Light Theme Inspired by Image */
+    --background: 200 70% 96%; /* Very light, slightly desaturated cyan/blue for main content bg */
+    --foreground: 215 25% 25%; /* Dark grayish blue for text */
+    --card: 0 0% 100%; /* White for cards */
+    --card-foreground: 215 25% 25%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 25%;
-    --primary: 210 73% 50%; /* Medium Blue #3498DB */
+    --popover-foreground: 215 25% 25%;
+    --primary: 180 60% 45%; /* Teal/Cyan - for main action buttons like image's '+' */
     --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 220 30% 90%; /* Light grayish blue for secondary elements #DDE3EA */
-    --secondary-foreground: 220 25% 35%; /* Darker blue for text on secondary #4A5568 */
-    --muted: 220 30% 94%; /* Lighter than secondary for borders etc #ECF0F3 */
-    --muted-foreground: 220 25% 55%; /* Gray for placeholder text #7B879A */
-    --accent: 145 58% 50%; /* Greenish teal for accent #2ECC71 */
-    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --secondary: 210 50% 92%; /* Lighter blue-gray for secondary elements */
+    --secondary-foreground: 215 25% 35%;
+    --muted: 210 50% 95%; /* Even lighter for borders etc #ECF0F3 */
+    --muted-foreground: 215 25% 55%; /* Gray for placeholder text */
+    --accent: 180 50% 65%; /* Lighter teal/cyan for general accents */
+    --accent-foreground: 215 25% 20%; /* Darker text on accent */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 20% 85%; /* #CCD3DB */
-    --input: 220 20% 90%; /* #DEE3E8 */
-    --ring: 210 73% 55%; /* Slightly darker primary for ring */
+    --border: 210 40% 88%; /* #D6DEE6 */
+    --input: 210 40% 93%; /* #E3E8ED */
+    --ring: 180 60% 50%; /* Slightly darker primary for ring */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -35,82 +36,77 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Sidebar specific colors - Light Theme */
-    --sidebar-background: hsl(217, 90%, 94%); /* Light blue-ish gray */
-    --sidebar-foreground: 220 25% 30%; /* Darker text for readability */
-    --sidebar-primary: hsl(var(--primary)); /* Use main primary color */
+    /* Sidebar specific colors - Light Theme (Inspired by image) */
+    --sidebar-background: 210 60% 98%; /* Very light blue-gray, almost white like image sidebar */
+    --sidebar-foreground: 215 25% 35%; /* Darker text for readability */
+    --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: 220 30% 90%; /* Light grayish blue for general accents */
-    --sidebar-accent-foreground: hsl(var(--primary)); /* Primary color for text on accent */
-    --sidebar-border: 220 20% 88%; /* Slightly darker for borders */
+    --sidebar-accent: 210 50% 94%; /* Very light hover for sidebar items */
+    --sidebar-accent-foreground: hsl(var(--primary));
+    --sidebar-border: 210 30% 90%; /* Light border for sidebar elements */
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-light: hsl(217, 95%, 97%); /* Slightly lighter end for gradient */
+    --sidebar-gradient-end-light: hsl(var(--sidebar-background)); /* No gradient, solid color like image */
 
-    /* Section Header Backgrounds - Light Theme */
-    --sidebar-section-main-bg: 210 80% 93%; /* Light Blue */
-    --sidebar-section-management-bg: 160 50% 93%; /* Light Greenish */
-    --sidebar-section-utility-bg: 50 70% 93%; /* Light Yellowish */
+    /* Section Header Styling - Light Theme (Subtle) */
+    --sidebar-section-header-text: hsl(215 25% 45%);
+    --sidebar-section-header-border: hsl(210 30% 88%);
 
-    /* Default Submenu Button Styles - Light Theme (Solid) - Enhanced for 3D */
-    --sidebar-button-bg-light: hsl(220 30% 92%);
-    --sidebar-button-hover-bg-light: hsl(220 30% 88%);
-    --sidebar-button-border: hsl(220 20% 85%);
-    --sidebar-button-shadow: 0 1px 2px hsla(220, 20%, 50%, 0.15), inset 0 1px 0px hsla(0, 0%, 100%, 0.3);
-    --sidebar-button-hover-shadow: 0 2px 4px hsla(220, 20%, 50%, 0.2), inset 0 1px 0px hsla(0, 0%, 100%, 0.3), 0 0 0 1px hsla(220, 20%, 80%, 0.6);
-    --sidebar-button-active-shadow: inset 0 1px 3px hsla(220, 20%, 50%, 0.2);
-
-
-    /* Custom Button Theme 1 (Green) - Light */
-    --btn-theme1-bg-light: hsl(145 58% 55%);
-    --btn-theme1-hover-bg-light: hsl(145 58% 50%);
-    --btn-theme1-border-light: hsl(145 40% 45%);
-
-    /* Custom Button Theme 2 (Blue) - Light */
-    --btn-theme2-bg-light: hsl(200 70% 60%);
-    --btn-theme2-hover-bg-light: hsl(200 70% 55%);
-    --btn-theme2-border-light: hsl(200 50% 50%);
-
-    /* Custom Button Theme 3 (Purple) - Light */
-    --btn-theme3-bg-light: hsl(260 60% 65%);
-    --btn-theme3-hover-bg-light: hsl(260 60% 60%);
-    --btn-theme3-border-light: hsl(260 40% 55%);
-
-    /* Custom Button Theme 4 (Teal) - Light */
-    --btn-theme4-bg-light: hsl(170 60% 50%);
-    --btn-theme4-hover-bg-light: hsl(170 60% 45%);
-    --btn-theme4-border-light: hsl(170 40% 40%);
-
-    /* Custom Button Theme 5 (Orange) - Light */
-    --btn-theme5-bg-light: hsl(30 80% 60%);
-    --btn-theme5-hover-bg-light: hsl(30 80% 55%);
-    --btn-theme5-border-light: hsl(30 60% 50%);
-    
-    /* Custom Button Theme 6 (Slate) - Light */
+    /* Sidebar Menu Button Theming - Light (Based on image's colored icons) */
+    /* Theme 1: Blue (like 'W' icon) */
+    --btn-theme1-bg-light: hsl(210 75% 55%);
+    --btn-theme1-hover-bg-light: hsl(210 75% 50%);
+    --btn-theme1-border-light: hsl(210 60% 45%);
+    /* Theme 2: Purple (like 'UI' icon) */
+    --btn-theme2-bg-light: hsl(265 60% 60%);
+    --btn-theme2-hover-bg-light: hsl(265 60% 55%);
+    --btn-theme2-border-light: hsl(265 45% 50%);
+    /* Theme 3: Orange (like '>' icon) */
+    --btn-theme3-bg-light: hsl(25 85% 60%);
+    --btn-theme3-hover-bg-light: hsl(25 85% 55%);
+    --btn-theme3-border-light: hsl(25 70% 50%);
+    /* Theme 4: Green */
+    --btn-theme4-bg-light: hsl(145 58% 50%);
+    --btn-theme4-hover-bg-light: hsl(145 58% 45%);
+    --btn-theme4-border-light: hsl(145 40% 40%);
+    /* Theme 5: Teal */
+    --btn-theme5-bg-light: hsl(170 60% 45%);
+    --btn-theme5-hover-bg-light: hsl(170 60% 40%);
+    --btn-theme5-border-light: hsl(170 45% 35%);
+    /* Theme 6: Slate Gray */
     --btn-theme6-bg-light: hsl(215 30% 65%);
     --btn-theme6-hover-bg-light: hsl(215 30% 60%);
     --btn-theme6-border-light: hsl(215 20% 55%);
+
+    /* Default Submenu Button Styles (If not themed) - Light - Based on existing but lighter */
+    --sidebar-button-bg-light: hsl(210 50% 96%); /* Lighter than previous */
+    --sidebar-button-hover-bg-light: hsl(210 50% 92%);
+    --sidebar-button-border: hsl(210 30% 88%);
+    --sidebar-button-shadow: 0 1px 2px hsla(210, 20%, 50%, 0.1), inset 0 1px 0px hsla(0, 0%, 100%, 0.2);
+    --sidebar-button-hover-shadow: 0 2px 3px hsla(210, 20%, 50%, 0.15), inset 0 1px 0px hsla(0, 0%, 100%, 0.2), 0 0 0 1px hsla(210, 30%, 85%, 0.5);
+    --sidebar-button-active-shadow: inset 0 1px 2px hsla(210, 20%, 50%, 0.15);
   }
 
   .dark {
-    --background: 220 20% 10%; /* Dark blue-gray #1A202C */
-    --foreground: 220 25% 90%; /* Light gray #E1E5EB */
-    --card: 220 20% 13%; /* Slightly lighter dark blue-gray #1D2430 */
-    --card-foreground: 220 25% 90%;
-    --popover: 220 20% 13%;
-    --popover-foreground: 220 25% 90%;
-    --primary: 210 73% 55%; /* Medium Blue #4A90E2 */
-    --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 220 20% 20%; /* Darker gray #2D3748 */
-    --secondary-foreground: 220 25% 80%; /* Lighter gray #A0AEC0 */
-    --muted: 220 20% 17%; /* #242B3D */
-    --muted-foreground: 220 25% 65%; /* #8A96A8 */
-    --accent: 145 58% 55%; /* Greenish teal for accent #38D39F */
-    --accent-foreground: 0 0% 0%; /* Black text on accent */
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 20% 25%; /* #313B4A */
-    --input: 220 20% 25%;
-    --ring: 210 73% 50%;
+    /* Dark Theme (Complementary to the new light theme) */
+    --background: 215 28% 17%; /* Dark slate blue */
+    --foreground: 210 40% 90%; /* Light gray */
+    --card: 215 28% 22%; /* Slightly lighter dark slate */
+    --card-foreground: 210 40% 90%;
+    --popover: 215 28% 22%;
+    --popover-foreground: 210 40% 90%;
+    --primary: 180 55% 55%; /* Brighter Teal/Cyan for dark mode */
+    --primary-foreground: 0 0% 0%; /* Black for contrast on bright teal */
+    --secondary: 215 25% 25%; /* Darker gray */
+    --secondary-foreground: 210 30% 80%;
+    --muted: 215 25% 20%; /* #2A303C */
+    --muted-foreground: 210 30% 65%;
+    --accent: 180 50% 70%; /* Lighter teal for dark mode accents */
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 62.8% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 215 20% 30%; /* #3B4454 */
+    --input: 215 20% 30%;
+    --ring: 180 55% 60%;
 
     --chart-1: 210 70% 60%;
     --chart-2: 145 60% 50%;
@@ -119,67 +115,56 @@ body {
     --chart-5: 320 75% 60%;
 
     /* Sidebar specific colors for dark mode */
-    --sidebar-background: hsl(217, 30%, 18%); /* Darker slate blue */
-    --sidebar-foreground: 210 20% 85%; /* Light gray for text */
+    --sidebar-background: 215 25% 14%; /* Very dark slate */
+    --sidebar-foreground: 210 30% 80%; /* Light gray for text */
     --sidebar-primary: hsl(var(--primary));
-    --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: 220 15% 25%; /* Slightly lighter dark slate for accents */
-    --sidebar-accent-foreground: 0 0% 100%; /* White text on accent */
-    --sidebar-border: 220 15% 20%; /* Darker border */
+    --sidebar-primary-foreground: hsl(0 0% 0%);
+    --sidebar-accent: 215 20% 22%; /* Slightly lighter dark slate for accents */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 15% 20%; /* Darker border */
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-dark: hsl(217, 25%, 14%); /* Even darker end for gradient */
+    --sidebar-gradient-end-dark: hsl(var(--sidebar-background)); /* Solid color */
 
-    /* Section Header Backgrounds - Dark Theme */
-    --sidebar-section-main-bg: 210 40% 22%; /* Dark Blue */
-    --sidebar-section-management-bg: 160 30% 22%; /* Dark Greenish */
-    --sidebar-section-utility-bg: 50 35% 22%; /* Dark Yellowish/Brownish */
-    
-    /* Default Submenu Button Styles - Dark Theme (Solid) - Enhanced for 3D */
-    --sidebar-button-bg-dark: hsl(220 15% 28%);
-    --sidebar-button-hover-bg-dark: hsl(220 15% 32%);
-    --sidebar-button-border: hsl(220 10% 22%); /* Shared border for dark */
-    --sidebar-button-shadow: 0 1px 2px hsla(220, 10%, 5%, 0.5), inset 0 1px 0px hsla(220, 15%, 40%, 0.15);
-    --sidebar-button-hover-shadow: 0 2px 4px hsla(220, 10%, 5%, 0.6), inset 0 1px 0px hsla(220, 15%, 40%, 0.15), 0 0 0 1px hsla(220, 10%, 20%, 0.8);
-    --sidebar-button-active-shadow: inset 0 1px 3px hsla(220, 10%, 5%, 0.5);
+    /* Section Header Styling - Dark Theme */
+    --sidebar-section-header-text: hsl(210 30% 70%);
+    --sidebar-section-header-border: hsl(215 15% 25%);
 
+    /* Sidebar Menu Button Theming - Dark */
+    --btn-theme1-bg-dark: hsl(210 60% 40%);
+    --btn-theme1-hover-bg-dark: hsl(210 60% 45%);
+    --btn-theme1-border-dark: hsl(210 50% 30%);
 
-    /* Custom Button Theme 1 (Green) - Dark */
-    --btn-theme1-bg-dark: hsl(145 50% 35%);
-    --btn-theme1-hover-bg-dark: hsl(145 50% 40%);
-    --btn-theme1-border-dark: hsl(145 30% 25%);
+    --btn-theme2-bg-dark: hsl(265 50% 45%);
+    --btn-theme2-hover-bg-dark: hsl(265 50% 50%);
+    --btn-theme2-border-dark: hsl(265 35% 35%);
 
-    /* Custom Button Theme 2 (Blue) - Dark */
-    --btn-theme2-bg-dark: hsl(200 60% 40%);
-    --btn-theme2-hover-bg-dark: hsl(200 60% 45%);
-    --btn-theme2-border-dark: hsl(200 40% 30%);
+    --btn-theme3-bg-dark: hsl(25 70% 45%);
+    --btn-theme3-hover-bg-dark: hsl(25 70% 50%);
+    --btn-theme3-border-dark: hsl(25 55% 35%);
 
-    /* Custom Button Theme 3 (Purple) - Dark */
-    --btn-theme3-bg-dark: hsl(260 50% 45%);
-    --btn-theme3-hover-bg-dark: hsl(260 50% 50%);
-    --btn-theme3-border-dark: hsl(260 30% 35%);
+    --btn-theme4-bg-dark: hsl(145 50% 35%);
+    --btn-theme4-hover-bg-dark: hsl(145 50% 40%);
+    --btn-theme4-border-dark: hsl(145 30% 25%);
 
-    /* Custom Button Theme 4 (Teal) - Dark */
-    --btn-theme4-bg-dark: hsl(170 50% 30%);
-    --btn-theme4-hover-bg-dark: hsl(170 50% 35%);
-    --btn-theme4-border-dark: hsl(170 30% 20%);
+    --btn-theme5-bg-dark: hsl(170 50% 30%);
+    --btn-theme5-hover-bg-dark: hsl(170 50% 35%);
+    --btn-theme5-border-dark: hsl(170 30% 20%);
 
-    /* Custom Button Theme 5 (Orange) - Dark */
-    --btn-theme5-bg-dark: hsl(30 70% 40%);
-    --btn-theme5-hover-bg-dark: hsl(30 70% 45%);
-    --btn-theme5-border-dark: hsl(30 50% 30%);
-
-    /* Custom Button Theme 6 (Slate) - Dark */
     --btn-theme6-bg-dark: hsl(215 25% 45%);
     --btn-theme6-hover-bg-dark: hsl(215 25% 50%);
     --btn-theme6-border-dark: hsl(215 15% 35%);
+
+    /* Default Submenu Button Styles - Dark Theme - Based on existing but darker */
+    --sidebar-button-bg-dark: hsl(215 20% 20%);
+    --sidebar-button-hover-bg-dark: hsl(215 20% 24%);
+    --sidebar-button-border: hsl(215 15% 15%);
+    --sidebar-button-shadow: 0 1px 2px hsla(210, 10%, 5%, 0.4), inset 0 1px 0px hsla(210, 15%, 30%, 0.1);
+    --sidebar-button-hover-shadow: 0 2px 3px hsla(210, 10%, 5%, 0.5), inset 0 1px 0px hsla(210, 15%, 30%, 0.1), 0 0 0 1px hsla(210, 15%, 18%, 0.7);
+    --sidebar-button-active-shadow: inset 0 1px 2px hsla(210, 10%, 5%, 0.45);
   }
 
-  /* Apply gradient ONLY to the sidebar panel when its parent has data-variant="sidebar" */
   [data-variant="sidebar"] [data-sidebar="sidebar"] {
-    background-image: linear-gradient(to bottom, hsl(var(--sidebar-background)), hsl(var(--sidebar-gradient-end-light)));
-  }
-  .dark [data-variant="sidebar"] [data-sidebar="sidebar"] {
-    background-image: linear-gradient(to bottom, hsl(var(--sidebar-background)), hsl(var(--sidebar-gradient-end-dark)));
+    background-color: hsl(var(--sidebar-background)); /* Solid color, no gradient */
   }
 }
 
@@ -193,29 +178,17 @@ body {
 }
 
 @layer components {
-  .sidebar-section-header-main {
-    @apply bg-[hsl(var(--sidebar-section-main-bg))] text-sidebar-foreground;
+  /* Collapsible Section Header - More subtle, like a text label */
+  .sidebar-collapsible-section-header {
+    @apply text-sm font-medium text-[hsl(var(--sidebar-section-header-text))] border-t border-[hsl(var(--sidebar-section-header-border))] first:border-t-0 pt-3 mt-2 first:mt-0;
   }
-  .sidebar-section-header-main:hover:not([aria-expanded="true"]) {
-    @apply bg-[hsl(var(--sidebar-section-main-bg)/0.9)];
-  }
-
-  .sidebar-section-header-management {
-    @apply bg-[hsl(var(--sidebar-section-management-bg))] text-sidebar-foreground;
-  }
-  .sidebar-section-header-management:hover:not([aria-expanded="true"]) {
-    @apply bg-[hsl(var(--sidebar-section-management-bg)/0.9)];
+  .sidebar-collapsible-section-header:hover {
+     @apply text-[hsl(var(--sidebar-section-header-text)/0.8)];
   }
 
-  .sidebar-section-header-utility {
-    @apply bg-[hsl(var(--sidebar-section-utility-bg))] text-sidebar-foreground;
-  }
-  .sidebar-section-header-utility:hover:not([aria-expanded="true"]) {
-    @apply bg-[hsl(var(--sidebar-section-utility-bg)/0.9)];
-  }
 
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"] {
-    @apply rounded-md px-3 py-2 my-1 text-sidebar-foreground;
+    @apply rounded-md px-3 py-2 my-0.5 text-sidebar-foreground; /* Reduced vertical margin */
     background-color: var(--sidebar-button-bg-light);
     border: 1px solid var(--sidebar-button-border);
     box-shadow: var(--sidebar-button-shadow);
@@ -241,23 +214,23 @@ body {
 
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"] {
     @apply bg-sidebar-primary text-sidebar-primary-foreground;
-    background-image: none !important; /* Override gradient/solid for active state */
+    background-image: none !important;
     box-shadow: var(--sidebar-button-active-shadow) !important;
     transform: translateY(0.5px);
     border-color: hsl(var(--sidebar-primary)/0.8) !important;
   }
    [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"]:hover {
     @apply bg-sidebar-primary/90;
-    background-image: none !important; /* Override for active state hover */
-    transform: translateY(0.5px); /* Keep it pressed */
-    box-shadow: var(--sidebar-button-active-shadow) !important; /* Maintain active shadow */
+    background-image: none !important;
+    transform: translateY(0.5px);
+    box-shadow: var(--sidebar-button-active-shadow) !important;
   }
 
   /* Custom Button Themes - Solid Colors */
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
-    background-color: var(--btn-theme1-bg-light) !important; 
+    background-color: var(--btn-theme1-bg-light) !important;
     border-color: var(--btn-theme1-border-light) !important;
-    color: hsl(var(--primary-foreground)) !important; 
+    color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
     background-color: var(--btn-theme1-bg-dark) !important;
@@ -301,7 +274,7 @@ body {
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme3"]:hover {
     background-color: var(--btn-theme3-hover-bg-dark) !important;
   }
-  
+ 
   [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
     background-color: var(--btn-theme4-bg-light) !important;
     border-color: var(--btn-theme4-border-light) !important;
@@ -350,43 +323,36 @@ body {
     background-color: var(--btn-theme6-hover-bg-dark) !important;
   }
 
-  /* Ensure text color is appropriate for themed buttons if default text color is not contrasting enough */
   [data-sidebar="menu-button"][data-menu-item-theme] span,
   [data-sidebar="menu-button"][data-menu-item-theme] svg {
-    color: hsl(var(--primary-foreground)) !important; /* Use primary-foreground for text on themed buttons */
+    color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme] span,
   .dark [data-sidebar="menu-button"][data-menu-item-theme] svg {
-    color: hsl(var(--primary-foreground)) !important; /* Or a specific dark theme text color for these buttons */
+    color: hsl(var(--primary-foreground)) !important;
   }
-  /* Active state text should also be primary-foreground */
   [data-sidebar="menu-button"][data-active="true"] span,
   [data-sidebar="menu-button"][data-active="true"] svg {
      color: hsl(var(--sidebar-primary-foreground)) !important;
   }
-
-
 }
 
-
-/* Custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-muted/50;
+  @apply bg-muted/30; /* Use a more subtle track color */
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/70;
+  @apply bg-primary/50; /* Make thumb slightly less prominent */
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary;
+  @apply bg-primary/70; /* Darken on hover */
 }
 
-/* Print styles for Dashboard Appointments */
 @media print {
   .hide-on-print-dashboard {
     display: none !important;
@@ -430,4 +396,4 @@ body {
   margin: 15mm;
 }
 
-
+    

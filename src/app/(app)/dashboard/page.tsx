@@ -48,7 +48,7 @@ interface QuickActionCardProps {
 }
 
 const QuickActionCardMemoized: React.FC<QuickActionCardProps> = React.memo(({ title, description, icon: Icon, bgColorClass, textColorClass = 'text-primary-foreground', href }) => (
-  <Link href={href} className={`block rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 ${bgColorClass} ${textColorClass}`}>
+  <Link href={href} className={`block rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 p-6 ${bgColorClass} ${textColorClass} transform hover:-translate-y-1`}>
     <div className="flex items-center mb-3">
       <Icon className="h-8 w-8 mr-3" />
       <h3 className="text-xl font-headline font-semibold">{title}</h3>
@@ -75,7 +75,7 @@ interface ActivityCardProps {
 }
 
 const ActivityCardMemoized: React.FC<ActivityCardProps> = React.memo(({ title, stats, bgColorClass, textColorClass = 'text-primary-foreground', detailsLink, icon: TitleIcon }) => (
-  <Card className={`shadow-lg hover:shadow-xl transition-shadow duration-300 ${bgColorClass} ${textColorClass} overflow-hidden`}>
+  <Card className={`shadow-lg hover:shadow-xl transition-all duration-300 ${bgColorClass} ${textColorClass} overflow-hidden transform hover:-translate-y-1`}>
     <CardHeader className="pb-2">
       <div className="flex items-center">
         {TitleIcon && <TitleIcon className="h-6 w-6 mr-2" />}
@@ -396,28 +396,28 @@ export default function DashboardPage() {
             title="নতুন রোগী ভর্তি"
             description="সিস্টেমে নতুন রোগীদের দ্রুত নিবন্ধন করুন।"
             icon={UserPlus}
-            bgColorClass="bg-green-500 dark:bg-green-600"
+            bgColorClass="bg-[hsl(var(--btn-theme1-bg-light))] dark:bg-[hsl(var(--btn-theme1-bg-dark))]"
             href={ROUTES.PATIENT_ENTRY}
           />
           <QuickActionCardMemoized
             title="রোগীর তালিকা"
             description="সকল নিবন্ধিত রোগীদের প্রোফাইল খুঁজুন ও দেখুন।"
             icon={Users}
-            bgColorClass="bg-blue-500 dark:bg-blue-600"
+            bgColorClass="bg-[hsl(var(--btn-theme2-bg-light))] dark:bg-[hsl(var(--btn-theme2-bg-dark))]"
             href={ROUTES.DICTIONARY}
           />
           <QuickActionCardMemoized
             title="দৈনিক প্রতিবেদন"
             description="দৈনিক কার্যক্রমের বিস্তারিত সারসংক্ষেপ দেখুন।"
             icon={FileText}
-            bgColorClass="bg-purple-500 dark:bg-purple-600"
+            bgColorClass="bg-[hsl(var(--btn-theme3-bg-light))] dark:bg-[hsl(var(--btn-theme3-bg-dark))]"
             href={ROUTES.DAILY_REPORT}
           />
           <QuickActionCardMemoized
             title="AI অভিযোগ সারাংশ"
             description="AI দ্বারা রোগীর অভিযোগ সারাংশ করুন।"
             icon={MessageSquareText}
-            bgColorClass="bg-teal-500 dark:bg-teal-600"
+            bgColorClass="bg-[hsl(var(--btn-theme4-bg-light))] dark:bg-[hsl(var(--btn-theme4-bg-dark))]"
             href={ROUTES.AI_SUMMARY}
           />
         </div>
@@ -432,7 +432,8 @@ export default function DashboardPage() {
             { label: 'মোট নিবন্ধিত রোগী', value: stats.monthlyTotalRegistered || 0, icon: Users },
             { label: 'আনুমানিক মাসিক আয়', value: formatCurrency(stats.monthlyIncome || 0), icon: TrendingUp },
           ]}
-          bgColorClass="bg-sky-500 dark:bg-sky-600"
+          bgColorClass="bg-sky-500 dark:bg-sky-700"
+          textColorClass="text-white"
           detailsLink={ROUTES.DAILY_REPORT}
         />
         <ActivityCardMemoized
@@ -443,12 +444,13 @@ export default function DashboardPage() {
             { label: 'অন্যান্য নিবন্ধিত রোগী', value: stats.dailyOtherRegistered || 0, icon: Users },
             { label: 'আজকের আয়', value: formatCurrency(stats.todayRevenue || 0), icon: TrendingUp },
           ]}
-          bgColorClass="bg-amber-500 dark:bg-amber-600"
+          bgColorClass="bg-amber-500 dark:bg-amber-700"
+          textColorClass="text-white"
           detailsLink={ROUTES.DAILY_REPORT}
         />
       </div>
 
-      <Card className="shadow-lg dashboard-appointments-card">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 dashboard-appointments-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="font-headline text-xl">আজকের সাক্ষাৎকার</CardTitle>
@@ -536,3 +538,4 @@ export default function DashboardPage() {
   );
 }
 
+    

@@ -13,9 +13,9 @@ export default function AppLayout({
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <SidebarInset className="flex flex-col">
+      <SidebarInset className="flex flex-col bg-background"> {/* Ensured bg-background is applied */}
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6"> {/* Removed bg-background, will inherit from SidebarInset */}
           {children}
         </main>
       </SidebarInset>
@@ -23,3 +23,4 @@ export default function AppLayout({
   );
 }
 
+    
