@@ -396,28 +396,32 @@ export default function DashboardPage() {
             title="নতুন রোগী ভর্তি"
             description="সিস্টেমে নতুন রোগীদের দ্রুত নিবন্ধন করুন।"
             icon={UserPlus}
-            bgColorClass="bg-[hsl(var(--btn-theme1-bg-light))] dark:bg-[hsl(var(--btn-theme1-bg-dark))]"
+            bgColorClass="bg-gradient-to-br from-sky-500 to-indigo-600"
+            textColorClass="text-white"
             href={ROUTES.PATIENT_ENTRY}
           />
           <QuickActionCardMemoized
             title="রোগীর তালিকা"
             description="সকল নিবন্ধিত রোগীদের প্রোফাইল খুঁজুন ও দেখুন।"
             icon={Users}
-            bgColorClass="bg-[hsl(var(--btn-theme2-bg-light))] dark:bg-[hsl(var(--btn-theme2-bg-dark))]"
+            bgColorClass="bg-gradient-to-br from-teal-500 to-emerald-600"
+            textColorClass="text-white"
             href={ROUTES.DICTIONARY}
           />
           <QuickActionCardMemoized
             title="দৈনিক প্রতিবেদন"
             description="দৈনিক কার্যক্রমের বিস্তারিত সারসংক্ষেপ দেখুন।"
             icon={FileText}
-            bgColorClass="bg-[hsl(var(--btn-theme3-bg-light))] dark:bg-[hsl(var(--btn-theme3-bg-dark))]"
+            bgColorClass="bg-gradient-to-br from-green-500 to-cyan-600"
+            textColorClass="text-white"
             href={ROUTES.DAILY_REPORT}
           />
           <QuickActionCardMemoized
             title="AI অভিযোগ সারাংশ"
             description="AI দ্বারা রোগীর অভিযোগ সারাংশ করুন।"
             icon={MessageSquareText}
-            bgColorClass="bg-[hsl(var(--btn-theme4-bg-light))] dark:bg-[hsl(var(--btn-theme4-bg-dark))]"
+            bgColorClass="bg-gradient-to-br from-purple-600 to-indigo-700"
+            textColorClass="text-white"
             href={ROUTES.AI_SUMMARY}
           />
         </div>
