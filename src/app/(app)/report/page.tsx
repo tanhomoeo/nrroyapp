@@ -10,10 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { getVisits, getPatients, getPaymentSlips, formatDate, formatCurrency, getClinicSettings, PAYMENT_METHOD_LABELS, getPaymentMethodLabel, getWeekRange, getMonthRange } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getVisits, getPatients, getPaymentSlips, formatDate, formatCurrency, getClinicSettings, PAYMENT_METHOD_LABELS, getPaymentMethodLabel, getWeekRange, getMonthRange } from '@/lib/firestoreService';
 import type { Visit, Patient, PaymentSlip, ClinicSettings, PaymentMethod } from '@/lib/types';
 import { CalendarIcon, Printer, Loader2, Filter } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isValid } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { APP_NAME } from '@/lib/constants';
 
@@ -42,7 +42,7 @@ const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string 
 
 export default function EnhancedReportPage() {
   const [reportType, setReportType] = useState<ReportType>('daily');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined); // Used for date picker anchor
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethod | 'all'>('all');
@@ -54,7 +54,6 @@ export default function EnhancedReportPage() {
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
 
   useEffect(() => {
-    // Set initial dates on client-side mount
     const today = new Date();
     setSelectedDate(today);
     setStartDate(today);
@@ -67,7 +66,6 @@ export default function EnhancedReportPage() {
     fetchSettings();
   }, []);
 
-
   const generateReport = useCallback(async () => {
     setIsLoading(true);
 
@@ -77,22 +75,21 @@ export default function EnhancedReportPage() {
         getPaymentSlips()
     ]);
 
-    let dateFilteredVisits: Visit[] = [];
     let currentReportStartDate: Date | null = null;
     let currentReportEndDate: Date | null = null;
     
-    if (reportType === 'daily' && startDate) {
+    if (reportType === 'daily' && startDate && isValid(startDate)) {
       currentReportStartDate = startOfDay(startDate);
       currentReportEndDate = endOfDay(startDate);
-    } else if (reportType === 'weekly' && startDate) {
+    } else if (reportType === 'weekly' && startDate && isValid(startDate)) {
       const { start, end } = getWeekRange(startDate);
       currentReportStartDate = start;
       currentReportEndDate = end;
-    } else if (reportType === 'monthly' && startDate) {
+    } else if (reportType === 'monthly' && startDate && isValid(startDate)) {
       const { start, end } = getMonthRange(startDate);
       currentReportStartDate = start;
       currentReportEndDate = end;
-    } else if (reportType === 'custom' && startDate && endDate && startDate <= endDate) {
+    } else if (reportType === 'custom' && startDate && isValid(startDate) && endDate && isValid(endDate) && startDate <= endDate) {
       currentReportStartDate = startOfDay(startDate);
       currentReportEndDate = endOfDay(endDate);
     }
@@ -104,9 +101,9 @@ export default function EnhancedReportPage() {
         return;
     }
 
-    dateFilteredVisits = allVisits.filter(visit => {
+    const dateFilteredVisits = allVisits.filter(visit => {
         const visitDate = new Date(visit.visitDate);
-        return visitDate >= currentReportStartDate! && visitDate <= currentReportEndDate!;
+        return isValid(visitDate) && visitDate >= currentReportStartDate! && visitDate <= currentReportEndDate!;
     });
 
     let processedVisits = dateFilteredVisits;
@@ -117,11 +114,13 @@ export default function EnhancedReportPage() {
 
     const data: ReportData[] = processedVisits.map(visit => {
       const patient = allPatients.find(p => p.id === visit.patientId);
-      let visitSlips = allSlips.filter(s =>
-        s.visitId === visit.id &&
-        new Date(s.date) >= currentReportStartDate! && 
-        new Date(s.date) <= currentReportEndDate!
-      );
+      let visitSlips = allSlips.filter(s => {
+        const slipDate = new Date(s.date);
+        return s.visitId === visit.id && 
+               isValid(slipDate) &&
+               slipDate >= currentReportStartDate! && 
+               slipDate <= currentReportEndDate!;
+      });
 
       if (paymentMethodFilter !== 'all') {
         visitSlips = visitSlips.filter(s => s.paymentMethod === paymentMethodFilter);
@@ -146,30 +145,30 @@ export default function EnhancedReportPage() {
 
   useEffect(() => {
     const today = new Date();
-    const currentSelectedDate = selectedDate || today; // Use today if selectedDate is not yet set
+    const baseDate = (selectedDate && isValid(selectedDate)) ? selectedDate : today;
 
     if (reportType === 'daily') {
-        setStartDate(currentSelectedDate);
-        setEndDate(currentSelectedDate);
+        setStartDate(baseDate);
+        setEndDate(baseDate);
     } else if (reportType === 'weekly') {
-        const { start, end } = getWeekRange(currentSelectedDate);
+        const { start, end } = getWeekRange(baseDate);
         setStartDate(start);
         setEndDate(end);
     } else if (reportType === 'monthly') {
-        const { start, end } = getMonthRange(currentSelectedDate);
+        const { start, end } = getMonthRange(baseDate);
         setStartDate(start);
         setEndDate(end);
-    } else if (reportType === 'custom') {
-        // For custom, ensure startDate and endDate are set, if not, default them.
-        if (!startDate) setStartDate(today);
-        if (!endDate) setEndDate(today);
     }
-  }, [reportType, selectedDate]); // Removed startDate, endDate from deps to avoid loop with generateReport effect
+    // For 'custom' reportType, startDate and endDate are managed by their respective Popover/Calendar.
+    // This effect does not modify them when reportType is 'custom'.
+  }, [reportType, selectedDate]);
 
 
   useEffect(() => {
-    if (startDate && (reportType !== 'custom' || (reportType === 'custom' && endDate))) {
-        generateReport();
+    if (startDate && (reportType !== 'custom' || (reportType === 'custom' && endDate && isValid(endDate)))) {
+        if (isValid(startDate)) { // Ensure startDate is valid before generating
+             generateReport();
+        }
     }
   }, [startDate, endDate, reportType, paymentMethodFilter, courierDeliveryOnly, generateReport]);
 
@@ -186,17 +185,17 @@ export default function EnhancedReportPage() {
   };
 
   const getReportDateRangeString = (): string => {
-    if (!startDate) return "N/A";
+    if (!startDate || !isValid(startDate)) return "একটি তারিখ নির্বাচন করুন";
     if (reportType === 'daily') return format(startDate, "eeee, dd MMMM, yyyy", { locale: bn });
     if (reportType === 'weekly') {
       const { start, end } = getWeekRange(startDate);
       return `${format(start, "dd MMM", { locale: bn })} - ${format(end, "dd MMM, yyyy", { locale: bn })}`;
     }
     if (reportType === 'monthly') return format(startDate, "MMMM, yyyy", { locale: bn });
-    if (reportType === 'custom' && endDate && startDate <= endDate) {
+    if (reportType === 'custom' && endDate && isValid(endDate) && startDate <= endDate) {
       return `${format(startDate, "dd MMM, yyyy", { locale: bn })} থেকে ${format(endDate, "dd MMM, yyyy", { locale: bn })}`;
     }
-    return startDate ? format(startDate, "PPP", { locale: bn }) : "একটি তারিখ নির্বাচন করুন";
+    return format(startDate, "PPP", { locale: bn });
   };
 
   const pageTitle = reportTypeOptions.find(opt => opt.value === reportType)?.label || "প্রতিবেদন";
@@ -291,7 +290,7 @@ export default function EnhancedReportPage() {
                       {endDate && isValid(endDate) ? format(endDate, "PPP", { locale: bn }) : <span>শেষ তারিখ</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus locale={bn} disabled={(date) => startDate ? date < startDate : false} /></PopoverContent>
+                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus locale={bn} disabled={(date) => startDate && isValid(startDate) ? date < startDate : false} /></PopoverContent>
                 </Popover>
               </div>
             </>
@@ -369,7 +368,7 @@ export default function EnhancedReportPage() {
         </div>
       </div>
 
-      {isLoading && !reportData.length && (!startDate || (reportType === 'custom' && !endDate)) ? ( // Adjusted loading condition
+      {isLoading && !reportData.length && (!startDate || (reportType === 'custom' && !endDate)) ? (
         <div className="flex justify-center items-center py-10 hide-on-print">
             <p className="text-muted-foreground">রিপোর্ট দেখতে অনুগ্রহ করে তারিখ নির্বাচন করুন।</p>
         </div>
@@ -476,8 +475,8 @@ export default function EnhancedReportPage() {
           .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
           .print\\:whitespace-normal { white-space: normal !important; }
           .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
-          .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
-          .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
+          .print\\:col-span-5 { grid-column: span 5 / span 5 !important; } /* Ensure this is used correctly in print table footer */
+          .print\\:col-span-1 { grid-column: span 1 / span 1 !important; } /* Ensure this is used correctly in print table footer */
           .print\\:w-\\[80px\\] { width: 80px !important; }
         }
         @page {
@@ -488,5 +487,4 @@ export default function EnhancedReportPage() {
     </div>
   );
 }
-
     

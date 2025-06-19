@@ -45,8 +45,8 @@ const instructionsFormSchema = z.object({
   patientName: z.string().min(1, "রোগীর নাম আবশ্যক।"),
   patientActualId: z.string().optional(),
   visitId: z.string().optional(),
-  instructionDate: z.date({ required_error: "নির্দেশনার তারিখ আবশ্যক।" }),
-  serialNumber: z.string().optional(), 
+  instructionDate: z.date({ required_error: "নির্দেশনার তারিখ আবশ্যক।" }).optional(), // Optional for initial state
+  serialNumber: z.string().optional(),
   followUpDays: z.string().min(1, "ফলো-আপ দিন নির্বাচন করুন।"),
   instructionTemplate: z.enum(['template1', 'template2']).default('template1'),
   dropsT1: z.string().optional(),
@@ -88,8 +88,8 @@ export default function MedicineInstructionsClientLogic() {
       patientName: '',
       patientActualId: '',
       visitId: '',
-      instructionDate: undefined,
-      serialNumber: '', 
+      instructionDate: undefined, // Initialize as undefined
+      serialNumber: '',
       followUpDays: '৭',
       instructionTemplate: 'template1',
       dropsT1: '৫',
@@ -114,6 +114,7 @@ export default function MedicineInstructionsClientLogic() {
     const visitIdFromQuery = searchParams.get('visitId');
 
     let formDataUpdate: Partial<InstructionsFormValues> = {};
+    let initialInstructionDate: Date | undefined = undefined;
 
     if (visitIdFromQuery) {
       formDataUpdate.visitId = visitIdFromQuery;
@@ -131,7 +132,7 @@ export default function MedicineInstructionsClientLogic() {
          formDataUpdate.serialNumber = 'N/A';
          setSelectedPatient(null);
       } else {
-        setSelectedPatient(null); 
+        setSelectedPatient(null);
       }
     } else if (patientNameFromQuery) {
       formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
@@ -141,39 +142,28 @@ export default function MedicineInstructionsClientLogic() {
       setSelectedPatient(null);
       formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
     }
-    
-    const currentFormValues = form.getValues();
-    let effectiveInstructionDate: Date;
 
-    const instructionDateFromUpdate = formDataUpdate.instructionDate; // Could be string if from query or existing data, or Date
-    const instructionDateFromCurrentForm = currentFormValues.instructionDate; // Could be Date or undefined
-
-    if (instructionDateFromUpdate) {
-        effectiveInstructionDate = (typeof instructionDateFromUpdate === 'string' && isValid(new Date(instructionDateFromUpdate))) 
-            ? new Date(instructionDateFromUpdate) 
-            : (instructionDateFromUpdate instanceof Date && isValid(instructionDateFromUpdate)) 
-                ? instructionDateFromUpdate 
-                : new Date();
-    } else if (instructionDateFromCurrentForm && isValid(instructionDateFromCurrentForm)) {
-        effectiveInstructionDate = instructionDateFromCurrentForm;
-    } else {
-        effectiveInstructionDate = new Date(); 
-    }
-    
+    // instructionDate will be set by useEffect after this reset
     form.reset({
-      ...currentFormValues, // Start with current form values (which includes defaults)
+      ...form.getValues(), // Start with existing (potentially default) values
       ...formDataUpdate,    // Override with fetched/query data
-      instructionDate: effectiveInstructionDate // Ensure this is a Date object
+      instructionDate: initialInstructionDate, // Reset with undefined, to be set by client-side effect
     });
-    
+
     setPaymentCompleted(false);
     setIsLoadingPageData(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, form.getValues, form.reset]); // Dependencies are stable functions from RHF and searchParams
+  }, [searchParams, form]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Effect to set instructionDate to new Date() if it's still undefined after initial load
+  useEffect(() => {
+    if (!isLoadingPageData && form.getValues('instructionDate') === undefined) {
+      form.setValue('instructionDate', new Date());
+    }
+  }, [isLoadingPageData, form]);
 
 
   const generateInstructionText = (data: InstructionsFormValues): string => {
@@ -188,8 +178,16 @@ export default function MedicineInstructionsClientLogic() {
   };
 
   const onSubmit: SubmitHandler<InstructionsFormValues> = (data) => {
+    if (!data.instructionDate || !isValid(data.instructionDate)) {
+        toast({
+            title: "তারিখ নির্বাচন করুন",
+            description: "অনুগ্রহ করে নির্দেশনার জন্য একটি বৈধ তারিখ নির্বাচন করুন।",
+            variant: "destructive"
+        });
+        return;
+    }
     setGeneratedInstruction(generateInstructionText(data));
-    setGeneratedSlipNumber(data.serialNumber || 'N/A'); 
+    setGeneratedSlipNumber(data.serialNumber || 'N/A');
     setTimeout(() => {
       if (typeof window !== 'undefined') {
         const elementsToHide = document.querySelectorAll('.hide-on-print');
@@ -213,8 +211,8 @@ export default function MedicineInstructionsClientLogic() {
   const handlePaymentModalClose = (slipCreated: boolean = false) => {
     setIsPaymentModalOpen(false);
     if (slipCreated) {
-      setPaymentCompleted(true); 
-      window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
+      setPaymentCompleted(true);
+      window.dispatchEvent(new CustomEvent('firestoreDataChange'));
     }
   };
 
@@ -240,7 +238,7 @@ export default function MedicineInstructionsClientLogic() {
         </div>
       );
   }
-  
+
   let pageHeaderDescriptionText: string;
   if (selectedPatient) {
     const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
@@ -638,5 +636,3 @@ export default function MedicineInstructionsClientLogic() {
     </div>
   );
 }
-
-    

@@ -37,14 +37,14 @@ const patientInfoSchema = z.object({
   phone: z.string().regex(/^(\+8801|01)\d{9}$/, "Valid BD phone number required"),
   villageUnion: z.string().optional(),
   district: z.string().optional(),
-  diaryNumber: z.string().optional(), // Changed to string
+  diaryNumber: z.string().optional(),
   age: z.string().optional(),
   gender: z.enum(['male', 'female', 'other', '']).optional(),
   occupation: z.string().optional(),
   guardianRelation: z.enum(['father', 'husband', '']).optional(),
   guardianName: z.string().optional(),
   thanaUpazila: z.string().optional(),
-  registrationDate: z.string().refine(val => isValid(new Date(val)), { message: "নিবন্ধনের তারিখ আবশ্যক।"}),
+  registrationDate: z.string().refine(val => val === '' || isValid(new Date(val)), { message: "নিবন্ধনের তারিখ আবশ্যক অথবা খালি রাখুন।" }),
 });
 type PatientInfoValues = z.infer<typeof patientInfoSchema>;
 
@@ -63,7 +63,7 @@ const medicineDeliveryMethodOptions: { value: 'direct' | 'courier'; label: strin
 ];
 
 const visitAndPaymentFormSchema = z.object({
-  visitDate: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "অবৈধ তারিখ" }),
+  visitDate: z.string().refine((date) => date === '' || !isNaN(Date.parse(date)), { message: "অবৈধ তারিখ" }),
   symptoms: z.string().min(3, "উপসর্গ/উদ্দেশ্য আবশ্যক"),
   amount: z.coerce.number().nonnegative("টাকার পরিমাণ অবশ্যই একটি অ-ঋণাত্মক সংখ্যা হতে হবে।"),
   paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other', '']).optional(),
@@ -98,21 +98,21 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         phone: '',
         villageUnion: '',
         district: '',
-        diaryNumber: '', // Default to empty string
+        diaryNumber: '',
         age: '',
         gender: '',
         occupation: '',
         guardianRelation: '',
         guardianName: '',
         thanaUpazila: '',
-        registrationDate: new Date().toISOString(),
+        registrationDate: '', // Initialize as empty string
     },
   });
 
   const visitAndPaymentForm = useForm<VisitAndPaymentFormValues>({
     resolver: zodResolver(visitAndPaymentFormSchema),
     defaultValues: {
-      visitDate: new Date().toISOString().split('T')[0],
+      visitDate: '', // Initialize as empty string
       symptoms: '',
       amount: 0,
       paymentMethod: 'cash',
@@ -152,7 +152,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       setCurrentTab(defaultTab);
       patientInfoForm.reset({
         ...patient,
-        diaryNumber: patient.diaryNumber || '', // Ensure it's a string or empty
+        diaryNumber: patient.diaryNumber || '',
         villageUnion: patient.villageUnion || '',
         age: patient.age || '',
         gender: patient.gender || '',
@@ -160,10 +160,10 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         guardianRelation: patient.guardianRelation || '',
         guardianName: patient.guardianName || '',
         thanaUpazila: patient.thanaUpazila || '',
-        registrationDate: patient.registrationDate ? formatDateFns(new Date(patient.registrationDate), 'yyyy-MM-dd') : formatDateFns(new Date(), 'yyyy-MM-dd'),
+        registrationDate: patient.registrationDate ? formatDateFns(new Date(patient.registrationDate), 'yyyy-MM-dd') : '',
       });
       visitAndPaymentForm.reset({
-        visitDate: new Date().toISOString().split('T')[0],
+        visitDate: '',
         symptoms: '',
         amount: 0,
         paymentMethod: 'cash',
@@ -178,11 +178,19 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     }
   }, [isOpen, patient, patientInfoForm, visitAndPaymentForm, defaultTab, currentTab, fetchVisitsAndPrescriptions]);
 
+  // Client-side effect to set default dates AFTER initial render and form reset
   useEffect(() => {
-    if (isOpen && patient && currentTab === 'history' && visits.length === 0 && !isLoadingVisits) {
-        fetchVisitsAndPrescriptions(patient.id);
+    if (isOpen && patient) {
+      // For PatientInfoForm: if registrationDate is still empty, set it to today.
+      if (patientInfoForm.getValues('registrationDate') === '') {
+        patientInfoForm.setValue('registrationDate', formatDateFns(new Date(), 'yyyy-MM-dd'));
+      }
+      // For VisitAndPaymentForm: if visitDate is empty, set it to today.
+      if (visitAndPaymentForm.getValues('visitDate') === '') {
+        visitAndPaymentForm.setValue('visitDate', new Date().toISOString().split('T')[0]);
+      }
     }
-  }, [isOpen, patient, currentTab, visits.length, isLoadingVisits, fetchVisitsAndPrescriptions]);
+  }, [isOpen, patient, patientInfoForm, visitAndPaymentForm]);
 
 
   const handlePatientInfoSubmit: SubmitHandler<PatientInfoValues> = async (data) => {
@@ -192,14 +200,14 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         phone: data.phone,
         villageUnion: data.villageUnion,
         district: data.district,
-        diaryNumber: data.diaryNumber || undefined, // Save as string or undefined
+        diaryNumber: data.diaryNumber || undefined,
         age: data.age,
-        gender: data.gender,
+        gender: data.gender as Patient['gender'],
         occupation: data.occupation,
-        guardianRelation: data.guardianRelation,
+        guardianRelation: data.guardianRelation as Patient['guardianRelation'],
         guardianName: data.guardianName,
         thanaUpazila: data.thanaUpazila,
-        registrationDate: new Date(data.registrationDate).toISOString(),
+        registrationDate: data.registrationDate ? new Date(data.registrationDate).toISOString() : new Date().toISOString(),
       };
 
       const success = await updatePatient(patient.id, updatedPatientData);
@@ -218,9 +226,10 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
   };
 
   const handleAddVisitAndPaymentSubmit: SubmitHandler<VisitAndPaymentFormValues> = async (data) => {
+    const visitDateToUse = data.visitDate ? new Date(data.visitDate).toISOString() : new Date().toISOString();
     const newVisitData: Omit<Visit, 'id' | 'createdAt'> = {
         patientId: patient.id,
-        visitDate: new Date(data.visitDate).toISOString(),
+        visitDate: visitDateToUse,
         symptoms: data.symptoms,
         medicineDeliveryMethod: data.medicineDeliveryMethod,
     };
@@ -237,7 +246,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         patientId: patient.id,
         visitId: visitId,
         slipNumber: `SLIP-${Date.now().toString().slice(-6)}`,
-        date: new Date(data.visitDate).toISOString(),
+        date: visitDateToUse,
         amount: data.amount,
         purpose: data.symptoms,
         paymentMethod: data.paymentMethod as Exclude<PaymentMethod, ''>,
@@ -255,7 +264,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     }
 
     visitAndPaymentForm.reset({
-      visitDate: new Date().toISOString().split('T')[0],
+      visitDate: '', // Reset to empty, will be set by client-side effect
       symptoms: '',
       amount: 0,
       paymentMethod: 'cash',
@@ -343,9 +352,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                             <FormControl>
                               <Input
                                 id="diaryNumberModal"
-                                type="text" // Changed to text
+                                type="text"
                                 {...field}
-                                value={field.value || ''} // Ensure it's a string or empty
+                                value={field.value || ''}
                                 readOnly={!isEditingInfo}
                                 className={cn(inputFieldClass, !isEditingInfo && readOnlyInputFieldClass)}
                                 placeholder="যেমন: F/123"
