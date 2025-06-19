@@ -12,7 +12,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -110,7 +109,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { state: sidebarState, setOpenMobile } = useSidebar();
   const isSidebarIconOnly = sidebarState === 'collapsed';
-  const [logoSrc, setLogoSrc] = useState("/icons/icon.png");
+  const [logoSrc, setLogoSrc] = useState("/image/icon.png"); // Corrected logo path
 
 
   const renderNavItems = (items: typeof mainNavItems) => (
@@ -167,13 +166,13 @@ export function AppSidebar() {
           {renderNavItems(mainNavItems)}
         </CollapsibleSidebarSection>
 
-        <SidebarSeparator className={cn("my-1", isSidebarIconOnly && "hidden")} />
+        {/* Removed SidebarSeparator */}
 
         <CollapsibleSidebarSection title="ব্যবস্থাপনা">
           {renderNavItems(managementNavItems as typeof mainNavItems)}
         </CollapsibleSidebarSection>
 
-        <SidebarSeparator className={cn("my-1", isSidebarIconOnly && "hidden")} />
+        {/* Removed SidebarSeparator */}
 
         <CollapsibleSidebarSection title="ইউটিলিটি">
           {renderNavItems(utilityNavItems as typeof mainNavItems)}
@@ -192,5 +191,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    
