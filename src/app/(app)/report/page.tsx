@@ -233,288 +233,290 @@ export default function EnhancedReportPage() {
   const pageTitle = currentReportTypeOption ? currentReportTypeOption.label : "প্রতিবেদন";
   
   return (
-    <div className="space-y-6 print:space-y-2">
-      <PageHeaderCard
-        title={pageTitle}
-        description={isLoading ? "রিপোর্টের তথ্য লোড হচ্ছে..." : `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}
-        className="hide-on-print"
-        actions={
-          <Button onClick={handlePrintReport} variant="outline" disabled={isLoading}><Printer className="mr-2 h-4 w-4" /> প্রিন্ট করুন</Button>
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
-          <div className="space-y-1">
-            <Label htmlFor="reportType">রিপোর্ট টাইপ</Label>
-            <Select value={reportType} onValueChange={(value) => { setReportType(value as ReportType); setSelectedDate(new Date()); }}>
-              <SelectTrigger id="reportType"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {reportTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+    <>
+      <div className="space-y-6 print:space-y-2">
+        <PageHeaderCard
+          title={pageTitle}
+          description={isLoading ? "রিপোর্টের তথ্য লোড হচ্ছে..." : `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}
+          className="hide-on-print"
+          actions={
+            <Button onClick={handlePrintReport} variant="outline" disabled={isLoading}><Printer className="mr-2 h-4 w-4" /> প্রিন্ট করুন</Button>
+          }
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+            <div className="space-y-1">
+              <Label htmlFor="reportType">রিপোর্ট টাইপ</Label>
+              <Select value={reportType} onValueChange={(value) => { setReportType(value as ReportType); setSelectedDate(new Date()); }}>
+                <SelectTrigger id="reportType"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {reportTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {reportType === 'daily' && (
-            <div className="space-y-1">
-              <Label htmlFor="dailyDate">তারিখ</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button id="dailyDate" variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date ? startOfDay(date) : undefined); setSelectedDate(date || new Date()); setEndDate(date ? endOfDay(date) : undefined);}} initialFocus locale={bn} /></PopoverContent>
-              </Popover>
-            </div>
-          )}
-           {reportType === 'weekly' && (
-            <div className="space-y-1">
-              <Label htmlFor="weeklyDate">সপ্তাহের যেকোনো দিন</Label>
-               <Popover>
-                <PopoverTrigger asChild>
-                  <Button id="weeklyDate" variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate && isValid(selectedDate) ? format(selectedDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={selectedDate} onSelect={(date) => setSelectedDate(date || new Date())} initialFocus locale={bn} /></PopoverContent>
-              </Popover>
-            </div>
-          )}
-          {reportType === 'monthly' && (
-            <div className="space-y-1">
-              <Label htmlFor="monthlyDate">মাসের যেকোনো দিন</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button id="monthlyDate" variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate && isValid(selectedDate) ? format(selectedDate, "MMMM yyyy", { locale: bn }) : <span>একটি মাস নির্বাচন করুন</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => setSelectedDate(date || new Date())} initialFocus locale={bn} captionLayout="dropdown-buttons" fromYear={2020} toYear={new Date().getFullYear() + 5}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
-          {reportType === 'custom' && (
-            <>
+            {reportType === 'daily' && (
               <div className="space-y-1">
-                <Label htmlFor="startDateCustom">শুরুর তারিখ</Label>
+                <Label htmlFor="dailyDate">তারিখ</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button id="startDateCustom" variant="outline" className="w-full justify-start text-left font-normal">
+                    <Button id="dailyDate" variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>শুরুর তারিখ</span>}
+                      {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => setStartDate(date ? startOfDay(date) : undefined)} initialFocus locale={bn} /></PopoverContent>
+                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date ? startOfDay(date) : undefined); setSelectedDate(date || new Date()); setEndDate(date ? endOfDay(date) : undefined);}} initialFocus locale={bn} /></PopoverContent>
                 </Popover>
               </div>
+            )}
+             {reportType === 'weekly' && (
               <div className="space-y-1">
-                <Label htmlFor="endDateCustom">শেষ তারিখ</Label>
+                <Label htmlFor="weeklyDate">সপ্তাহের যেকোনো দিন</Label>
+                 <Popover>
+                  <PopoverTrigger asChild>
+                    <Button id="weeklyDate" variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate && isValid(selectedDate) ? format(selectedDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={selectedDate} onSelect={(date) => setSelectedDate(date || new Date())} initialFocus locale={bn} /></PopoverContent>
+                </Popover>
+              </div>
+            )}
+            {reportType === 'monthly' && (
+              <div className="space-y-1">
+                <Label htmlFor="monthlyDate">মাসের যেকোনো দিন</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button id="endDateCustom" variant="outline" className="w-full justify-start text-left font-normal">
+                    <Button id="monthlyDate" variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate && isValid(endDate) ? format(endDate, "PPP", { locale: bn }) : <span>শেষ তারিখ</span>}
+                      {selectedDate && isValid(selectedDate) ? format(selectedDate, "MMMM yyyy", { locale: bn }) : <span>একটি মাস নির্বাচন করুন</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={(date) => setEndDate(date ? endOfDay(date) : undefined)} initialFocus locale={bn} disabled={(date) => startDate && isValid(startDate) ? date < startDate : false} /></PopoverContent>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={selectedDate} onSelect={(date) => setSelectedDate(date || new Date())} initialFocus locale={bn} captionLayout="dropdown-buttons" fromYear={2020} toYear={new Date().getFullYear() + 5}
+                    />
+                  </PopoverContent>
                 </Popover>
               </div>
-            </>
-          )}
-           <div className="space-y-1">
-            <Label htmlFor="paymentMethodFilter">পেমেন্ট মাধ্যম</Label>
-            <Select value={paymentMethodFilter} onValueChange={(value) => setPaymentMethodFilter(value as PaymentMethod | 'all')}>
-              <SelectTrigger id="paymentMethodFilter"><Filter className="mr-2 h-4 w-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {paymentMethodFilterOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            )}
+            {reportType === 'custom' && (
+              <>
+                <div className="space-y-1">
+                  <Label htmlFor="startDateCustom">শুরুর তারিখ</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button id="startDateCustom" variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>শুরুর তারিখ</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => setStartDate(date ? startOfDay(date) : undefined)} initialFocus locale={bn} /></PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="endDateCustom">শেষ তারিখ</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button id="endDateCustom" variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate && isValid(endDate) ? format(endDate, "PPP", { locale: bn }) : <span>শেষ তারিখ</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={(date) => setEndDate(date ? endOfDay(date) : undefined)} initialFocus locale={bn} disabled={(date) => startDate && isValid(startDate) ? date < startDate : false} /></PopoverContent>
+                  </Popover>
+                </div>
+              </>
+            )}
+             <div className="space-y-1">
+              <Label htmlFor="paymentMethodFilter">পেমেন্ট মাধ্যম</Label>
+              <Select value={paymentMethodFilter} onValueChange={(value) => setPaymentMethodFilter(value as PaymentMethod | 'all')}>
+                <SelectTrigger id="paymentMethodFilter"><Filter className="mr-2 h-4 w-4 text-muted-foreground" /><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {paymentMethodFilterOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2 pt-5">
+              <Switch id="courierDeliveryOnly" checked={courierDeliveryOnly} onCheckedChange={setCourierDeliveryOnly} />
+              <Label htmlFor="courierDeliveryOnly">শুধু কুরিয়ার ডেলিভারি</Label>
+            </div>
           </div>
-          <div className="flex items-center space-x-2 pt-5">
-            <Switch id="courierDeliveryOnly" checked={courierDeliveryOnly} onCheckedChange={setCourierDeliveryOnly} />
-            <Label htmlFor="courierDeliveryOnly">শুধু কুরিয়ার ডেলিভারি</Label>
+        </PageHeaderCard>
+
+        <div className="print-only-block print-container bg-white text-black">
+          <div className="print-header">
+            <h1 className="font-headline text-xl font-bold">{clinicSettings?.clinicName || APP_NAME}</h1>
+            {clinicSettings?.clinicAddress && <p className="text-xs">{clinicSettings.clinicAddress}</p>}
+            {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {clinicSettings.clinicContact}</p>}
+            <h2 className="print-title text-lg font-semibold mt-1">{pageTitle}</h2>
+            <p className="text-xs">{`তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}</p>
           </div>
-        </div>
-      </PageHeaderCard>
 
-      <div className="print-only-block print-container bg-white text-black">
-        <div className="print-header">
-          <h1 className="font-headline text-xl font-bold">{clinicSettings?.clinicName || APP_NAME}</h1>
-          {clinicSettings?.clinicAddress && <p className="text-xs">{clinicSettings.clinicAddress}</p>}
-          {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {clinicSettings.clinicContact}</p>}
-          <h2 className="print-title text-lg font-semibold mt-1">{pageTitle}</h2>
-          <p className="text-xs">{`তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}</p>
-        </div>
-
-        <div className="report-table-container">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30px] text-center">Sl.</TableHead>
-                  <TableHead className="w-[90px]">Date</TableHead>
-                  <TableHead>Patient Name</TableHead>
-                  <TableHead className="print:hidden">Diary No.</TableHead>
-                  <TableHead>Purpose/Symptoms</TableHead>
-                  <TableHead className="w-[100px] print:w-[80px]">Payment Method</TableHead>
-                  <TableHead className="text-right w-[70px]">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reportData.length > 0 ? (
-                  reportData.map((item, index) => (
-                    <TableRow key={item.visit.id}>
-                      <TableCell className="text-center">{index + 1}</TableCell>
-                      <TableCell>{format(new Date(item.visit.visitDate), "dd/MM/yy", { locale: bn })}</TableCell>
-                      <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
-                      <TableCell className="print:hidden">{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
-                      <TableCell className="print:max-w-[120px] print:whitespace-normal print:truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
-                      <TableCell className="print:max-w-[70px] print:whitespace-normal print:truncate">
-                        {item.slips.length > 0 ?
-                          item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'
-                        }
-                      </TableCell>
-                      <TableCell className="text-right">{item.totalAmountFromSlips > 0 ? formatCurrency(item.totalAmountFromSlips) : '-'}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
+          <div className="report-table-container">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                      এই ফিল্টার অনুযায়ী কোনো ডেটা পাওয়া যায়নি।
-                    </TableCell>
+                    <TableHead className="w-[30px] text-center">Sl.</TableHead>
+                    <TableHead className="w-[90px]">Date</TableHead>
+                    <TableHead>Patient Name</TableHead>
+                    <TableHead className="print:hidden">Diary No.</TableHead>
+                    <TableHead>Purpose/Symptoms</TableHead>
+                    <TableHead className="w-[100px] print:w-[80px]">Payment Method</TableHead>
+                    <TableHead className="text-right w-[70px]">Amount</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-              <TableFooter>
-                <TableRow className="font-bold bg-muted/50">
-                  <TableCell colSpan={6} className="text-right print:col-span-5">মোট ভিজিট: {summary.totalVisits.toLocaleString('bn-BD')}</TableCell>
-                  <TableCell className="text-right print:col-span-1" colSpan={1}>মোট আয়: {formatCurrency(summary.totalRevenue)}</TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
-        </div>
-      </div>
-
-      {isLoading && (!startDate || (reportType === 'custom' && !endDate)) ? (
-        <div className="flex justify-center items-center py-10 hide-on-print">
-            <p className="text-muted-foreground">রিপোর্ট দেখতে অনুগ্রহ করে তারিখ নির্বাচন করুন।</p>
-        </div>
-      ) : isLoading ? (
-        <div className="flex justify-center items-center py-10 hide-on-print">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2 text-muted-foreground">রিপোর্ট ডেটা লোড হচ্ছে...</p>
-        </div>
-      ) : (
-        <div className="hide-on-print">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <Card className="shadow-sm">
-              <CardHeader className="pb-2"><CardTitle className="text-lg font-headline">মোট ভিজিট</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold text-primary">{summary.totalVisits.toLocaleString('bn-BD')}</p></CardContent>
-            </Card>
-            <Card className="shadow-sm">
-              <CardHeader className="pb-2"><CardTitle className="text-lg font-headline">মোট আয়</CardTitle></CardHeader>
-              <CardContent><p className="text-3xl font-bold text-primary">{formatCurrency(summary.totalRevenue)}</p></CardContent>
-            </Card>
-          </div>
-          <div className="overflow-x-auto rounded-lg border shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[40px] text-center">Sl.</TableHead>
-                  <TableHead className="w-[100px]">Date</TableHead>
-                  <TableHead>Patient Name</TableHead>
-                  <TableHead>Diary No.</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Symptoms/Purpose</TableHead>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reportData.length > 0 ? (
-                  reportData.map((item, index) => (
-                    <TableRow key={item.visit.id}>
-                      <TableCell className="text-center">{index + 1}</TableCell>
-                      <TableCell>{formatDate(item.visit.visitDate)}</TableCell>
-                      <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
-                      <TableCell>{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
-                      <TableCell>{item.patient?.phone || 'N/A'}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
-                       <TableCell className="max-w-[100px] truncate">
-                         {item.slips.length > 0 ?
+                </TableHeader>
+                <TableBody>
+                  {reportData.length > 0 ? (
+                    reportData.map((item, index) => (
+                      <TableRow key={item.visit.id}>
+                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell>{format(new Date(item.visit.visitDate), "dd/MM/yy", { locale: bn })}</TableCell>
+                        <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
+                        <TableCell className="print:hidden">{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
+                        <TableCell className="print:max-w-[120px] print:whitespace-normal print:truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
+                        <TableCell className="print:max-w-[70px] print:whitespace-normal print:truncate">
+                          {item.slips.length > 0 ?
                             item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'
-                         }
-                       </TableCell>
-                      <TableCell className="text-right">{item.totalAmountFromSlips > 0 ? formatCurrency(item.totalAmountFromSlips) : '-'}</TableCell>
+                          }
+                        </TableCell>
+                        <TableCell className="text-right">{item.totalAmountFromSlips > 0 ? formatCurrency(item.totalAmountFromSlips) : '-'}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                        এই ফিল্টার অনুযায়ী কোনো ডেটা পাওয়া যায়নি।
+                      </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                     এই ফিল্টার অনুযায়ী কোনো ডেটা পাওয়া যায়নি।
-                    </TableCell>
+                  )}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="font-bold bg-muted/50">
+                    <TableCell colSpan={6} className="text-right print:col-span-5">মোট ভিজিট: {summary.totalVisits.toLocaleString('bn-BD')}</TableCell>
+                    <TableCell className="text-right print:col-span-1" colSpan={1}>মোট আয়: {formatCurrency(summary.totalRevenue)}</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-              <TableFooter>
-                <TableRow className="font-bold bg-muted/50 dark:bg-muted/30">
-                  <TableCell colSpan={7} className="text-right">মোট</TableCell>
-                  <TableCell className="text-right">{formatCurrency(summary.totalRevenue)}</TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
+                </TableFooter>
+              </Table>
           </div>
         </div>
-      )}
 
-       <style jsx global>{\`
-        .print-only-block { display: none; }
-        @media print {
-          .hide-on-print { display: none !important; }
-          .print-only-block { display: block !important; }
-          body.printing-report-active {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            margin: 0; padding: 0;
-            background-color: #fff !important;
+        {isLoading && (!startDate || (reportType === 'custom' && !endDate)) ? (
+          <div className="flex justify-center items-center py-10 hide-on-print">
+              <p className="text-muted-foreground">রিপোর্ট দেখতে অনুগ্রহ করে তারিখ নির্বাচন করুন।</p>
+          </div>
+        ) : isLoading ? (
+          <div className="flex justify-center items-center py-10 hide-on-print">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2 text-muted-foreground">রিপোর্ট ডেটা লোড হচ্ছে...</p>
+          </div>
+        ) : (
+          <div className="hide-on-print">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <Card className="shadow-sm">
+                <CardHeader className="pb-2"><CardTitle className="text-lg font-headline">মোট ভিজিট</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-bold text-primary">{summary.totalVisits.toLocaleString('bn-BD')}</p></CardContent>
+              </Card>
+              <Card className="shadow-sm">
+                <CardHeader className="pb-2"><CardTitle className="text-lg font-headline">মোট আয়</CardTitle></CardHeader>
+                <CardContent><p className="text-3xl font-bold text-primary">{formatCurrency(summary.totalRevenue)}</p></CardContent>
+              </Card>
+            </div>
+            <div className="overflow-x-auto rounded-lg border shadow-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[40px] text-center">Sl.</TableHead>
+                    <TableHead className="w-[100px]">Date</TableHead>
+                    <TableHead>Patient Name</TableHead>
+                    <TableHead>Diary No.</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Symptoms/Purpose</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData.length > 0 ? (
+                    reportData.map((item, index) => (
+                      <TableRow key={item.visit.id}>
+                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell>{formatDate(item.visit.visitDate)}</TableCell>
+                        <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
+                        <TableCell>{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
+                        <TableCell>{item.patient?.phone || 'N/A'}</TableCell>
+                        <TableCell className="max-w-[150px] truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
+                         <TableCell className="max-w-[100px] truncate">
+                           {item.slips.length > 0 ?
+                              item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'
+                           }
+                         </TableCell>
+                        <TableCell className="text-right">{item.totalAmountFromSlips > 0 ? formatCurrency(item.totalAmountFromSlips) : '-'}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                       এই ফিল্টার অনুযায়ী কোনো ডেটা পাওয়া যায়নি।
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+                <TableFooter>
+                  <TableRow className="font-bold bg-muted/50 dark:bg-muted/30">
+                    <TableCell colSpan={7} className="text-right">মোট</TableCell>
+                    <TableCell className="text-right">{formatCurrency(summary.totalRevenue)}</TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          </div>
+        )}
+
+         <style jsx global>{`
+          .print-only-block { display: none; }
+          @media print {
+            .hide-on-print { display: none !important; }
+            .print-only-block { display: block !important; }
+            body.printing-report-active {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              margin: 0; padding: 0;
+              background-color: #fff !important;
+            }
+            .print-container {
+              width: 100%;
+              margin: 0 auto;
+              padding: 5mm;
+              box-sizing: border-box;
+              font-family: 'PT Sans', Arial, sans-serif;
+              font-size: 8.5pt;
+              line-height: 1.2;
+              color: #000 !important;
+            }
+            .print-header { text-align: center; margin-bottom: 4mm; border-bottom: 1px solid #666; padding-bottom: 2mm; }
+            .print-header h1 { font-size: 12pt; }
+            .print-header p { font-size: 7.5pt; }
+            .print-title { font-size: 10pt; }
+            .report-table-container table { width: 100%; border-collapse: collapse; margin-top: 2mm; }
+            .report-table-container th, .report-table-container td { border: 1px solid #bbb; padding: 1mm 1.5mm; text-align: left; vertical-align: top; font-size:8pt; word-break: break-word; }
+            .report-table-container th { background-color: #f0f0f0 !important; font-weight: bold; }
+            .report-table-container td.text-right, .report-table-container th.text-right { text-align: right; }
+            .report-table-container td.text-center, .report-table-container th.text-center { text-align: center; }
+            .print\\:hidden { display: none !important; }
+   .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
+   .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
+   .print\\:whitespace-normal { white-space: normal !important; }
+   .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
+   .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
+   .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
+   .print\\:w-\\[80px\\] { width: 80px !important; }
           }
-          .print-container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 5mm;
-            box-sizing: border-box;
-            font-family: 'PT Sans', Arial, sans-serif;
-            font-size: 8.5pt;
-            line-height: 1.2;
-            color: #000 !important;
+          @page {
+            size: A4 landscape;
+            margin: 10mm;
           }
-          .print-header { text-align: center; margin-bottom: 4mm; border-bottom: 1px solid #666; padding-bottom: 2mm; }
-          .print-header h1 { font-size: 12pt; }
-          .print-header p { font-size: 7.5pt; }
-          .print-title { font-size: 10pt; }
-          .report-table-container table { width: 100%; border-collapse: collapse; margin-top: 2mm; }
-          .report-table-container th, .report-table-container td { border: 1px solid #bbb; padding: 1mm 1.5mm; text-align: left; vertical-align: top; font-size:8pt; word-break: break-word; }
-          .report-table-container th { background-color: #f0f0f0 !important; font-weight: bold; }
-          .report-table-container td.text-right, .report-table-container th.text-right { text-align: right; }
-          .report-table-container td.text-center, .report-table-container th.text-center { text-align: center; }
-          .print\\:hidden { display: none !important; }
- .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
- .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
- .print\\:whitespace-normal { white-space: normal !important; }
- .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
- .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
- .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
- .print\\:w-\\[80px\\] { width: 80px !important; }
-        }
-        @page {
-          size: A4 landscape;
-          margin: 10mm;
-        }
-      \`}</style>
-    </div>
+        `}</style>
+      </div>
+    </>
   );
 }
