@@ -12,7 +12,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC4N7z6jCbBohaQTgmC78dXz3GzsiONjHM",
   authDomain: "dr-nihar.firebaseapp.com",
   projectId: "dr-nihar",
-  storageBucket: "dr-nihar.firebasestorage.app", // Corrected from firebasestorage.app
+  storageBucket: "dr-nihar.appspot.com", // Standard format is usually project-id.appspot.com
   messagingSenderId: "721559945328",
   appId: "1:721559945328:web:4e747e02632754eced74b5",
   measurementId: "G-0K3W0DKLJX"

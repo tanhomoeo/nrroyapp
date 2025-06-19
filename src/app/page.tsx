@@ -75,7 +75,7 @@ PLEASE VERY CAREFULLY:
         alertMessage += detailedErrorMessage;
         alert(alertMessage);
         // Optionally, redirect to dashboard even on failure, or handle differently
-        // router.replace('/dashboard'); 
+        router.replace('/dashboard'); 
       }
     };
 
