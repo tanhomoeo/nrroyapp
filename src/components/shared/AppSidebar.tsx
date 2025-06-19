@@ -39,7 +39,7 @@ const mainNavItems = [
   { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks, theme: 'theme4' },
   { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: MessageSquareText, theme: 'theme5' },
   { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: FileText, theme: 'theme6' },
-  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText, theme: 'theme1' }, // Re-using themes
+  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText, theme: 'theme1' }, 
 ];
 
 const managementNavItems = [
@@ -71,10 +71,8 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
           "flex items-center w-full p-2 rounded-md text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
           "transition-colors duration-150",
           isSidebarIconOnly && "hidden",
-          // Use the new subtle header style from globals.css
           !isOpen && "sidebar-collapsible-section-header", 
-          // When open, remove specific background, let items define style
-          isOpen && !isSidebarIconOnly && "sidebar-collapsible-section-header border-t-0 mt-0 pt-2", // Adjust open style
+          isOpen && !isSidebarIconOnly && "sidebar-collapsible-section-header border-t-0 mt-0 pt-2",
            isOpen ? "hover:bg-sidebar-accent/20" : "hover:text-[hsl(var(--sidebar-section-header-text)/0.8)]"
         )}
         aria-expanded={isOpen}
@@ -93,11 +91,10 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
         className={cn(
           "overflow-hidden",
           !isSidebarIconOnly && "transition-all duration-300 ease-in-out",
-          // Add padding when open and not icon-only to indent items slightly
           isSidebarIconOnly ? "max-h-none opacity-100" : (isOpen ? "max-h-[500px] opacity-100 mt-1 pl-1" : "max-h-0 opacity-0")
         )}
       >
-        <div className={cn(!isSidebarIconOnly && "pl-1")}> {/* Further indent content */}
+        <div className={cn(!isSidebarIconOnly && "pl-1")}> 
            {children}
         </div>
       </div>
@@ -109,7 +106,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { state: sidebarState, setOpenMobile } = useSidebar();
   const isSidebarIconOnly = sidebarState === 'collapsed';
-  const [logoSrc, setLogoSrc] = useState("/icons/icon.png"); // Updated logo path
+  const [logoSrc, setLogoSrc] = useState("/icons/icon.png"); 
 
 
   const renderNavItems = (items: typeof mainNavItems) => (
@@ -121,7 +118,7 @@ export function AppSidebar() {
             isActive={pathname === item.href || (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href))}
             tooltip={{ children: item.label, side: 'right', align: 'center' }}
             onClick={() => setOpenMobile(false)}
-            data-menu-item-theme={item.theme || undefined} // Apply theme
+            data-menu-item-theme={item.theme || undefined} 
           >
             <Link href={item.href}>
               <item.icon className="h-5 w-5" />
@@ -139,7 +136,7 @@ export function AppSidebar() {
   return (
     <Sidebar side="left" variant="sidebar" collapsible="icon">
       <SidebarHeader className={cn(
-        "p-4 flex items-center border-b border-sidebar-border", // Added bottom border
+        "p-4 flex items-center border-b border-sidebar-border", 
         isSidebarIconOnly ? "justify-center" : "justify-start"
       )}>
         <Link href={ROUTES.DASHBOARD} className="flex items-center">
@@ -157,22 +154,18 @@ export function AppSidebar() {
             />
           </Avatar>
           {!isSidebarIconOnly && (
-             <span className="ml-3 text-xl font-bold text-sidebar-foreground font-headline tracking-tight">{APP_NAME}</span>
+             <span className="ml-2 text-base font-semibold whitespace-nowrap text-sidebar-foreground font-headline tracking-tight">{APP_NAME}</span>
           )}
         </Link>
       </SidebarHeader>
-      <SidebarContent className="flex-grow px-2 space-y-0"> {/* Reduced space-y */}
+      <SidebarContent className="flex-grow px-2 space-y-0"> 
         <CollapsibleSidebarSection title="প্রধান মেনু" defaultOpen>
           {renderNavItems(mainNavItems)}
         </CollapsibleSidebarSection>
 
-        {/* Removed SidebarSeparator */}
-
         <CollapsibleSidebarSection title="ব্যবস্থাপনা">
           {renderNavItems(managementNavItems as typeof mainNavItems)}
         </CollapsibleSidebarSection>
-
-        {/* Removed SidebarSeparator */}
 
         <CollapsibleSidebarSection title="ইউটিলিটি">
           {renderNavItems(utilityNavItems as typeof mainNavItems)}

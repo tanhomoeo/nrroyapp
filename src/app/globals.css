@@ -27,7 +27,7 @@ body {
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 210 40% 88%; /* #D6DEE6 */
-    --input: 210 40% 93%; /* #E3E8ED */
+    --input: 210 40% 80%; /* Slightly darker than border for input field borders #C9D3DB */
     --ring: 180 60% 50%; /* Slightly darker primary for ring */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -36,65 +36,64 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Sidebar specific colors - Light Theme (Inspired by image) */
-    --sidebar-background: 210 60% 98%; /* Very light blue-gray, almost white like image sidebar */
-    --sidebar-foreground: 215 25% 35%; /* Darker text for readability */
+    /* Sidebar specific colors - Light Theme (Modern Light Gradient) */
+    --sidebar-background-gradient-start-light: 205 65% 97%; /* Very light blue */
+    --sidebar-background-gradient-end-light: 215 60% 95%;   /* Slightly different very light blue */
+    --sidebar-foreground: 215 25% 35%; 
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: 210 50% 94%; /* Very light hover for sidebar items */
+    --sidebar-accent: 210 50% 94%; 
     --sidebar-accent-foreground: hsl(var(--primary));
-    --sidebar-border: 210 30% 90%; /* Light border for sidebar elements */
+    --sidebar-border: 210 30% 90%; 
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-light: hsl(var(--sidebar-background)); /* No gradient, solid color like image */
-
+    
     /* Section Header Styling - Light Theme (Subtle) */
     --sidebar-section-header-text: hsl(215 25% 45%);
     --sidebar-section-header-border: hsl(210 30% 88%);
 
-    /* Sidebar Menu Button Theming - Light (Gradients) */
-    --btn-theme1-gradient-light: linear-gradient(to bottom right, #38bdf8, #6366f1); /* sky-500, indigo-500 */
-    --btn-theme1-gradient-hover-light: linear-gradient(to bottom right, #0ea5e9, #4f46e5); /* sky-600, indigo-600 (darker) */
-    --btn-theme2-gradient-light: linear-gradient(to bottom right, #2dd4bf, #10b981); /* teal-400, emerald-500 */
-    --btn-theme2-gradient-hover-light: linear-gradient(to bottom right, #14b8a6, #059669); /* teal-500, emerald-600 (darker) */
-    --btn-theme3-gradient-light: linear-gradient(to bottom right, #4ade80, #a3e635); /* green-400, lime-400 */
-    --btn-theme3-gradient-hover-light: linear-gradient(to bottom right, #22c55e, #84cc16); /* green-500, lime-500 (darker) */
-    --btn-theme4-gradient-light: linear-gradient(to bottom right, #a78bfa, #8b5cf6); /* purple-400, violet-500 */
-    --btn-theme4-gradient-hover-light: linear-gradient(to bottom right, #8b5cf6, #7c3aed); /* purple-500, violet-600 (darker) */
-    --btn-theme5-gradient-light: linear-gradient(to bottom right, #fb923c, #f59e0b); /* orange-400, amber-500 */
-    --btn-theme5-gradient-hover-light: linear-gradient(to bottom right, #f97316, #d97706); /* orange-500, amber-600 (darker) */
-    --btn-theme6-gradient-light: linear-gradient(to bottom right, #f472b6, #ec4899); /* rose-400, pink-500 */
-    --btn-theme6-gradient-hover-light: linear-gradient(to bottom right, #e11d48, #db2777); /* rose-500, pink-600 (darker) */
+    /* Sidebar Menu Button Theming - Light (Lighter Gradients) */
+    --btn-theme1-gradient-light: linear-gradient(to bottom right, #38bdf8, #a855f7); /* Lighter sky-400 to purple-500 */
+    --btn-theme1-gradient-hover-light: linear-gradient(to bottom right, #0ea5e9, #9333ea); /* sky-500 to purple-600 (darker) */
+    --btn-theme2-gradient-light: linear-gradient(to bottom right, #2dd4bf, #22d3ee); /* Lighter teal-400 to cyan-400 */
+    --btn-theme2-gradient-hover-light: linear-gradient(to bottom right, #14b8a6, #06b6d4); /* teal-500 to cyan-500 (darker) */
+    --btn-theme3-gradient-light: linear-gradient(to bottom right, #4ade80, #bef264); /* Lighter green-400 to lime-300 */
+    --btn-theme3-gradient-hover-light: linear-gradient(to bottom right, #22c55e, #a3e635); /* green-500 to lime-400 (darker) */
+    --btn-theme4-gradient-light: linear-gradient(to bottom right, #a78bfa, #c084fc); /* Lighter violet-400 to fuchsia-400 */
+    --btn-theme4-gradient-hover-light: linear-gradient(to bottom right, #8b5cf6, #a855f7); /* violet-500 to fuchsia-500 (darker) */
+    --btn-theme5-gradient-light: linear-gradient(to bottom right, #fb923c, #facc15); /* Lighter orange-400 to yellow-400 */
+    --btn-theme5-gradient-hover-light: linear-gradient(to bottom right, #f97316, #f59e0b); /* orange-500 to yellow-500 (darker) */
+    --btn-theme6-gradient-light: linear-gradient(to bottom right, #f472b6, #f0abfc); /* Lighter pink-400 to purple-300 */
+    --btn-theme6-gradient-hover-light: linear-gradient(to bottom right, #ec4899, #e879f9); /* pink-500 to purple-400 (darker) */
 
-
-    /* Default Submenu Button Styles (If not themed) - Light - Based on existing but lighter */
-    --sidebar-button-bg-light: hsl(210 50% 96%); /* Lighter than previous */
-    --sidebar-button-hover-bg-light: hsl(210 50% 92%);
+    /* Default Submenu Button Styles - Light */
+    --sidebar-button-bg-light: hsl(210 50% 97%); 
+    --sidebar-button-hover-bg-light: hsl(210 50% 94%);
     --sidebar-button-border: hsl(210 30% 88% / 0); /* Transparent Border */
-    --sidebar-button-shadow: 0 2px 5px hsl(210 20% 50% / 0.1), 0 1px 1px hsl(210 20% 50% / 0.05); /* New 3D Shadow */
-    --sidebar-button-hover-shadow: 0 4px 8px hsl(210 20% 50% / 0.12), 0 2px 3px hsl(210 20% 50% / 0.08); /* Enhanced Hover Shadow */
-    --sidebar-button-active-shadow: inset 0 2px 4px hsl(210 20% 50% / 0.15); /* Pressed-in Shadow */
+    --sidebar-button-shadow: 0 1px 3px hsl(210 20% 50% / 0.08), 0 1px 2px hsl(210 20% 50% / 0.04); /* Softer 3D Shadow */
+    --sidebar-button-hover-shadow: 0 3px 6px hsl(210 20% 50% / 0.1), 0 2px 4px hsl(210 20% 50% / 0.06); /* Enhanced Hover Shadow */
+    --sidebar-button-active-shadow: inset 0 1px 2px hsl(210 20% 50% / 0.1); /* Softer Pressed-in Shadow */
   }
 
   .dark {
     /* Dark Theme (Complementary to the new light theme) */
-    --background: 215 28% 17%; /* Dark slate blue */
-    --foreground: 210 40% 90%; /* Light gray */
-    --card: 215 28% 22%; /* Slightly lighter dark slate */
+    --background: 215 28% 17%; 
+    --foreground: 210 40% 90%; 
+    --card: 215 28% 22%; 
     --card-foreground: 210 40% 90%;
     --popover: 215 28% 22%;
     --popover-foreground: 210 40% 90%;
-    --primary: 180 55% 55%; /* Brighter Teal/Cyan for dark mode */
-    --primary-foreground: 0 0% 0%; /* Black for contrast on bright teal */
-    --secondary: 215 25% 25%; /* Darker gray */
+    --primary: 180 55% 55%; 
+    --primary-foreground: 0 0% 0%; 
+    --secondary: 215 25% 25%; 
     --secondary-foreground: 210 30% 80%;
-    --muted: 215 25% 20%; /* #2A303C */
+    --muted: 215 25% 20%; 
     --muted-foreground: 210 30% 65%;
-    --accent: 180 50% 70%; /* Lighter teal for dark mode accents */
+    --accent: 180 50% 70%; 
     --accent-foreground: 0 0% 0%;
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 215 20% 30%; /* #3B4454 */
-    --input: 215 20% 30%;
+    --border: 215 20% 30%; 
+    --input: 215 20% 28%; /* Slightly darker input border for dark mode */
     --ring: 180 55% 60%;
 
     --chart-1: 210 70% 60%;
@@ -103,47 +102,72 @@ body {
     --chart-4: 260 70% 65%;
     --chart-5: 320 75% 60%;
 
-    /* Sidebar specific colors for dark mode */
-    --sidebar-background: 215 25% 14%; /* Very dark slate */
-    --sidebar-foreground: 210 30% 80%; /* Light gray for text */
+    /* Sidebar specific colors for dark mode (Modern Dark Gradient) */
+    --sidebar-background-gradient-start-dark: 215 28% 18%; /* Dark slate subtle gradient start */
+    --sidebar-background-gradient-end-dark: 215 28% 15%;   /* Dark slate subtle gradient end */
+    --sidebar-foreground: 210 30% 80%; 
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(0 0% 0%);
-    --sidebar-accent: 215 20% 22%; /* Slightly lighter dark slate for accents */
+    --sidebar-accent: 215 20% 22%; 
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 15% 20%; /* Darker border */
+    --sidebar-border: 215 15% 20%; 
     --sidebar-ring: hsl(var(--primary));
-    --sidebar-gradient-end-dark: hsl(var(--sidebar-background)); /* Solid color */
-
+    
     /* Section Header Styling - Dark Theme */
     --sidebar-section-header-text: hsl(210 30% 70%);
     --sidebar-section-header-border: hsl(215 15% 25%);
 
-    /* Sidebar Menu Button Theming - Dark (Gradients) */
-    --btn-theme1-gradient-dark: linear-gradient(to bottom right, #0ea5e9, #4f46e5); /* sky-600, indigo-600 */
-    --btn-theme1-gradient-hover-dark: linear-gradient(to bottom right, #0284c7, #4338ca); /* sky-700, indigo-700 (darker) */
-    --btn-theme2-gradient-dark: linear-gradient(to bottom right, #14b8a6, #059669); /* teal-500, emerald-600 */
-    --btn-theme2-gradient-hover-dark: linear-gradient(to bottom right, #0d9488, #047857); /* teal-600, emerald-700 (darker) */
-    --btn-theme3-gradient-dark: linear-gradient(to bottom right, #22c55e, #84cc16); /* green-500, lime-500 */
-    --btn-theme3-gradient-hover-dark: linear-gradient(to bottom right, #16a34a, #65a30d); /* green-600, lime-600 (darker) */
-    --btn-theme4-gradient-dark: linear-gradient(to bottom right, #8b5cf6, #7c3aed); /* purple-500, violet-600 */
-    --btn-theme4-gradient-hover-dark: linear-gradient(to bottom right, #7c3aed, #6d28d9); /* purple-600, violet-700 (darker) */
-    --btn-theme5-gradient-dark: linear-gradient(to bottom right, #f97316, #d97706); /* orange-500, amber-600 */
-    --btn-theme5-gradient-hover-dark: linear-gradient(to bottom right, #ea580c, #b45309); /* orange-600, amber-700 (darker) */
-    --btn-theme6-gradient-dark: linear-gradient(to bottom right, #e11d48, #db2777); /* rose-500, pink-600 */
-    --btn-theme6-gradient-hover-dark: linear-gradient(to bottom right, #be123c, #be185d); /* rose-600, pink-700 (darker) */
-
-    /* Default Submenu Button Styles - Dark Theme - Based on existing but darker */
-    --sidebar-button-bg-dark: hsl(215 20% 20%);
-    --sidebar-button-hover-bg-dark: hsl(215 20% 24%);
+    /* Sidebar Menu Button Theming - Dark (Lighter Gradients) */
+    --btn-theme1-gradient-dark: linear-gradient(to bottom right, #0ea5e9, #8b5cf6); /* sky-500 to purple-500 */
+    --btn-theme1-gradient-hover-dark: linear-gradient(to bottom right, #0284c7, #7e22ce); /* sky-600 to purple-600 (darker) */
+    --btn-theme2-gradient-dark: linear-gradient(to bottom right, #14b8a6, #06b6d4); /* teal-500 to cyan-500 */
+    --btn-theme2-gradient-hover-dark: linear-gradient(to bottom right, #0d9488, #0891b2); /* teal-600 to cyan-600 (darker) */
+    --btn-theme3-gradient-dark: linear-gradient(to bottom right, #22c55e, #a3e635); /* green-500 to lime-400 */
+    --btn-theme3-gradient-hover-dark: linear-gradient(to bottom right, #16a34a, #84cc16); /* green-600 to lime-500 (darker) */
+    --btn-theme4-gradient-dark: linear-gradient(to bottom right, #8b5cf6, #d946ef); /* violet-500 to fuchsia-500 */
+    --btn-theme4-gradient-hover-dark: linear-gradient(to bottom right, #7c3aed, #c026d3); /* violet-600 to fuchsia-600 (darker) */
+    --btn-theme5-gradient-dark: linear-gradient(to bottom right, #f97316, #eab308); /* orange-500 to yellow-500 */
+    --btn-theme5-gradient-hover-dark: linear-gradient(to bottom right, #ea580c, #ca8a04); /* orange-600 to yellow-600 (darker) */
+    --btn-theme6-gradient-dark: linear-gradient(to bottom right, #ec4899, #d946ef); /* pink-500 to fuchsia-500 */
+    --btn-theme6-gradient-hover-dark: linear-gradient(to bottom right, #db2777, #c026d3); /* pink-600 to fuchsia-600 (darker) */
+    
+    /* Default Submenu Button Styles - Dark Theme */
+    --sidebar-button-bg-dark: hsl(215 20% 22%);
+    --sidebar-button-hover-bg-dark: hsl(215 20% 26%);
     --sidebar-button-border: hsl(215 15% 15% / 0); /* Transparent Border */
-    --sidebar-button-shadow: 0 2px 5px hsl(210 10% 5% / 0.2), 0 1px 1px hsl(210 10% 5% / 0.15); /* New 3D Shadow */
-    --sidebar-button-hover-shadow: 0 4px 8px hsl(210 10% 5% / 0.25), 0 2px 3px hsl(210 10% 5% / 0.2); /* Enhanced Hover Shadow */
-    --sidebar-button-active-shadow: inset 0 2px 4px hsl(210 10% 5% / 0.3); /* Pressed-in Shadow */
+    --sidebar-button-shadow: 0 1px 3px hsl(210 10% 5% / 0.15), 0 1px 2px hsl(210 10% 5% / 0.1); /* Softer 3D Shadow */
+    --sidebar-button-hover-shadow: 0 3px 6px hsl(210 10% 5% / 0.2), 0 2px 4px hsl(210 10% 5% / 0.15); /* Enhanced Hover Shadow */
+    --sidebar-button-active-shadow: inset 0 1px 2px hsl(210 10% 5% / 0.25); /* Softer Pressed-in Shadow */
   }
 
   [data-variant="sidebar"] [data-sidebar="sidebar"] {
-    background-color: hsl(var(--sidebar-background)); /* Solid color, no gradient */
+    background-image: linear-gradient(180deg, hsl(var(--sidebar-background-gradient-start-light)), hsl(var(--sidebar-background-gradient-end-light)));
   }
+  .dark [data-variant="sidebar"] [data-sidebar="sidebar"] {
+    background-image: linear-gradient(180deg, hsl(var(--sidebar-background-gradient-start-dark)), hsl(var(--sidebar-background-gradient-end-dark)));
+  }
+
+  .dashboard-main-title {
+    color: hsl(220, 70%, 40%); /* Dark Blue */
+    text-shadow: 0px 1px 1px hsla(0, 0%, 100%, 0.5), /* Top-light for 3D */
+                 0px 2px 3px hsla(220, 70%, 30%, 0.2); /* Darker shadow for depth */
+  }
+  .dark .dashboard-main-title {
+    color: hsl(210, 80%, 75%); /* Lighter Blue for Dark Mode */
+    text-shadow: 0px 1px 1px hsla(0, 0%, 0%, 0.3),  /* Top-dark for 3D */
+                 0px 2px 3px hsla(210, 80%, 25%, 0.4); /* Darker shadow for depth */
+  }
+  .dashboard-subtitle {
+    color: hsl(215, 50%, 50%); /* Slightly lighter blue */
+    text-shadow: 0px 1px 1px hsla(0, 0%, 100%, 0.3);
+    margin-top: -0.25rem; /* Adjust for 'move up' */
+  }
+  .dark .dashboard-subtitle {
+    color: hsl(210, 70%, 65%);
+    text-shadow: 0px 1px 1px hsla(0, 0%, 0%, 0.2);
+    margin-top: -0.25rem;
+  }
+
 }
 
 @layer base {
@@ -156,7 +180,6 @@ body {
 }
 
 @layer components {
-  /* Collapsible Section Header - More subtle, like a text label */
   .sidebar-collapsible-section-header {
     @apply text-sm font-medium text-[hsl(var(--sidebar-section-header-text))] border-t border-[hsl(var(--sidebar-section-header-border))] first:border-t-0 pt-3 mt-2 first:mt-0;
   }
@@ -164,11 +187,10 @@ body {
      @apply text-[hsl(var(--sidebar-section-header-text)/0.8)];
   }
 
-
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"] {
-    @apply rounded-md px-3 py-2 my-0.5 text-sidebar-foreground; /* Reduced vertical margin */
+    @apply rounded-md px-3 py-2 my-0.5 text-sidebar-foreground;
     background-color: var(--sidebar-button-bg-light);
-    border: 1px solid var(--sidebar-button-border); /* Uses transparent border from CSS vars */
+    border: 1px solid var(--sidebar-button-border); 
     box-shadow: var(--sidebar-button-shadow);
     transition: background-color 0.15s ease-out, background-image 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out, border-color 0.15s ease-out;
   }
@@ -193,9 +215,9 @@ body {
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"] {
     @apply bg-sidebar-primary text-sidebar-primary-foreground;
     background-image: none !important;
-    box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important; /* Updated shadow for active */
+    box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important;
     transform: translateY(0.5px);
-    border-color: transparent !important; /* Ensure no border for active state */
+    border-color: transparent !important;
   }
    [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"]:hover {
     @apply bg-sidebar-primary/90;
@@ -204,7 +226,6 @@ body {
     box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important;
   }
 
-  /* Custom Button Themes - Gradients */
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
     background-image: var(--btn-theme1-gradient-light) !important;
     background-color: transparent !important;
@@ -320,15 +341,15 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-muted/30; /* Use a more subtle track color */
+  @apply bg-muted/30;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/50; /* Make thumb slightly less prominent */
+  @apply bg-primary/50; 
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/70; /* Darken on hover */
+  @apply bg-primary/70; 
 }
 
 @media print {
@@ -373,5 +394,3 @@ body {
   size: A4 portrait;
   margin: 15mm;
 }
-
-    

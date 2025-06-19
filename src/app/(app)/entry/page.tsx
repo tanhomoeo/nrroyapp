@@ -27,7 +27,7 @@ import { appendFinalTranscript } from '@/lib/utils';
 
 const patientFormSchema = z.object({
   registrationDate: z.date({ required_error: "নিবন্ধনের তারিখ আবশ্যক।" }),
-  diaryNumber: z.string().optional(), // Changed to string, manual input
+  diaryNumber: z.string().optional(),
   name: z.string().min(1, { message: "পুরো নাম আবশ্যক।" }),
   age: z.string().optional(),
   gender: z.enum(['male', 'female', 'other', ''], { errorMap: () => ({ message: "লিঙ্গ নির্বাচন করুন।" }) }).optional(),
@@ -45,7 +45,7 @@ type PatientFormValues = z.infer<typeof patientFormSchema>;
 export default function PatientEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoadingSettings, setIsLoadingSettings] = useState(false); // No longer loading settings for diary number
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export default function PatientEntryPage() {
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
       registrationDate: new Date(),
-      diaryNumber: '', // Default to empty string
+      diaryNumber: '',
       name: '',
       age: '',
       gender: '',
@@ -67,8 +67,6 @@ export default function PatientEntryPage() {
       villageUnion: '',
     },
   });
-
-  // Removed useEffect for fetching clinic settings related to nextDiaryNumber
 
   const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
@@ -84,12 +82,10 @@ export default function PatientEntryPage() {
         district: data.district,
         thanaUpazila: data.thanaUpazila,
         villageUnion: data.villageUnion,
-        diaryNumber: data.diaryNumber || undefined, // Save as string or undefined
+        diaryNumber: data.diaryNumber || undefined,
       };
 
       const patientId = await addPatient(newPatientData);
-
-      // Removed logic for updating nextDiaryNumber in clinic settings
 
       toast({
         title: 'রোগী নিবন্ধিত',
@@ -98,7 +94,7 @@ export default function PatientEntryPage() {
 
       form.reset({
         registrationDate: new Date(),
-        diaryNumber: '', // Reset to empty
+        diaryNumber: '',
         name: '',
         age: '',
         gender: '',
@@ -131,10 +127,14 @@ export default function PatientEntryPage() {
     }
   };
 
-  const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
-  const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
+  const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all duration-150";
+  const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500";
+  const textareaWrapperClass = "flex items-start w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary min-h-[80px] transition-all duration-150";
+  const textareaFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 resize-y";
+  const selectTriggerClass = "flex h-10 items-center w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-150 text-slate-800 dark:text-slate-100";
 
-  if (isLoadingSettings) { // Though settings are not directly used for diary numbers now, keep for potential future use
+
+  if (isLoadingSettings) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -150,6 +150,8 @@ export default function PatientEntryPage() {
           title="নতুন রোগী নিবন্ধন"
           description="নতুন রোগী নিবন্ধন করতে নিচের বিবরণগুলি পূরণ করুন। ডেটা সিস্টেমে সংরক্ষিত হবে।"
           actions={<UserPlus className="h-8 w-8 text-primary" />}
+          wrapperClassName="bg-gradient-to-br from-sky-400 to-indigo-500 text-white"
+          className="text-white [&_div>h2]:text-white [&_div>p]:text-sky-100 dark:[&_div>h2]:text-white dark:[&_div>p]:text-sky-100 [&_svg]:text-white"
         />
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Card className="shadow-md">
@@ -164,10 +166,10 @@ export default function PatientEntryPage() {
                       <PopoverTrigger asChild>
                         <Button
                           variant={"outline"}
-                          className={cn(
+                           className={cn(
                             "w-full justify-start text-left font-normal",
                             !field.value && "text-muted-foreground",
-                            inputWrapperClass
+                            selectTriggerClass // Use new selectTriggerClass
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
@@ -206,7 +208,7 @@ export default function PatientEntryPage() {
                         <Input
                           placeholder="যেমন: F/123, CH/456"
                           {...field}
-                          type="text" // Changed to text
+                          type="text"
                           className={inputFieldClass}
                           id="patientDiaryNumberEntry"
                         />
@@ -238,6 +240,7 @@ export default function PatientEntryPage() {
                         setIsListeningGlobal={setIsListeningGlobal}
                         currentListeningField={currentListeningField}
                         setCurrentListeningField={setCurrentListeningField}
+                        className="text-slate-500 dark:text-slate-400"
                       />
                     </div>
                     <FormMessage />
@@ -269,7 +272,7 @@ export default function PatientEntryPage() {
                     <FormLabel>লিঙ্গ</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
-                        <SelectTrigger className={inputWrapperClass} id="patientGenderEntry">
+                        <SelectTrigger className={selectTriggerClass} id="patientGenderEntry">
                           <SelectValue placeholder="লিঙ্গ নির্বাচন করুন" />
                         </SelectTrigger>
                       </FormControl>
@@ -292,7 +295,7 @@ export default function PatientEntryPage() {
                     <FormLabel>রোগীর পেশা (ঐচ্ছিক)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                       <FormControl>
-                        <SelectTrigger className={inputWrapperClass} id="patientOccupationEntry">
+                        <SelectTrigger className={selectTriggerClass} id="patientOccupationEntry">
                           <SelectValue placeholder="পেশা নির্বাচন করুন" />
                         </SelectTrigger>
                       </FormControl>
@@ -380,6 +383,7 @@ export default function PatientEntryPage() {
                         setIsListeningGlobal={setIsListeningGlobal}
                         currentListeningField={currentListeningField}
                         setCurrentListeningField={setCurrentListeningField}
+                        className="text-slate-500 dark:text-slate-400"
                       />
                     </div>
                     <FormMessage />
@@ -406,6 +410,7 @@ export default function PatientEntryPage() {
                         setIsListeningGlobal={setIsListeningGlobal}
                         currentListeningField={currentListeningField}
                         setCurrentListeningField={setCurrentListeningField}
+                        className="text-slate-500 dark:text-slate-400"
                       />
                     </div>
                     <FormMessage />
@@ -431,6 +436,7 @@ export default function PatientEntryPage() {
                         setIsListeningGlobal={setIsListeningGlobal}
                         currentListeningField={currentListeningField}
                         setCurrentListeningField={setCurrentListeningField}
+                        className="text-slate-500 dark:text-slate-400"
                       />
                     </div>
                     <FormMessage />
@@ -456,6 +462,7 @@ export default function PatientEntryPage() {
                         setIsListeningGlobal={setIsListeningGlobal}
                         currentListeningField={currentListeningField}
                         setCurrentListeningField={setCurrentListeningField}
+                        className="text-slate-500 dark:text-slate-400"
                       />
                     </div>
                     <FormMessage />

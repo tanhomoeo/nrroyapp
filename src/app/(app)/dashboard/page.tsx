@@ -42,13 +42,13 @@ interface QuickActionCardProps {
   title: string;
   description: string;
   icon: React.ElementType;
-  bgColorClass: string;
+  className?: string; // Changed from bgColorClass for more flexibility
   textColorClass?: string;
   href: string;
 }
 
-const QuickActionCardMemoized: React.FC<QuickActionCardProps> = React.memo(({ title, description, icon: Icon, bgColorClass, textColorClass = 'text-primary-foreground', href }) => (
-  <Link href={href} className={`block rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 p-6 ${bgColorClass} ${textColorClass} transform hover:-translate-y-1`}>
+const QuickActionCardMemoized: React.FC<QuickActionCardProps> = React.memo(({ title, description, icon: Icon, className, textColorClass = 'text-white', href }) => (
+  <Link href={href} className={`block rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 p-6 transform hover:-translate-y-1 ${className} ${textColorClass}`}>
     <div className="flex items-center mb-3">
       <Icon className="h-8 w-8 mr-3" />
       <h3 className="text-xl font-headline font-semibold">{title}</h3>
@@ -68,14 +68,14 @@ interface ActivityStat {
 interface ActivityCardProps {
   title: string;
   stats: ActivityStat[];
-  bgColorClass: string;
+  className?: string; // Changed from bgColorClass
   textColorClass?: string;
   detailsLink?: string;
   icon?: React.ElementType;
 }
 
-const ActivityCardMemoized: React.FC<ActivityCardProps> = React.memo(({ title, stats, bgColorClass, textColorClass = 'text-primary-foreground', detailsLink, icon: TitleIcon }) => (
-  <Card className={`shadow-lg hover:shadow-xl transition-all duration-300 ${bgColorClass} ${textColorClass} overflow-hidden transform hover:-translate-y-1`}>
+const ActivityCardMemoized: React.FC<ActivityCardProps> = React.memo(({ title, stats, className, textColorClass = 'text-white', detailsLink, icon: TitleIcon }) => (
+  <Card className={`shadow-lg hover:shadow-xl transition-all duration-300 ${className} ${textColorClass} overflow-hidden transform hover:-translate-y-1`}>
     <CardHeader className="pb-2">
       <div className="flex items-center">
         {TitleIcon && <TitleIcon className="h-6 w-6 mr-2" />}
@@ -137,6 +137,11 @@ export default function DashboardPage() {
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
+  const [clientRenderedTimestamp, setClientRenderedTimestamp] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setClientRenderedTimestamp(new Date());
+  }, []);
 
 
   const loadAppointments = useCallback(async () => {
@@ -346,8 +351,8 @@ export default function DashboardPage() {
     <TooltipProvider>
     <div className="space-y-8 p-1 md:p-2">
       <div className="mb-6 px-4 md:px-0 hide-on-print-dashboard">
-        <h1 className="text-3xl font-bold font-headline text-foreground">{APP_NAME}</h1>
-        <p className="text-muted-foreground">একটি আদর্শ হোমিওপ্যাথিক চিকিৎসালয়</p>
+        <h1 className="text-3xl font-bold font-headline dashboard-main-title">{APP_NAME}</h1>
+        <p className="dashboard-subtitle">একটি আদর্শ হোমিওপ্যাথিক চিকিৎসালয়</p>
 
         <div className="mt-6 max-w-xl">
           <div className="flex h-11 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary">
@@ -372,6 +377,7 @@ export default function DashboardPage() {
               setIsListeningGlobal={setIsListeningGlobal}
               currentListeningField={currentListeningField}
               setCurrentListeningField={setCurrentListeningField}
+              className="text-slate-500 dark:text-slate-400"
             />
             {dashboardSearchTerm && (
               <Button variant="ghost" size="icon" className="h-full w-10 text-muted-foreground hover:text-foreground" onClick={() => setDashboardSearchTerm('')}>
@@ -396,7 +402,7 @@ export default function DashboardPage() {
             title="নতুন রোগী ভর্তি"
             description="সিস্টেমে নতুন রোগীদের দ্রুত নিবন্ধন করুন।"
             icon={UserPlus}
-            bgColorClass="bg-gradient-to-br from-sky-500 to-indigo-600"
+            className="bg-gradient-to-br from-sky-400 to-indigo-500"
             textColorClass="text-white"
             href={ROUTES.PATIENT_ENTRY}
           />
@@ -404,7 +410,7 @@ export default function DashboardPage() {
             title="রোগীর তালিকা"
             description="সকল নিবন্ধিত রোগীদের প্রোফাইল খুঁজুন ও দেখুন।"
             icon={Users}
-            bgColorClass="bg-gradient-to-br from-teal-500 to-emerald-600"
+            className="bg-gradient-to-br from-teal-400 to-emerald-500"
             textColorClass="text-white"
             href={ROUTES.DICTIONARY}
           />
@@ -412,7 +418,7 @@ export default function DashboardPage() {
             title="দৈনিক প্রতিবেদন"
             description="দৈনিক কার্যক্রমের বিস্তারিত সারসংক্ষেপ দেখুন।"
             icon={FileText}
-            bgColorClass="bg-gradient-to-br from-green-500 to-cyan-600"
+            className="bg-gradient-to-br from-green-400 to-cyan-500"
             textColorClass="text-white"
             href={ROUTES.DAILY_REPORT}
           />
@@ -420,7 +426,7 @@ export default function DashboardPage() {
             title="AI অভিযোগ সারাংশ"
             description="AI দ্বারা রোগীর অভিযোগ সারাংশ করুন।"
             icon={MessageSquareText}
-            bgColorClass="bg-gradient-to-br from-purple-600 to-indigo-700"
+            className="bg-gradient-to-br from-purple-500 to-indigo-600"
             textColorClass="text-white"
             href={ROUTES.AI_SUMMARY}
           />
@@ -436,7 +442,7 @@ export default function DashboardPage() {
             { label: 'মোট নিবন্ধিত রোগী', value: stats.monthlyTotalRegistered || 0, icon: Users },
             { label: 'আনুমানিক মাসিক আয়', value: formatCurrency(stats.monthlyIncome || 0), icon: TrendingUp },
           ]}
-          bgColorClass="bg-gradient-to-br from-blue-400 to-purple-500"
+          className="bg-gradient-to-br from-blue-400 to-purple-500"
           textColorClass="text-white"
           detailsLink={ROUTES.DAILY_REPORT}
         />
@@ -448,7 +454,7 @@ export default function DashboardPage() {
             { label: 'অন্যান্য নিবন্ধিত রোগী', value: stats.dailyOtherRegistered || 0, icon: Users },
             { label: 'আজকের আয়', value: formatCurrency(stats.todayRevenue || 0), icon: TrendingUp },
           ]}
-          bgColorClass="bg-gradient-to-br from-green-400 to-teal-500"
+          className="bg-gradient-to-br from-lime-400 to-teal-500" // Updated gradient
           textColorClass="text-white"
           detailsLink={ROUTES.DAILY_REPORT}
         />
@@ -537,9 +543,11 @@ export default function DashboardPage() {
           />
         )}
       </Suspense>
+       <div className="print-only-block print-footer">
+         <p>রিপোর্ট তৈরির সময়: {clientRenderedTimestamp ? format(clientRenderedTimestamp, "PPpp", { locale: bn }) : 'সময় লোড হচ্ছে...'}</p>
+         <p>স্বাক্ষর: _________________________</p>
+      </div>
     </div>
     </TooltipProvider>
   );
 }
-
-    
