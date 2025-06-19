@@ -14,18 +14,22 @@ export function generateSimpleId(): string {
 }
 
 export const appendFinalTranscript = (currentValue: string | undefined | null, newTranscript: string): string => {
-  let textToSet = typeof currentValue === 'string' ? currentValue : ""; // Ensure currentValue is a string or empty
-  let processedTranscript = typeof newTranscript === 'string' ? newTranscript.trim() : ""; // Ensure newTranscript is a trimmed string or empty
+  let textToSet = typeof currentValue === 'string' ? currentValue : ""; 
+  let processedTranscript = typeof newTranscript === 'string' ? newTranscript.trim() : ""; 
+
+  if (!processedTranscript) { // If new transcript is empty, return current value as is
+    return textToSet;
+  }
 
   if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-    textToSet += " ";
+    textToSet += " "; // Add a space if current text is not empty and doesn't end with a space
   }
-
-  if (processedTranscript.length > 0) {
-    // Append the processed transcript, followed by a space if the transcript itself isn't empty.
-    textToSet += processedTranscript + " ";
-  }
+  
+  // Append the processed transcript. If it's a single word, no trailing space is needed yet.
+  // If it's multiple words, it might already have spaces internally.
+  // A trailing space is generally good for subsequent appends.
+  textToSet += processedTranscript + " "; 
   
   return textToSet;
 };
-
+    
