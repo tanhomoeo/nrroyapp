@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getClinicSettings, getPatientById } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getClinicSettings, getPatientById } from '@/lib/firestoreService';
 import type { ClinicSettings, Patient, PaymentSlip } from '@/lib/types';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { Printer, CalendarIcon, Info, ClipboardList, User, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
@@ -43,11 +43,10 @@ const followUpDaysOptions = ["৩", "৭", "১০", "১৫", "২১", "৩০
 
 const instructionsFormSchema = z.object({
   patientName: z.string().min(1, "রোগীর নাম আবশ্যক।"),
-  patientIdDisplay: z.string().optional(),
   patientActualId: z.string().optional(),
   visitId: z.string().optional(),
   instructionDate: z.date({ required_error: "নির্দেশনার তারিখ আবশ্যক।" }),
-  serialNumber: z.string().optional(),
+  serialNumber: z.string().optional(), // This will hold the diary number
   followUpDays: z.string().min(1, "ফলো-আপ দিন নির্বাচন করুন।"),
   instructionTemplate: z.enum(['template1', 'template2']).default('template1'),
   dropsT1: z.string().optional(),
@@ -87,11 +86,10 @@ export default function MedicineInstructionsClientLogic() {
     resolver: zodResolver(instructionsFormSchema),
     defaultValues: {
       patientName: '',
-      patientIdDisplay: '',
       patientActualId: '',
       visitId: '',
       instructionDate: new Date(),
-      serialNumber: `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`,
+      serialNumber: '', // Will be populated with diary number
       followUpDays: '৭',
       instructionTemplate: 'template1',
       dropsT1: '৫',
@@ -111,7 +109,6 @@ export default function MedicineInstructionsClientLogic() {
       setIsLoadingPageData(true);
       const settings = await getClinicSettings();
       setClinicSettings(settings);
-      form.setValue('serialNumber', `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`);
 
       const patientIdFromQuery = searchParams.get('patientId');
       const patientNameFromQuery = searchParams.get('name');
@@ -127,21 +124,19 @@ export default function MedicineInstructionsClientLogic() {
           setSelectedPatient(patient);
           form.setValue('patientName', patient.name);
           form.setValue('patientActualId', patient.id);
-          const diaryNumberDisplayString = patient.diaryNumber ? `ডায়েরি নং: ${patient.diaryNumber.toLocaleString('bn-BD')}` : '';
-          const patientIdShortDisplay = patient.id ? `আইডি: ${patient.id}` : 'আইডি উপলব্ধ নেই';
-          form.setValue('patientIdDisplay', `${diaryNumberDisplayString}${diaryNumberDisplayString && patient.id ? ' / ' : ''}${patient.id ? patientIdShortDisplay : ''}`);
+          form.setValue('serialNumber', patient.diaryNumber ? String(patient.diaryNumber).toLocaleString('bn-BD') : 'N/A');
         } else if (patientNameFromQuery) {
            form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
-           form.setValue('patientIdDisplay', 'আইডি উপলব্ধ নেই');
+           form.setValue('serialNumber', 'N/A'); // No patient, so no diary number for serial
            setSelectedPatient(null);
         }
       } else if (patientNameFromQuery) {
         form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
-        form.setValue('patientIdDisplay', 'আইডি উপলব্ধ নেই');
+        form.setValue('serialNumber', 'N/A');
         setSelectedPatient(null);
       } else {
         setSelectedPatient(null);
-        form.setValue('patientIdDisplay', '');
+        form.setValue('serialNumber', `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`); // Fallback if no patient context
       }
       setPaymentCompleted(false);
       setIsLoadingPageData(false);
@@ -162,7 +157,7 @@ export default function MedicineInstructionsClientLogic() {
 
   const onSubmit: SubmitHandler<InstructionsFormValues> = (data) => {
     setGeneratedInstruction(generateInstructionText(data));
-    setGeneratedSlipNumber(data.serialNumber || `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`);
+    setGeneratedSlipNumber(data.serialNumber || 'N/A'); // Use diary number or N/A
     setTimeout(() => {
       if (typeof window !== 'undefined') {
         const elementsToHide = document.querySelectorAll('.hide-on-print');
@@ -202,7 +197,7 @@ export default function MedicineInstructionsClientLogic() {
 
   const currentValues = form.watch();
   const previewInstructionText = generateInstructionText(currentValues);
-  const previewSlipNumber = currentValues.serialNumber || generatedSlipNumber || `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`;
+  const previewSlipNumber = currentValues.serialNumber || 'N/A';
   const isPatientNamePrefilled = !!searchParams.get('name') || !!selectedPatient;
 
   if (isLoadingPageData) {
@@ -213,12 +208,17 @@ export default function MedicineInstructionsClientLogic() {
         </div>
       );
   }
+  
+  const pageHeaderDescription = selectedPatient 
+    ? `রোগী: ${selectedPatient.name}${selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber).toLocaleString('bn-BD')})` : ''}`
+    : "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
+
 
   return (
     <div className="space-y-6">
       <PageHeaderCard
         title="ঔষধ খাওয়ার নিয়মাবলী"
-        description={selectedPatient ? `রোগী: ${selectedPatient.name}` : "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।"}
+        description={pageHeaderDescription}
         actions={<ClipboardList className="h-8 w-8 text-primary" />}
         className="hide-on-print"
       />
@@ -238,7 +238,7 @@ export default function MedicineInstructionsClientLogic() {
                         control={form.control}
                         name="patientName"
                         render={({ field }) => (
-                        <FormItem className={currentValues.patientIdDisplay ? "md:col-span-1" : "md:col-span-2"}>
+                        <FormItem className="md:col-span-1">
                             <FormLabel>রোগীর নাম</FormLabel>
                             <div className={cn(inputWrapperClass, isPatientNamePrefilled && readOnlyInputClass)}>
                             <User className="h-4 w-4 text-muted-foreground mx-2" />
@@ -255,27 +255,6 @@ export default function MedicineInstructionsClientLogic() {
                         </FormItem>
                         )}
                     />
-                    {currentValues.patientIdDisplay && (
-                        <FormField
-                        control={form.control}
-                        name="patientIdDisplay"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-1">
-                            <FormLabel>রোগীর ডায়েরি/আইডি</FormLabel>
-                            <div className={cn(inputWrapperClass, readOnlyInputClass)}>
-                                <FormControl>
-                                    <Input
-                                    {...field}
-                                    readOnly
-                                    className={cn(inputFieldClass, readOnlyInputClass)}
-                                    />
-                                </FormControl>
-                            </div>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    )}
                      <FormField
                         control={form.control}
                         name="patientActualId"
@@ -326,12 +305,13 @@ export default function MedicineInstructionsClientLogic() {
                         name="serialNumber"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>ক্রমিক নং (স্লিপ)</FormLabel>
+                            <FormLabel>ডায়েরি নম্বর (স্লিপের ক্রমিক)</FormLabel>
                             <div className={cn(inputWrapperClass, readOnlyInputClass)}>
                             <FormControl>
                                 <Input {...field} readOnly className={cn(inputFieldClass, readOnlyInputClass)} />
                             </FormControl>
                             </div>
+                            <FormDescription className="text-xs">এটি রোগীর ডায়েরি নম্বর এবং নির্দেশিকা স্লিপের ক্রমিক হিসেবে ব্যবহৃত হবে।</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -471,15 +451,15 @@ export default function MedicineInstructionsClientLogic() {
               </div>
 
               <div className="flex justify-between text-xs mb-1">
-                <span>ক্রমিক নং: {previewSlipNumber}</span>
+                <span>ক্রমিক নং (স্লিপ): {previewSlipNumber}</span>
                 <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : formatDateFns(new Date(), "dd/MM/yyyy", {locale: bn})}</span>
               </div>
               <div className="text-xs mb-1">নামঃ {currentValues.patientName || "রোগীর নাম"}</div>
-              {currentValues.patientIdDisplay &&
-                <div className="text-xs mb-3 leading-tight">
-                    {currentValues.patientIdDisplay}
+              {selectedPatient?.diaryNumber && (
+                 <div className="text-xs mb-3 leading-tight">
+                    ডায়েরি নং: {String(selectedPatient.diaryNumber).toLocaleString('bn-BD')}
                 </div>
-              }
+              )}
 
 
               <h3 className="text-center font-semibold text-md my-3 underline">ঔষধ খাওয়ার নিয়মাবলী</h3>
@@ -515,13 +495,13 @@ export default function MedicineInstructionsClientLogic() {
         </div>
 
         <div className="meta-info">
-          <span>ক্রমিক নং: {generatedSlipNumber || currentValues.serialNumber || `MI-${(Date.now().toString().slice(-6)).toLocaleString('bn-BD')}`}</span>
+          <span>ক্রমিক নং (স্লিপ): {generatedSlipNumber || currentValues.serialNumber || `N/A`}</span>
           <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : formatDateFns(new Date(), "dd MMMM, yyyy", { locale: bn })}</span>
         </div>
         <div className="patient-name">নামঃ {currentValues.patientName}</div>
-         {currentValues.patientIdDisplay &&
-            <div className="patient-diary-no">
-                {currentValues.patientIdDisplay}
+         {selectedPatient?.diaryNumber &&
+            <div className="patient-diary-no-print text-xs">
+                ডায়েরি নং: {String(selectedPatient.diaryNumber).toLocaleString('bn-BD')}
             </div>
         }
 
@@ -590,7 +570,7 @@ export default function MedicineInstructionsClientLogic() {
 
           .print-instruction-container .meta-info { display: flex; justify-content: space-between; font-size: 10pt; margin-bottom: 1mm; }
           .print-instruction-container .patient-name { font-size: 11pt; margin-bottom: 1mm; }
-          .print-instruction-container .patient-diary-no { font-size: 10pt; margin-bottom: 3mm; line-height: 1.3; }
+          .print-instruction-container .patient-diary-no-print { font-size: 10pt; margin-bottom: 3mm; line-height: 1.3; }
 
           .print-instruction-container .instruction-title { text-align: center; font-size: 14pt; font-weight: bold; text-decoration: underline; margin: 5mm 0; }
           .print-instruction-container .main-instruction {
