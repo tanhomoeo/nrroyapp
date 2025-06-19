@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -13,9 +13,10 @@ import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { getVisits, getPatients, getPaymentSlips, formatDate, formatCurrency, getClinicSettings, PAYMENT_METHOD_LABELS, getPaymentMethodLabel, getWeekRange, getMonthRange } from '@/lib/firestoreService';
 import type { Visit, Patient, PaymentSlip, ClinicSettings, PaymentMethod } from '@/lib/types';
 import { CalendarIcon, Printer, Loader2, Filter } from 'lucide-react';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isValid } from 'date-fns';
+import { format, startOfDay, endOfDay, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { APP_NAME } from '@/lib/constants';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReportData {
   visit: Visit;
@@ -52,101 +53,130 @@ export default function EnhancedReportPage() {
   const [summary, setSummary] = useState({ totalVisits: 0, totalRevenue: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const today = new Date();
-    setSelectedDate(today);
-    setStartDate(today);
-    setEndDate(today);
-
-    const fetchSettings = async () => {
-      const settings = await getClinicSettings();
-      setClinicSettings(settings);
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      try {
+        const settings = await getClinicSettings();
+        setClinicSettings(settings);
+        // Initialize dates here after settings are fetched or if needed
+        const today = new Date();
+        setSelectedDate(today);
+        setStartDate(today); // Default to daily report for today
+        setEndDate(today);
+      } catch (error) {
+        console.error("Failed to fetch clinic settings:", error);
+        toast({ title: "ত্রুটি", description: "ক্লিনিক সেটিংস লোড করা যায়নি।", variant: "destructive" });
+        // Fallback dates if settings fetch fails
+        const today = new Date();
+        setSelectedDate(today);
+        setStartDate(today);
+        setEndDate(today);
+      }
+      // setIsLoading(false); // Moved to generateReport
     };
-    fetchSettings();
-  }, []);
+    fetchInitialData();
+  }, [toast]);
 
   const generateReport = useCallback(async () => {
-    setIsLoading(true);
-
-    const [allVisits, allPatients, allSlips] = await Promise.all([
-        getVisits(),
-        getPatients(),
-        getPaymentSlips()
-    ]);
-
-    let currentReportStartDate: Date | null = null;
-    let currentReportEndDate: Date | null = null;
-    
-    if (reportType === 'daily' && startDate && isValid(startDate)) {
-      currentReportStartDate = startOfDay(startDate);
-      currentReportEndDate = endOfDay(startDate);
-    } else if (reportType === 'weekly' && startDate && isValid(startDate)) {
-      const { start, end } = getWeekRange(startDate);
-      currentReportStartDate = start;
-      currentReportEndDate = end;
-    } else if (reportType === 'monthly' && startDate && isValid(startDate)) {
-      const { start, end } = getMonthRange(startDate);
-      currentReportStartDate = start;
-      currentReportEndDate = end;
-    } else if (reportType === 'custom' && startDate && isValid(startDate) && endDate && isValid(endDate) && startDate <= endDate) {
-      currentReportStartDate = startOfDay(startDate);
-      currentReportEndDate = endOfDay(endDate);
-    }
-
-    if (!currentReportStartDate || !currentReportEndDate) {
+    if (!startDate || (reportType === 'custom' && !endDate)) {
+        // For custom, ensure both dates are set before loading.
+        // For other types, startDate is enough to determine range.
         setReportData([]);
         setSummary({ totalVisits: 0, totalRevenue: 0 });
-        setIsLoading(false);
+        setIsLoading(false); // Ensure loading stops if dates are not ready
         return;
     }
+    setIsLoading(true);
 
-    const dateFilteredVisits = allVisits.filter(visit => {
-        const visitDate = new Date(visit.visitDate);
-        return isValid(visitDate) && visitDate >= currentReportStartDate! && visitDate <= currentReportEndDate!;
-    });
+    try {
+        const [allVisits, allPatients, allSlips] = await Promise.all([
+            getVisits(),
+            getPatients(),
+            getPaymentSlips()
+        ]);
 
-    let processedVisits = dateFilteredVisits;
+        let currentReportStartDate: Date | null = null;
+        let currentReportEndDate: Date | null = null;
+        
+        const baseDateForRange = (selectedDate && isValid(selectedDate)) ? selectedDate : (startDate && isValid(startDate) ? startDate : new Date());
 
-    if (courierDeliveryOnly) {
-      processedVisits = processedVisits.filter(visit => visit.medicineDeliveryMethod === 'courier');
-    }
-
-    const data: ReportData[] = processedVisits.map(visit => {
-      const patient = allPatients.find(p => p.id === visit.patientId);
-      let visitSlips = allSlips.filter(s => {
-        const slipDate = new Date(s.date);
-        return s.visitId === visit.id && 
-               isValid(slipDate) &&
-               slipDate >= currentReportStartDate! && 
-               slipDate <= currentReportEndDate!;
-      });
-
-      if (paymentMethodFilter !== 'all') {
-        visitSlips = visitSlips.filter(s => s.paymentMethod === paymentMethodFilter);
-      }
-
-      const totalAmountFromSlips = visitSlips.reduce((acc, slip) => acc + slip.amount, 0);
-
-      return { visit, patient, slips: visitSlips, totalAmountFromSlips };
-    }).filter(item => { 
-        if (paymentMethodFilter !== 'all') {
-            return item.slips.length > 0; 
+        if (reportType === 'daily' && startDate && isValid(startDate)) {
+          currentReportStartDate = startOfDay(startDate);
+          currentReportEndDate = endOfDay(startDate);
+        } else if (reportType === 'weekly' && baseDateForRange) {
+          const { start, end } = getWeekRange(baseDateForRange);
+          currentReportStartDate = start;
+          currentReportEndDate = end;
+        } else if (reportType === 'monthly' && baseDateForRange) {
+          const { start, end } = getMonthRange(baseDateForRange);
+          currentReportStartDate = start;
+          currentReportEndDate = end;
+        } else if (reportType === 'custom' && startDate && isValid(startDate) && endDate && isValid(endDate) && startDate <= endDate) {
+          currentReportStartDate = startOfDay(startDate);
+          currentReportEndDate = endOfDay(endDate);
         }
-        return true; 
-    });
 
-    setReportData(data.sort((a,b) => new Date(a.visit.visitDate).getTime() - new Date(b.visit.visitDate).getTime() || (a.patient?.name || '').localeCompare(b.patient?.name || '', 'bn')));
+        if (!currentReportStartDate || !currentReportEndDate) {
+            setReportData([]);
+            setSummary({ totalVisits: 0, totalRevenue: 0 });
+            setIsLoading(false);
+            return;
+        }
 
-    const totalRevenue = data.reduce((acc, item) => acc + item.totalAmountFromSlips, 0);
-    setSummary({ totalVisits: data.length, totalRevenue });
-    setIsLoading(false);
-  }, [startDate, endDate, reportType, paymentMethodFilter, courierDeliveryOnly]);
+        const dateFilteredVisits = allVisits.filter(visit => {
+            const visitDate = new Date(visit.visitDate);
+            return isValid(visitDate) && visitDate >= currentReportStartDate! && visitDate <= currentReportEndDate!;
+        });
+
+        let processedVisits = dateFilteredVisits;
+
+        if (courierDeliveryOnly) {
+          processedVisits = processedVisits.filter(visit => visit.medicineDeliveryMethod === 'courier');
+        }
+
+        const data: ReportData[] = processedVisits.map(visit => {
+          const patient = allPatients.find(p => p.id === visit.patientId);
+          let visitSlips = allSlips.filter(s => {
+            const slipDate = new Date(s.date);
+            return s.visitId === visit.id && 
+                   isValid(slipDate) &&
+                   slipDate >= currentReportStartDate! && 
+                   slipDate <= currentReportEndDate!;
+          });
+
+          if (paymentMethodFilter !== 'all') {
+            visitSlips = visitSlips.filter(s => s.paymentMethod === paymentMethodFilter);
+          }
+
+          const totalAmountFromSlips = visitSlips.reduce((acc, slip) => acc + slip.amount, 0);
+
+          return { visit, patient, slips: visitSlips, totalAmountFromSlips };
+        }).filter(item => { 
+            if (paymentMethodFilter !== 'all') {
+                return item.slips.length > 0; 
+            }
+            return true; 
+        });
+
+        setReportData(data.sort((a,b) => new Date(a.visit.visitDate).getTime() - new Date(b.visit.visitDate).getTime() || (a.patient?.name || '').localeCompare(b.patient?.name || '', 'bn')));
+
+        const totalRevenue = data.reduce((acc, item) => acc + item.totalAmountFromSlips, 0);
+        setSummary({ totalVisits: data.length, totalRevenue });
+    } catch (error) {
+        console.error("Error generating report:", error);
+        toast({ title: "রিপোর্ট তৈরি করতে সমস্যা", description: "ডেটা আনতে ত্রুটি হয়েছে।", variant: "destructive" });
+        setReportData([]);
+        setSummary({ totalVisits: 0, totalRevenue: 0 });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [startDate, endDate, reportType, paymentMethodFilter, courierDeliveryOnly, selectedDate, toast]);
 
   useEffect(() => {
-    const today = new Date();
-    const baseDate = (selectedDate && isValid(selectedDate)) ? selectedDate : today;
-
+    const baseDate = (selectedDate && isValid(selectedDate)) ? selectedDate : new Date();
     if (reportType === 'daily') {
         setStartDate(baseDate);
         setEndDate(baseDate);
@@ -159,19 +189,23 @@ export default function EnhancedReportPage() {
         setStartDate(start);
         setEndDate(end);
     }
-    // For 'custom' reportType, startDate and endDate are managed by their respective Popover/Calendar.
-    // This effect does not modify them when reportType is 'custom'.
   }, [reportType, selectedDate]);
 
-
   useEffect(() => {
-    if (startDate && (reportType !== 'custom' || (reportType === 'custom' && endDate && isValid(endDate)))) {
-        if (isValid(startDate)) { // Ensure startDate is valid before generating
-             generateReport();
-        }
+    if (startDate && (reportType !== 'custom' || (reportType === 'custom' && endDate && isValid(endDate) && startDate <= endDate))) {
+        generateReport();
+    } else if (reportType !== 'custom' && !startDate) {
+        // If not custom and startDate becomes undefined, reset to today
+        const today = new Date();
+        setSelectedDate(today);
+        setStartDate(today);
+        setEndDate(today);
+    } else if (reportType === 'custom' && (!startDate || !endDate || startDate > endDate)) {
+        // If custom and dates are invalid/incomplete, clear report
+        setReportData([]);
+        setSummary({ totalVisits: 0, totalRevenue: 0 });
     }
   }, [startDate, endDate, reportType, paymentMethodFilter, courierDeliveryOnly, generateReport]);
-
 
   const handlePrintReport = () => {
     if (typeof window !== 'undefined') {
@@ -184,7 +218,7 @@ export default function EnhancedReportPage() {
     }
   };
 
-  const getReportDateRangeString = (): string => {
+  const getReportDateRangeString = useCallback((): string => {
     if (!startDate || !isValid(startDate)) return "একটি তারিখ নির্বাচন করুন";
     if (reportType === 'daily') return format(startDate, "eeee, dd MMMM, yyyy", { locale: bn });
     if (reportType === 'weekly') {
@@ -196,10 +230,20 @@ export default function EnhancedReportPage() {
       return `${format(startDate, "dd MMM, yyyy", { locale: bn })} থেকে ${format(endDate, "dd MMM, yyyy", { locale: bn })}`;
     }
     return format(startDate, "PPP", { locale: bn });
-  };
+  }, [startDate, endDate, reportType]);
 
   const pageTitle = reportTypeOptions.find(opt => opt.value === reportType)?.label || "প্রতিবেদন";
-  const pageDescription = `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`;
+  
+  const pageDescription = useMemo(() => {
+    if (isLoading && (!startDate || (reportType === 'custom' && !endDate))) { // Show loading if initial dates not set
+      return "রিপোর্টের তথ্য লোড হচ্ছে...";
+    }
+    const dateRangeStr = getReportDateRangeString();
+    const paymentFilterStr = paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : '';
+    const courierFilterStr = courierDeliveryOnly ? ' | শুধু কুরিয়ার' : '';
+    return `তারিখ/পরিসীমা: ${dateRangeStr}${paymentFilterStr}${courierFilterStr}`;
+  }, [isLoading, startDate, endDate, reportType, getReportDateRangeString, paymentMethodFilter, courierDeliveryOnly]);
+
 
   return (
     <div className="space-y-6 print:space-y-2">
@@ -368,7 +412,7 @@ export default function EnhancedReportPage() {
         </div>
       </div>
 
-      {isLoading && !reportData.length && (!startDate || (reportType === 'custom' && !endDate)) ? (
+      {isLoading && !startDate ? (
         <div className="flex justify-center items-center py-10 hide-on-print">
             <p className="text-muted-foreground">রিপোর্ট দেখতে অনুগ্রহ করে তারিখ নির্বাচন করুন।</p>
         </div>
@@ -475,8 +519,8 @@ export default function EnhancedReportPage() {
           .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
           .print\\:whitespace-normal { white-space: normal !important; }
           .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
-          .print\\:col-span-5 { grid-column: span 5 / span 5 !important; } /* Ensure this is used correctly in print table footer */
-          .print\\:col-span-1 { grid-column: span 1 / span 1 !important; } /* Ensure this is used correctly in print table footer */
+          .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
+          .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
           .print\\:w-\\[80px\\] { width: 80px !important; }
         }
         @page {
@@ -487,4 +531,3 @@ export default function EnhancedReportPage() {
     </div>
   );
 }
-    

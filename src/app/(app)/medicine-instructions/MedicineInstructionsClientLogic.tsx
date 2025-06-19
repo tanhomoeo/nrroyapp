@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +22,7 @@ import { format as formatDateFns, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const CreatePaymentSlipModal = dynamic(() =>
   import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
@@ -45,7 +46,7 @@ const instructionsFormSchema = z.object({
   patientName: z.string().min(1, "রোগীর নাম আবশ্যক।"),
   patientActualId: z.string().optional(),
   visitId: z.string().optional(),
-  instructionDate: z.date({ required_error: "নির্দেশনার তারিখ আবশ্যক।" }).optional(), // Optional for initial state
+  instructionDate: z.date({ required_error: "নির্দেশনার তারিখ আবশ্যক।" }).optional(),
   serialNumber: z.string().optional(),
   followUpDays: z.string().min(1, "ফলো-আপ দিন নির্বাচন করুন।"),
   instructionTemplate: z.enum(['template1', 'template2']).default('template1'),
@@ -74,6 +75,7 @@ type InstructionsFormValues = z.infer<typeof instructionsFormSchema>;
 export default function MedicineInstructionsClientLogic() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [generatedInstruction, setGeneratedInstruction] = useState<string>('');
@@ -88,7 +90,7 @@ export default function MedicineInstructionsClientLogic() {
       patientName: '',
       patientActualId: '',
       visitId: '',
-      instructionDate: undefined, // Initialize as undefined
+      instructionDate: undefined,
       serialNumber: '',
       followUpDays: '৭',
       instructionTemplate: 'template1',
@@ -106,65 +108,66 @@ export default function MedicineInstructionsClientLogic() {
 
   const fetchData = useCallback(async () => {
     setIsLoadingPageData(true);
-    const settings = await getClinicSettings();
-    setClinicSettings(settings);
+    try {
+        const settings = await getClinicSettings();
+        setClinicSettings(settings);
 
-    const patientIdFromQuery = searchParams.get('patientId');
-    const patientNameFromQuery = searchParams.get('name');
-    const visitIdFromQuery = searchParams.get('visitId');
+        const patientIdFromQuery = searchParams.get('patientId');
+        const patientNameFromQuery = searchParams.get('name');
+        const visitIdFromQuery = searchParams.get('visitId');
 
-    let formDataUpdate: Partial<InstructionsFormValues> = {};
-    let initialInstructionDate: Date | undefined = undefined;
+        let formDataUpdate: Partial<InstructionsFormValues> = {};
+        let localSelectedPatient: Patient | null = null;
 
-    if (visitIdFromQuery) {
-      formDataUpdate.visitId = visitIdFromQuery;
+        if (visitIdFromQuery) {
+            formDataUpdate.visitId = visitIdFromQuery;
+        }
+
+        if (patientIdFromQuery) {
+            const patientData = await getPatientById(patientIdFromQuery);
+            if (patientData) {
+                localSelectedPatient = patientData;
+                formDataUpdate.patientName = patientData.name;
+                formDataUpdate.patientActualId = patientData.id;
+                formDataUpdate.serialNumber = patientData.diaryNumber ? String(patientData.diaryNumber) : `MI-${String(Date.now()).slice(-6)}`;
+            } else if (patientNameFromQuery) {
+                formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
+                formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
+            } else {
+                formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
+            }
+        } else if (patientNameFromQuery) {
+            formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
+            formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
+        } else {
+            formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
+        }
+        
+        setSelectedPatient(localSelectedPatient);
+        form.reset({
+            ...form.getValues(),
+            ...formDataUpdate,
+            instructionDate: undefined, // Will be set by client-side effect
+        });
+        setPaymentCompleted(false);
+
+    } catch (error) {
+        console.error("Error fetching initial data for medicine instructions:", error);
+        toast({ title: "ত্রুটি", description: "পৃষ্ঠার তথ্য লোড করতে সমস্যা হয়েছে।", variant: "destructive" });
+    } finally {
+        setIsLoadingPageData(false);
     }
-
-    if (patientIdFromQuery) {
-      const patientData = await getPatientById(patientIdFromQuery);
-      if (patientData) {
-        setSelectedPatient(patientData);
-        formDataUpdate.patientName = patientData.name;
-        formDataUpdate.patientActualId = patientData.id;
-        formDataUpdate.serialNumber = patientData.diaryNumber ? String(patientData.diaryNumber) : 'N/A';
-      } else if (patientNameFromQuery) {
-         formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
-         formDataUpdate.serialNumber = 'N/A';
-         setSelectedPatient(null);
-      } else {
-        setSelectedPatient(null);
-      }
-    } else if (patientNameFromQuery) {
-      formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
-      formDataUpdate.serialNumber = 'N/A';
-      setSelectedPatient(null);
-    } else {
-      setSelectedPatient(null);
-      formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
-    }
-
-    // instructionDate will be set by useEffect after this reset
-    form.reset({
-      ...form.getValues(), // Start with existing (potentially default) values
-      ...formDataUpdate,    // Override with fetched/query data
-      instructionDate: initialInstructionDate, // Reset with undefined, to be set by client-side effect
-    });
-
-    setPaymentCompleted(false);
-    setIsLoadingPageData(false);
-  }, [searchParams, form]);
+  }, [searchParams, form, toast]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Effect to set instructionDate to new Date() if it's still undefined after initial load
   useEffect(() => {
     if (!isLoadingPageData && form.getValues('instructionDate') === undefined) {
       form.setValue('instructionDate', new Date());
     }
   }, [isLoadingPageData, form]);
-
 
   const generateInstructionText = (data: InstructionsFormValues): string => {
     if (data.instructionTemplate === 'template1') {
@@ -204,7 +207,7 @@ export default function MedicineInstructionsClientLogic() {
     if (selectedPatient && form.getValues('visitId')) {
       setIsPaymentModalOpen(true);
     } else {
-        alert("রোগীর তথ্য বা ভিজিট আইডি পাওয়া যায়নি। পেমেন্ট মডাল খোলা সম্ভব হচ্ছে না।");
+        toast({ title: "ত্রুটি", description: "রোগীর তথ্য বা ভিজিট আইডি পাওয়া যায়নি। পেমেন্ট মডাল খোলা সম্ভব হচ্ছে না।", variant: "destructive" });
     }
   };
 
@@ -220,7 +223,6 @@ export default function MedicineInstructionsClientLogic() {
     router.push(ROUTES.DASHBOARD);
   };
 
-
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-input bg-card shadow-inner overflow-hidden focus-within:ring-1 focus-within:ring-ring focus-within:border-primary";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base placeholder-muted-foreground";
   const readOnlyInputClass = "bg-muted/30 cursor-default";
@@ -230,7 +232,18 @@ export default function MedicineInstructionsClientLogic() {
   const previewSlipNumber = currentValues.serialNumber || 'N/A';
   const isPatientNamePrefilled = !!searchParams.get('name') || !!selectedPatient;
 
-  if (isLoadingPageData) {
+  const pageHeaderDescription = useMemo(() => {
+    if (isLoadingPageData) {
+      return "ঔষধের নিয়মাবলী লোড হচ্ছে...";
+    }
+    if (selectedPatient) {
+      const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
+      return `রোগী: ${selectedPatient.name}${diaryStr}`;
+    }
+    return "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
+  }, [isLoadingPageData, selectedPatient]);
+
+  if (isLoadingPageData && !selectedPatient && !searchParams.get('name')) { // Show full page loader only if no patient context at all
       return (
         <div className="flex h-screen items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -238,15 +251,6 @@ export default function MedicineInstructionsClientLogic() {
         </div>
       );
   }
-
-  let pageHeaderDescriptionText: string;
-  if (selectedPatient) {
-    const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
-    pageHeaderDescriptionText = `রোগী: ${selectedPatient.name}${diaryStr}`;
-  } else {
-    pageHeaderDescriptionText = "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
-  }
-  const pageHeaderDescription = pageHeaderDescriptionText;
 
   return (
     <div className="space-y-6">
