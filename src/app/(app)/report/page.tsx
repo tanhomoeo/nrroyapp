@@ -42,9 +42,9 @@ const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string 
 
 export default function EnhancedReportPage() {
   const [reportType, setReportType] = useState<ReportType>('daily');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Used for date picker anchor
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined); // Used for date picker anchor
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<PaymentMethod | 'all'>('all');
   const [courierDeliveryOnly, setCourierDeliveryOnly] = useState(false);
 
@@ -52,19 +52,21 @@ export default function EnhancedReportPage() {
   const [summary, setSummary] = useState({ totalVisits: 0, totalRevenue: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings | null>(null);
-  const [clientRenderedTimestamp, setClientRenderedTimestamp] = useState<Date | null>(null);
 
   useEffect(() => {
-    setClientRenderedTimestamp(new Date());
-  }, []);
+    // Set initial dates on client-side mount
+    const today = new Date();
+    setSelectedDate(today);
+    setStartDate(today);
+    setEndDate(today);
 
-  useEffect(() => {
     const fetchSettings = async () => {
       const settings = await getClinicSettings();
       setClinicSettings(settings);
     };
     fetchSettings();
   }, []);
+
 
   const generateReport = useCallback(async () => {
     setIsLoading(true);
@@ -76,16 +78,12 @@ export default function EnhancedReportPage() {
     ]);
 
     let dateFilteredVisits: Visit[] = [];
-    let currentReportStartDate: Date = new Date();
-    let currentReportEndDate: Date = new Date();
-    currentReportStartDate.setHours(0, 0, 0, 0);
-    currentReportEndDate.setHours(23, 59, 59, 999);
-
+    let currentReportStartDate: Date | null = null;
+    let currentReportEndDate: Date | null = null;
+    
     if (reportType === 'daily' && startDate) {
-      currentReportStartDate = new Date(startDate);
-      currentReportStartDate.setHours(0,0,0,0);
-      currentReportEndDate = new Date(startDate);
-      currentReportEndDate.setHours(23,59,59,999);
+      currentReportStartDate = startOfDay(startDate);
+      currentReportEndDate = endOfDay(startDate);
     } else if (reportType === 'weekly' && startDate) {
       const { start, end } = getWeekRange(startDate);
       currentReportStartDate = start;
@@ -95,11 +93,11 @@ export default function EnhancedReportPage() {
       currentReportStartDate = start;
       currentReportEndDate = end;
     } else if (reportType === 'custom' && startDate && endDate && startDate <= endDate) {
-      currentReportStartDate = new Date(startDate);
-      currentReportStartDate.setHours(0,0,0,0);
-      currentReportEndDate = new Date(endDate);
-      currentReportEndDate.setHours(23,59,59,999);
-    } else {
+      currentReportStartDate = startOfDay(startDate);
+      currentReportEndDate = endOfDay(endDate);
+    }
+
+    if (!currentReportStartDate || !currentReportEndDate) {
         setReportData([]);
         setSummary({ totalVisits: 0, totalRevenue: 0 });
         setIsLoading(false);
@@ -108,7 +106,7 @@ export default function EnhancedReportPage() {
 
     dateFilteredVisits = allVisits.filter(visit => {
         const visitDate = new Date(visit.visitDate);
-        return visitDate >= currentReportStartDate && visitDate <= currentReportEndDate;
+        return visitDate >= currentReportStartDate! && visitDate <= currentReportEndDate!;
     });
 
     let processedVisits = dateFilteredVisits;
@@ -121,8 +119,8 @@ export default function EnhancedReportPage() {
       const patient = allPatients.find(p => p.id === visit.patientId);
       let visitSlips = allSlips.filter(s =>
         s.visitId === visit.id &&
-        new Date(s.date) >= currentReportStartDate && // Also filter slips by the report date range
-        new Date(s.date) <= currentReportEndDate
+        new Date(s.date) >= currentReportStartDate! && 
+        new Date(s.date) <= currentReportEndDate!
       );
 
       if (paymentMethodFilter !== 'all') {
@@ -132,11 +130,11 @@ export default function EnhancedReportPage() {
       const totalAmountFromSlips = visitSlips.reduce((acc, slip) => acc + slip.amount, 0);
 
       return { visit, patient, slips: visitSlips, totalAmountFromSlips };
-    }).filter(item => { // Ensure items are filtered out if no slips match paymentMethodFilter
+    }).filter(item => { 
         if (paymentMethodFilter !== 'all') {
-            return item.slips.length > 0; // Only include if there are slips matching the filter
+            return item.slips.length > 0; 
         }
-        return true; // Include all items if filter is 'all'
+        return true; 
     });
 
     setReportData(data.sort((a,b) => new Date(a.visit.visitDate).getTime() - new Date(b.visit.visitDate).getTime() || (a.patient?.name || '').localeCompare(b.patient?.name || '', 'bn')));
@@ -148,26 +146,29 @@ export default function EnhancedReportPage() {
 
   useEffect(() => {
     const today = new Date();
+    const currentSelectedDate = selectedDate || today; // Use today if selectedDate is not yet set
+
     if (reportType === 'daily') {
-        setStartDate(selectedDate);
-        setEndDate(selectedDate);
+        setStartDate(currentSelectedDate);
+        setEndDate(currentSelectedDate);
     } else if (reportType === 'weekly') {
-        const { start, end } = getWeekRange(selectedDate);
+        const { start, end } = getWeekRange(currentSelectedDate);
         setStartDate(start);
         setEndDate(end);
     } else if (reportType === 'monthly') {
-        const { start, end } = getMonthRange(selectedDate);
+        const { start, end } = getMonthRange(currentSelectedDate);
         setStartDate(start);
         setEndDate(end);
     } else if (reportType === 'custom') {
+        // For custom, ensure startDate and endDate are set, if not, default them.
         if (!startDate) setStartDate(today);
         if (!endDate) setEndDate(today);
     }
-  }, [reportType, selectedDate, startDate, endDate]);
+  }, [reportType, selectedDate]); // Removed startDate, endDate from deps to avoid loop with generateReport effect
 
 
   useEffect(() => {
-    if ((reportType === 'custom' && startDate && endDate) || (reportType !== 'custom' && startDate)) {
+    if (startDate && (reportType !== 'custom' || (reportType === 'custom' && endDate))) {
         generateReport();
     }
   }, [startDate, endDate, reportType, paymentMethodFilter, courierDeliveryOnly, generateReport]);
@@ -195,7 +196,7 @@ export default function EnhancedReportPage() {
     if (reportType === 'custom' && endDate && startDate <= endDate) {
       return `${format(startDate, "dd MMM, yyyy", { locale: bn })} থেকে ${format(endDate, "dd MMM, yyyy", { locale: bn })}`;
     }
-    return format(startDate, "PPP", { locale: bn });
+    return startDate ? format(startDate, "PPP", { locale: bn }) : "একটি তারিখ নির্বাচন করুন";
   };
 
   const pageTitle = reportTypeOptions.find(opt => opt.value === reportType)?.label || "প্রতিবেদন";
@@ -366,10 +367,13 @@ export default function EnhancedReportPage() {
               </TableFooter>
             </Table>
         </div>
-         {/* Footer removed as per request */}
       </div>
 
-      {isLoading && !reportData.length ? (
+      {isLoading && !reportData.length && (!startDate || (reportType === 'custom' && !endDate)) ? ( // Adjusted loading condition
+        <div className="flex justify-center items-center py-10 hide-on-print">
+            <p className="text-muted-foreground">রিপোর্ট দেখতে অনুগ্রহ করে তারিখ নির্বাচন করুন।</p>
+        </div>
+      ) : isLoading ? (
         <div className="flex justify-center items-center py-10 hide-on-print">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="ml-2 text-muted-foreground">রিপোর্ট ডেটা লোড হচ্ছে...</p>
@@ -437,7 +441,7 @@ export default function EnhancedReportPage() {
         </div>
       )}
 
-       <style jsx global>{`
+       <style jsx global>{\`
         .print-only-block { display: none; }
         @media print {
           .hide-on-print { display: none !important; }
@@ -467,7 +471,6 @@ export default function EnhancedReportPage() {
           .report-table-container th { background-color: #f0f0f0 !important; font-weight: bold; }
           .report-table-container td.text-right, .report-table-container th.text-right { text-align: right; }
           .report-table-container td.text-center, .report-table-container th.text-center { text-align: center; }
-          /* Footer removed as per request */
           .print\\:hidden { display: none !important; }
           .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
           .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
@@ -481,7 +484,7 @@ export default function EnhancedReportPage() {
           size: A4 landscape;
           margin: 10mm;
         }
-      `}</style>
+      \`}</style>
     </div>
   );
 }

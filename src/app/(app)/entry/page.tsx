@@ -45,7 +45,7 @@ type PatientFormValues = z.infer<typeof patientFormSchema>;
 export default function PatientEntryPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false); // Kept for potential future use, though not directly used now
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function PatientEntryPage() {
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
-      registrationDate: new Date(),
+      registrationDate: undefined, // Changed from new Date()
       diaryNumber: '',
       name: '',
       age: '',
@@ -67,6 +67,14 @@ export default function PatientEntryPage() {
       villageUnion: '',
     },
   });
+
+  useEffect(() => {
+    // Set registrationDate to new Date() on client-side mount if it's not already set
+    if (!form.getValues('registrationDate')) {
+      form.setValue('registrationDate', new Date());
+    }
+  }, [form]);
+
 
   const onSubmit: SubmitHandler<PatientFormValues> = async (data) => {
     try {
@@ -93,7 +101,7 @@ export default function PatientEntryPage() {
       });
 
       form.reset({
-        registrationDate: new Date(),
+        registrationDate: new Date(), // Reset to new Date for the next entry
         diaryNumber: '',
         name: '',
         age: '',
@@ -132,7 +140,7 @@ export default function PatientEntryPage() {
   const selectTriggerClass = "flex h-10 items-center w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-150 text-slate-800 dark:text-slate-100";
 
 
-  if (isLoadingSettings) {
+  if (isLoadingSettings) { // Kept for potential future use
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -487,3 +495,5 @@ export default function PatientEntryPage() {
     </div>
   );
 }
+
+    

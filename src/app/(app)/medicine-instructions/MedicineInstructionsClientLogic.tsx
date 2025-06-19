@@ -46,7 +46,7 @@ const instructionsFormSchema = z.object({
   patientActualId: z.string().optional(),
   visitId: z.string().optional(),
   instructionDate: z.date({ required_error: "নির্দেশনার তারিখ আবশ্যক।" }),
-  serialNumber: z.string().optional(), // This will hold the diary number
+  serialNumber: z.string().optional(), 
   followUpDays: z.string().min(1, "ফলো-আপ দিন নির্বাচন করুন।"),
   instructionTemplate: z.enum(['template1', 'template2']).default('template1'),
   dropsT1: z.string().optional(),
@@ -88,8 +88,8 @@ export default function MedicineInstructionsClientLogic() {
       patientName: '',
       patientActualId: '',
       visitId: '',
-      instructionDate: new Date(),
-      serialNumber: '', // Will be populated with diary number
+      instructionDate: undefined, // Changed from new Date()
+      serialNumber: '', 
       followUpDays: '৭',
       instructionTemplate: 'template1',
       dropsT1: '৫',
@@ -114,31 +114,46 @@ export default function MedicineInstructionsClientLogic() {
       const patientNameFromQuery = searchParams.get('name');
       const visitIdFromQuery = searchParams.get('visitId');
 
+      let formDataUpdate: Partial<InstructionsFormValues> = {};
+
       if (visitIdFromQuery) {
-        form.setValue('visitId', visitIdFromQuery);
+        formDataUpdate.visitId = visitIdFromQuery;
       }
 
       if (patientIdFromQuery) {
         const patient = await getPatientById(patientIdFromQuery);
         if (patient) {
           setSelectedPatient(patient);
-          form.setValue('patientName', patient.name);
-          form.setValue('patientActualId', patient.id);
-          form.setValue('serialNumber', patient.diaryNumber ? String(patient.diaryNumber) : 'N/A');
+          formDataUpdate.patientName = patient.name;
+          formDataUpdate.patientActualId = patient.id;
+          formDataUpdate.serialNumber = patient.diaryNumber ? String(patient.diaryNumber) : 'N/A';
         } else if (patientNameFromQuery) {
-           form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
-           form.setValue('serialNumber', 'N/A'); // No patient, so no diary number for serial
+           formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
+           formDataUpdate.serialNumber = 'N/A';
            setSelectedPatient(null);
         }
       } else if (patientNameFromQuery) {
-        form.setValue('patientName', decodeURIComponent(patientNameFromQuery));
-        form.setValue('serialNumber', 'N/A');
+        formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
+        formDataUpdate.serialNumber = 'N/A';
         setSelectedPatient(null);
       } else {
         setSelectedPatient(null);
-        // Fallback if no patient context - ensure it's a string
-        form.setValue('serialNumber', `MI-${String(Date.now()).slice(-6)}`); 
+        formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
       }
+      
+      Object.keys(formDataUpdate).forEach(keyStr => {
+          const key = keyStr as keyof InstructionsFormValues;
+          if (formDataUpdate[key] !== undefined) { // Only set if value exists in formDataUpdate
+            form.setValue(key, formDataUpdate[key]);
+          }
+      });
+      
+      // Set instructionDate to new Date() on client-side mount if it's not already set
+      // This happens after potentially loading existing data which might include a date
+      if (!form.getValues('instructionDate')) {
+        form.setValue('instructionDate', new Date());
+      }
+
       setPaymentCompleted(false);
       setIsLoadingPageData(false);
     };
@@ -158,7 +173,7 @@ export default function MedicineInstructionsClientLogic() {
 
   const onSubmit: SubmitHandler<InstructionsFormValues> = (data) => {
     setGeneratedInstruction(generateInstructionText(data));
-    setGeneratedSlipNumber(data.serialNumber || 'N/A'); // Use diary number or N/A
+    setGeneratedSlipNumber(data.serialNumber || 'N/A'); 
     setTimeout(() => {
       if (typeof window !== 'undefined') {
         const elementsToHide = document.querySelectorAll('.hide-on-print');
@@ -210,10 +225,14 @@ export default function MedicineInstructionsClientLogic() {
       );
   }
   
-  const pageHeaderDescription = selectedPatient 
-    ? `রোগী: ${selectedPatient.name}${selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : ''}`
-    : "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
-
+  let pageHeaderDescriptionText: string;
+  if (selectedPatient) {
+    const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
+    pageHeaderDescriptionText = `রোগী: ${selectedPatient.name}${diaryStr}`;
+  } else {
+    pageHeaderDescriptionText = "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
+  }
+  const pageHeaderDescription = pageHeaderDescriptionText;
 
   return (
     <div className="space-y-6">
@@ -453,7 +472,7 @@ export default function MedicineInstructionsClientLogic() {
 
               <div className="flex justify-between text-xs mb-1">
                 <span>ক্রমিক নং (স্লিপ): {previewSlipNumber}</span>
-                <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : formatDateFns(new Date(), "dd/MM/yyyy", {locale: bn})}</span>
+                <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : "..."}</span>
               </div>
               <div className="text-xs mb-1">নামঃ {currentValues.patientName || "রোগীর নাম"}</div>
               {selectedPatient?.diaryNumber && (
@@ -497,7 +516,7 @@ export default function MedicineInstructionsClientLogic() {
 
         <div className="meta-info">
           <span>ক্রমিক নং (স্লিপ): {generatedSlipNumber || currentValues.serialNumber || `N/A`}</span>
-          <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : formatDateFns(new Date(), "dd MMMM, yyyy", { locale: bn })}</span>
+          <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? formatDateFns(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : "..."}</span>
         </div>
         <div className="patient-name">নামঃ {currentValues.patientName}</div>
          {selectedPatient?.diaryNumber &&
@@ -603,3 +622,5 @@ export default function MedicineInstructionsClientLogic() {
     </div>
   );
 }
+
+    
