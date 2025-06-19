@@ -57,13 +57,13 @@ export default function EnhancedReportPage() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       try {
         const settings = await getClinicSettings();
         setClinicSettings(settings);
         const today = new Date();
-        setSelectedDate(today); // Set for non-custom reports
-        setStartDate(startOfDay(today)); // Default to daily report for today
+        setSelectedDate(today);
+        setStartDate(startOfDay(today));
         setEndDate(endOfDay(today));
       } catch (error) {
         console.error("Failed to fetch clinic settings:", error);
@@ -73,7 +73,6 @@ export default function EnhancedReportPage() {
         setStartDate(startOfDay(today));
         setEndDate(endOfDay(today));
       }
-      // setIsLoading(false); // Loading will be set to false in generateReport
     };
     fetchInitialData();
   }, [toast]);
@@ -141,7 +140,7 @@ export default function EnhancedReportPage() {
         const data: ReportData[] = processedVisits.map(visit => {
           const patient = allPatients.find(p => p.id === visit.patientId);
           let visitSlips = allSlips.filter(s => {
-            const slipDate = new Date(s.date); // Assuming slip.date is ISO string
+            const slipDate = new Date(s.date);
             return s.visitId === visit.id && 
                    isValid(slipDate) &&
                    slipDate >= finalStartDate && 
@@ -190,17 +189,15 @@ export default function EnhancedReportPage() {
         setStartDate(startOfDay(start));
         setEndDate(endOfDay(end));
     }
-    // For 'custom', startDate and endDate are set by the user via Popovers
   }, [reportType, selectedDate]);
 
   useEffect(() => {
     if (startDate && (reportType !== 'custom' || (reportType === 'custom' && endDate && isValid(endDate) && startDate <= endDate))) {
         generateReport();
     } else if (reportType === 'custom' && (!startDate || !endDate || (endDate && isValid(endDate) && startDate && startDate > endDate))) {
-        // For custom reports, if dates are incomplete or invalid range, clear the report.
         setReportData([]);
         setSummary({ totalVisits: 0, totalRevenue: 0 });
-        setIsLoading(false); // Ensure loading stops
+        setIsLoading(false);
     }
   }, [startDate, endDate, reportType, paymentMethodFilter, courierDeliveryOnly, generateReport]);
 
@@ -220,22 +217,21 @@ export default function EnhancedReportPage() {
     if (!startDate || !isValid(startDate)) return "একটি তারিখ নির্বাচন করুন";
     if (reportType === 'daily') return format(startDate, "eeee, dd MMMM, yyyy", { locale: bn });
     if (reportType === 'weekly') {
-      const { start, end } = getWeekRange(startDate); // Use current startDate
+      const { start, end } = getWeekRange(startDate);
       return `${format(start, "dd MMM", { locale: bn })} - ${format(end, "dd MMM, yyyy", { locale: bn })}`;
     }
-    if (reportType === 'monthly') return format(startDate, "MMMM, yyyy", { locale: bn }); // Use current startDate
+    if (reportType === 'monthly') return format(startDate, "MMMM, yyyy", { locale: bn });
     if (reportType === 'custom' && endDate && isValid(endDate) && startDate <= endDate) {
       return `${format(startDate, "dd MMM, yyyy", { locale: bn })} থেকে ${format(endDate, "dd MMM, yyyy", { locale: bn })}`;
     }
-    // Fallback for custom if endDate is not set or invalid
     if (reportType === 'custom') return `${format(startDate, "dd MMM, yyyy", { locale: bn })} থেকে (শেষ তারিখ নির্বাচন করুন)`;
     
-    return format(startDate, "PPP", { locale: bn }); // General fallback
+    return format(startDate, "PPP", { locale: bn });
   }, [startDate, endDate, reportType]);
 
-  const pageTitle = reportTypeOptions.find(opt => opt.value === reportType)?.label || "প্রতিবেদন";
+  const currentReportTypeOption = reportTypeOptions.find(opt => opt.value === reportType);
+  const pageTitle = currentReportTypeOption ? currentReportTypeOption.label : "প্রতিবেদন";
   
-
   return (
     <div className="space-y-6 print:space-y-2">
       <PageHeaderCard
@@ -403,7 +399,7 @@ export default function EnhancedReportPage() {
         </div>
       </div>
 
-      {isLoading && (!startDate || (reportType === 'custom' && !endDate)) ? ( // Updated loading condition
+      {isLoading && (!startDate || (reportType === 'custom' && !endDate)) ? (
         <div className="flex justify-center items-center py-10 hide-on-print">
             <p className="text-muted-foreground">রিপোর্ট দেখতে অনুগ্রহ করে তারিখ নির্বাচন করুন।</p>
         </div>

@@ -145,9 +145,9 @@ export default function MedicineInstructionsClientLogic() {
         
         setSelectedPatient(localSelectedPatient);
         form.reset({
-            ...form.getValues(), // keep existing form values (like template selection)
-            ...formDataUpdate, // apply fetched data
-            instructionDate: formDataUpdate.instructionDate || undefined, // Ensure instructionDate is handled correctly or reset
+            ...form.getValues(),
+            ...formDataUpdate,
+            instructionDate: formDataUpdate.instructionDate || undefined,
         });
         setPaymentCompleted(false);
 
@@ -157,7 +157,7 @@ export default function MedicineInstructionsClientLogic() {
     } finally {
         setIsLoadingPageData(false);
     }
-  }, [searchParams, form, toast]); // form added as dependency because form.reset is used
+  }, [searchParams, form, toast]);
 
   useEffect(() => {
     fetchData();
@@ -230,22 +230,19 @@ export default function MedicineInstructionsClientLogic() {
   const readOnlyInputClass = "bg-muted/30 cursor-default";
 
   const currentValues = form.watch();
-  const previewInstructionText = generateInstructionText(currentValues);
-  const previewSlipNumber = currentValues.serialNumber || 'N/A';
+  const previewInstructionText = useMemo(() => generateInstructionText(currentValues), [currentValues]);
+  const previewSlipNumber = useMemo(() => currentValues.serialNumber || 'N/A', [currentValues.serialNumber]);
   const isPatientNamePrefilled = !!searchParams.get('name') || !!selectedPatient;
 
-
-  const pageHeaderDescriptionText = useMemo(() => {
-    if (isLoadingPageData) {
-      return "ঔষধের নিয়মাবলী লোড হচ্ছে...";
-    }
-    if (selectedPatient) {
-      const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
-      return `রোগী: ${selectedPatient.name}${diaryStr}`;
-    }
-    return "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
-  }, [isLoadingPageData, selectedPatient]);
-
+  let pageHeaderDescriptionText;
+  if (isLoadingPageData) {
+    pageHeaderDescriptionText = "ঔষধের নিয়মাবলী লোড হচ্ছে...";
+  } else if (selectedPatient) {
+    const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
+    pageHeaderDescriptionText = `রোগী: ${selectedPatient.name}${diaryStr}`;
+  } else {
+    pageHeaderDescriptionText = "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
+  }
 
   if (isLoadingPageData && !selectedPatient && !searchParams.get('name')) { 
       return (
@@ -256,18 +253,11 @@ export default function MedicineInstructionsClientLogic() {
       );
   }
 
-
   return (
     <div className="space-y-6">
       <PageHeaderCard
         title="ঔষধ খাওয়ার নিয়মাবলী"
-        description={
-            isLoadingPageData 
-            ? "ঔষধের নিয়মাবলী লোড হচ্ছে..." 
-            : selectedPatient 
-              ? `রোগী: ${selectedPatient.name}${selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : ''}`
-              : "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।"
-        }
+        description={pageHeaderDescriptionText}
         actions={<ClipboardList className="h-8 w-8 text-primary" />}
         className="hide-on-print"
       />
