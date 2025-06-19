@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json", // Link to the manifest file
   icons: {
     icon: [
-      { url: '/image/favicon.ico', sizes: 'any', rel: 'icon', type: 'image/x-icon' },
+      { url: '/icons/favicon.ico', sizes: 'any', rel: 'icon', type: 'image/x-icon' }, // Updated favicon path
       { url: '/image/icon-16x16.png', type: 'image/png', sizes: '16x16' },
       { url: '/image/icon-32x32.png', type: 'image/png', sizes: '32x32' },
       { url: '/icons/icon.png', type: 'image/png', sizes: '192x192' }, // PWA icon
