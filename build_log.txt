@@ -1,0 +1,53 @@
+
+> nextn@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.5
+  - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./src/app/(app)/medicine-instructions/MedicineInstructionsClientLogic.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/user/studio/src/app/(app)/medicine-instructions/MedicineInstructionsClientLogic.tsx[0m:249:1]
+ [2m249[0m |   const pageHeaderDescription = pageHeaderDescriptionText;
+ [2m250[0m | 
+ [2m251[0m |   return (
+ [2m252[0m |     <div className="space-y-6">
+     : [31;1m     ^^^[0m
+ [2m253[0m |       <PageHeaderCard
+ [2m254[0m |         title="ঔষধ খাওয়ার নিয়মাবলী"
+ [2m255[0m |         description={pageHeaderDescription}
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/(app)/medicine-instructions/MedicineInstructionsClientLogic.tsx
+./src/app/(app)/medicine-instructions/page.tsx
+
+./src/app/(app)/report/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4m/home/user/studio/src/app/(app)/report/page.tsx[0m:202:1]
+ [2m202[0m |   const pageDescription = `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`;
+ [2m203[0m | 
+ [2m204[0m |   return (
+ [2m205[0m |     <div className="space-y-6 print:space-y-2">
+     : [31;1m     ^^^[0m
+ [2m206[0m |       <PageHeaderCard
+ [2m207[0m |         title={pageTitle}
+ [2m208[0m |         description={pageDescription}
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/(app)/report/page.tsx
+
+
+> Build failed because of webpack errors
