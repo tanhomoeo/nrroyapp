@@ -55,35 +55,35 @@ body {
     /* Theme 1: Blue (like 'W' icon) */
     --btn-theme1-bg-light: hsl(210 75% 55%);
     --btn-theme1-hover-bg-light: hsl(210 75% 50%);
-    --btn-theme1-border-light: hsl(210 60% 45%);
+    --btn-theme1-border-light: hsl(210 60% 45% / 0); /* Transparent Border */
     /* Theme 2: Purple (like 'UI' icon) */
     --btn-theme2-bg-light: hsl(265 60% 60%);
     --btn-theme2-hover-bg-light: hsl(265 60% 55%);
-    --btn-theme2-border-light: hsl(265 45% 50%);
+    --btn-theme2-border-light: hsl(265 45% 50% / 0); /* Transparent Border */
     /* Theme 3: Orange (like '>' icon) */
     --btn-theme3-bg-light: hsl(25 85% 60%);
     --btn-theme3-hover-bg-light: hsl(25 85% 55%);
-    --btn-theme3-border-light: hsl(25 70% 50%);
+    --btn-theme3-border-light: hsl(25 70% 50% / 0); /* Transparent Border */
     /* Theme 4: Green */
     --btn-theme4-bg-light: hsl(145 58% 50%);
     --btn-theme4-hover-bg-light: hsl(145 58% 45%);
-    --btn-theme4-border-light: hsl(145 40% 40%);
+    --btn-theme4-border-light: hsl(145 40% 40% / 0); /* Transparent Border */
     /* Theme 5: Teal */
     --btn-theme5-bg-light: hsl(170 60% 45%);
     --btn-theme5-hover-bg-light: hsl(170 60% 40%);
-    --btn-theme5-border-light: hsl(170 45% 35%);
+    --btn-theme5-border-light: hsl(170 45% 35% / 0); /* Transparent Border */
     /* Theme 6: Slate Gray */
     --btn-theme6-bg-light: hsl(215 30% 65%);
     --btn-theme6-hover-bg-light: hsl(215 30% 60%);
-    --btn-theme6-border-light: hsl(215 20% 55%);
+    --btn-theme6-border-light: hsl(215 20% 55% / 0); /* Transparent Border */
 
     /* Default Submenu Button Styles (If not themed) - Light - Based on existing but lighter */
     --sidebar-button-bg-light: hsl(210 50% 96%); /* Lighter than previous */
     --sidebar-button-hover-bg-light: hsl(210 50% 92%);
-    --sidebar-button-border: hsl(210 30% 88%);
-    --sidebar-button-shadow: 0 1px 2px hsla(210, 20%, 50%, 0.1), inset 0 1px 0px hsla(0, 0%, 100%, 0.2);
-    --sidebar-button-hover-shadow: 0 2px 3px hsla(210, 20%, 50%, 0.15), inset 0 1px 0px hsla(0, 0%, 100%, 0.2), 0 0 0 1px hsla(210, 30%, 85%, 0.5);
-    --sidebar-button-active-shadow: inset 0 1px 2px hsla(210, 20%, 50%, 0.15);
+    --sidebar-button-border: hsl(210 30% 88% / 0); /* Transparent Border */
+    --sidebar-button-shadow: 0 2px 5px hsl(210 20% 50% / 0.1), 0 1px 1px hsl(210 20% 50% / 0.05); /* New 3D Shadow */
+    --sidebar-button-hover-shadow: 0 4px 8px hsl(210 20% 50% / 0.12), 0 2px 3px hsl(210 20% 50% / 0.08); /* Enhanced Hover Shadow */
+    --sidebar-button-active-shadow: inset 0 2px 4px hsl(210 20% 50% / 0.15); /* Pressed-in Shadow */
   }
 
   .dark {
@@ -132,35 +132,35 @@ body {
     /* Sidebar Menu Button Theming - Dark */
     --btn-theme1-bg-dark: hsl(210 60% 40%);
     --btn-theme1-hover-bg-dark: hsl(210 60% 45%);
-    --btn-theme1-border-dark: hsl(210 50% 30%);
+    --btn-theme1-border-dark: hsl(210 50% 30% / 0); /* Transparent Border */
 
     --btn-theme2-bg-dark: hsl(265 50% 45%);
     --btn-theme2-hover-bg-dark: hsl(265 50% 50%);
-    --btn-theme2-border-dark: hsl(265 35% 35%);
+    --btn-theme2-border-dark: hsl(265 35% 35% / 0); /* Transparent Border */
 
     --btn-theme3-bg-dark: hsl(25 70% 45%);
     --btn-theme3-hover-bg-dark: hsl(25 70% 50%);
-    --btn-theme3-border-dark: hsl(25 55% 35%);
+    --btn-theme3-border-dark: hsl(25 55% 35% / 0); /* Transparent Border */
 
     --btn-theme4-bg-dark: hsl(145 50% 35%);
     --btn-theme4-hover-bg-dark: hsl(145 50% 40%);
-    --btn-theme4-border-dark: hsl(145 30% 25%);
+    --btn-theme4-border-dark: hsl(145 30% 25% / 0); /* Transparent Border */
 
     --btn-theme5-bg-dark: hsl(170 50% 30%);
     --btn-theme5-hover-bg-dark: hsl(170 50% 35%);
-    --btn-theme5-border-dark: hsl(170 30% 20%);
+    --btn-theme5-border-dark: hsl(170 30% 20% / 0); /* Transparent Border */
 
     --btn-theme6-bg-dark: hsl(215 25% 45%);
     --btn-theme6-hover-bg-dark: hsl(215 25% 50%);
-    --btn-theme6-border-dark: hsl(215 15% 35%);
+    --btn-theme6-border-dark: hsl(215 15% 35% / 0); /* Transparent Border */
 
     /* Default Submenu Button Styles - Dark Theme - Based on existing but darker */
     --sidebar-button-bg-dark: hsl(215 20% 20%);
     --sidebar-button-hover-bg-dark: hsl(215 20% 24%);
-    --sidebar-button-border: hsl(215 15% 15%);
-    --sidebar-button-shadow: 0 1px 2px hsla(210, 10%, 5%, 0.4), inset 0 1px 0px hsla(210, 15%, 30%, 0.1);
-    --sidebar-button-hover-shadow: 0 2px 3px hsla(210, 10%, 5%, 0.5), inset 0 1px 0px hsla(210, 15%, 30%, 0.1), 0 0 0 1px hsla(210, 15%, 18%, 0.7);
-    --sidebar-button-active-shadow: inset 0 1px 2px hsla(210, 10%, 5%, 0.45);
+    --sidebar-button-border: hsl(215 15% 15% / 0); /* Transparent Border */
+    --sidebar-button-shadow: 0 2px 5px hsl(210 10% 5% / 0.2), 0 1px 1px hsl(210 10% 5% / 0.15); /* New 3D Shadow */
+    --sidebar-button-hover-shadow: 0 4px 8px hsl(210 10% 5% / 0.25), 0 2px 3px hsl(210 10% 5% / 0.2); /* Enhanced Hover Shadow */
+    --sidebar-button-active-shadow: inset 0 2px 4px hsl(210 10% 5% / 0.3); /* Pressed-in Shadow */
   }
 
   [data-variant="sidebar"] [data-sidebar="sidebar"] {
@@ -190,7 +190,7 @@ body {
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"] {
     @apply rounded-md px-3 py-2 my-0.5 text-sidebar-foreground; /* Reduced vertical margin */
     background-color: var(--sidebar-button-bg-light);
-    border: 1px solid var(--sidebar-button-border);
+    border: 1px solid var(--sidebar-button-border); /* Uses transparent border from CSS vars */
     box-shadow: var(--sidebar-button-shadow);
     transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out, border-color 0.15s ease-out;
   }
@@ -215,26 +215,26 @@ body {
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"] {
     @apply bg-sidebar-primary text-sidebar-primary-foreground;
     background-image: none !important;
-    box-shadow: var(--sidebar-button-active-shadow) !important;
+    box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important; /* Updated shadow for active */
     transform: translateY(0.5px);
-    border-color: hsl(var(--sidebar-primary)/0.8) !important;
+    border-color: transparent !important; /* Ensure no border for active state */
   }
    [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"]:hover {
     @apply bg-sidebar-primary/90;
     background-image: none !important;
     transform: translateY(0.5px);
-    box-shadow: var(--sidebar-button-active-shadow) !important;
+    box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important;
   }
 
   /* Custom Button Themes - Solid Colors */
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
     background-color: var(--btn-theme1-bg-light) !important;
-    border-color: var(--btn-theme1-border-light) !important;
+    border-color: var(--btn-theme1-border-light) !important; /* Uses transparent border var */
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
     background-color: var(--btn-theme1-bg-dark) !important;
-    border-color: var(--btn-theme1-border-dark) !important;
+    border-color: var(--btn-theme1-border-dark) !important; /* Uses transparent border var */
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"]:hover {
     background-color: var(--btn-theme1-hover-bg-light) !important;
@@ -245,12 +245,12 @@ body {
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme2"] {
     background-color: var(--btn-theme2-bg-light) !important;
-    border-color: var(--btn-theme2-border-light) !important;
+    border-color: var(--btn-theme2-border-light) !important; /* Uses transparent border var */
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme2"] {
     background-color: var(--btn-theme2-bg-dark) !important;
-    border-color: var(--btn-theme2-border-dark) !important;
+    border-color: var(--btn-theme2-border-dark) !important; /* Uses transparent border var */
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme2"]:hover {
     background-color: var(--btn-theme2-hover-bg-light) !important;
@@ -261,12 +261,12 @@ body {
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme3"] {
     background-color: var(--btn-theme3-bg-light) !important;
-    border-color: var(--btn-theme3-border-light) !important;
+    border-color: var(--btn-theme3-border-light) !important; /* Uses transparent border var */
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme3"] {
     background-color: var(--btn-theme3-bg-dark) !important;
-    border-color: var(--btn-theme3-border-dark) !important;
+    border-color: var(--btn-theme3-border-dark) !important; /* Uses transparent border var */
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme3"]:hover {
     background-color: var(--btn-theme3-hover-bg-light) !important;
@@ -277,12 +277,12 @@ body {
  
   [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
     background-color: var(--btn-theme4-bg-light) !important;
-    border-color: var(--btn-theme4-border-light) !important;
+    border-color: var(--btn-theme4-border-light) !important; /* Uses transparent border var */
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
     background-color: var(--btn-theme4-bg-dark) !important;
-    border-color: var(--btn-theme4-border-dark) !important;
+    border-color: var(--btn-theme4-border-dark) !important; /* Uses transparent border var */
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme4"]:hover {
     background-color: var(--btn-theme4-hover-bg-light) !important;
@@ -293,12 +293,12 @@ body {
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme5"] {
     background-color: var(--btn-theme5-bg-light) !important;
-    border-color: var(--btn-theme5-border-light) !important;
+    border-color: var(--btn-theme5-border-light) !important; /* Uses transparent border var */
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme5"] {
     background-color: var(--btn-theme5-bg-dark) !important;
-    border-color: var(--btn-theme5-border-dark) !important;
+    border-color: var(--btn-theme5-border-dark) !important; /* Uses transparent border var */
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme5"]:hover {
     background-color: var(--btn-theme5-hover-bg-light) !important;
@@ -309,12 +309,12 @@ body {
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme6"] {
     background-color: var(--btn-theme6-bg-light) !important;
-    border-color: var(--btn-theme6-border-light) !important;
+    border-color: var(--btn-theme6-border-light) !important; /* Uses transparent border var */
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme6"] {
     background-color: var(--btn-theme6-bg-dark) !important;
-    border-color: var(--btn-theme6-border-dark) !important;
+    border-color: var(--btn-theme6-border-dark) !important; /* Uses transparent border var */
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme6"]:hover {
     background-color: var(--btn-theme6-hover-bg-light) !important;
