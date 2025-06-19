@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Mic, Loader2, AlertCircle, Keyboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { appendFinalTranscript } from '@/lib/utils';
 
 declare global {
   interface Window {
@@ -20,6 +21,7 @@ export const FloatingVoiceInput: React.FC = () => {
   const [isBrowserSupported, setIsBrowserSupported] = useState(true);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const activeElementRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const finalTranscriptBuffer = useRef<string>("");
   const { toast } = useToast();
 
   const isActuallyListening = isListeningByClick || isListeningByKeyboard;
@@ -28,26 +30,16 @@ export const FloatingVoiceInput: React.FC = () => {
     const element = activeElementRef.current || document.activeElement;
     if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')) {
       const inputElement = element as HTMLInputElement | HTMLTextAreaElement;
-      const start = inputElement.selectionStart || 0;
-      const end = inputElement.selectionEnd || 0;
       const currentValue = inputElement.value;
-      let textToSet = currentValue.substring(0, start) + textToInsert + currentValue.substring(end);
       
-      // Add a space if the inserted text doesn't end with one and there's content before it
-      if (textToInsert.trim().length > 0 && !textToInsert.endsWith(" ") && start > 0 && !currentValue.substring(start -1, start).match(/\s$/) ) {
-         textToSet = currentValue.substring(0, start) + " " + textToInsert + currentValue.substring(end);
-      } else if (textToInsert.trim().length > 0 && !textToInsert.endsWith(" ")) {
-         textToSet = currentValue.substring(0, start) + textToInsert + " " + currentValue.substring(end);
-      }
-
+      const newText = appendFinalTranscript(currentValue, textToInsert.trim());
 
       const originalValueSetter = Object.getOwnPropertyDescriptor(inputElement.constructor.prototype, 'value')?.set;
-      originalValueSetter?.call(inputElement, textToSet);
+      originalValueSetter?.call(inputElement, newText);
 
-      const newCursorPosition = start + textToInsert.length + (textToSet.endsWith(" ") && textToInsert.trim().length > 0 ? 1 : 0);
+      const newCursorPosition = newText.length;
       inputElement.selectionStart = newCursorPosition;
       inputElement.selectionEnd = newCursorPosition;
-      // inputElement.focus(); // Keep commented to avoid stealing focus if user types
 
       const eventOptions = { bubbles: true, cancelable: true };
       inputElement.dispatchEvent(new Event('input', eventOptions));
@@ -85,33 +77,25 @@ export const FloatingVoiceInput: React.FC = () => {
     }
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true; // Keep continuous true for push-to-talk like behavior
-    recognition.interimResults = true;
+    recognition.continuous = false; // Stop after first pause for more controlled input
+    recognition.interimResults = false; // We only care about final results
     recognition.lang = 'bn-BD';
 
     recognition.onstart = () => {
       setError(null);
+      finalTranscriptBuffer.current = ""; // Clear buffer on start
     };
 
     recognition.onresult = (event) => {
-      let finalTranscriptSegment = '';
-      let interimTranscriptSegment = '';
+      let recognizedTextForThisSegment = "";
       for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscriptSegment += transcriptPart;
-        } else {
-          interimTranscriptSegment += transcriptPart;
+          recognizedTextForThisSegment += event.results[i][0].transcript;
         }
       }
-      // For push-to-talk, we primarily care about the final transcript upon release,
-      // but interim can be used if desired for live feedback.
-      // For now, let's focus on accumulating final results and inserting on keyup/stop.
-      // For click mode, we can insert interim results.
-      if (isListeningByClick && interimTranscriptSegment.trim()) {
-        insertTextIntoActiveElement(interimTranscriptSegment);
-      } else if (finalTranscriptSegment.trim()){
-        insertTextIntoActiveElement(finalTranscriptSegment); // Insert final segment for keyboard mode or click mode final
+      if (recognizedTextForThisSegment.trim()) {
+        // Accumulate final transcript segments. Will be inserted on 'onend'.
+        finalTranscriptBuffer.current += recognizedTextForThisSegment + " "; 
       }
     };
     
@@ -141,27 +125,34 @@ export const FloatingVoiceInput: React.FC = () => {
         variant: 'destructive',
         duration: 7000,
       });
-      setIsListeningByClick(false);
-      setIsListeningByKeyboard(false);
+      // Ensure listening states are reset if an error occurs during recognition
+      if (isListeningByClick) setIsListeningByClick(false);
+      if (isListeningByKeyboard) setIsListeningByKeyboard(false);
+      finalTranscriptBuffer.current = "";
     };
 
     recognition.onend = () => {
+      if (finalTranscriptBuffer.current.trim()) {
+        insertTextIntoActiveElement(finalTranscriptBuffer.current.trim());
+      }
+      finalTranscriptBuffer.current = "";
+      // These states should be reset here regardless of how stop was triggered
       setIsListeningByClick(false);
-      setIsListeningByKeyboard(false); // Ensure keyboard listening also stops
+      setIsListeningByKeyboard(false);
     };
 
     speechRecognitionRef.current = recognition;
 
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.stop();
+        speechRecognitionRef.current.abort(); // Use abort to forcefully stop and discard results
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
         speechRecognitionRef.current.onend = null;
       }
     };
-  }, [toast, insertTextIntoActiveElement]);
+  }, [toast, insertTextIntoActiveElement]); // Removed isListeningByClick and isListeningByKeyboard
 
   const startRecognition = useCallback(() => {
     if (!speechRecognitionRef.current || !isBrowserSupported) return;
@@ -170,14 +161,19 @@ export const FloatingVoiceInput: React.FC = () => {
       ? document.activeElement 
       : null;
 
-    if (!activeElementRef.current) {
+    if (!activeElementRef.current && (isListeningByClick || isListeningByKeyboard)) { // Check if we intended to listen
       toast({
         title: 'ইনপুট ফিল্ড নির্বাচন করুন',
         description: 'ভয়েস টাইপিং শুরু করার আগে একটি টেক্সট ফিল্ডে ক্লিক করুন।',
         variant: 'default'
       });
+      // Reset listening state if no field is active
+      if (isListeningByClick) setIsListeningByClick(false);
+      if (isListeningByKeyboard) setIsListeningByKeyboard(false);
       return;
     }
+    
+    finalTranscriptBuffer.current = ""; // Clear buffer before starting
 
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(() => {
@@ -197,31 +193,32 @@ export const FloatingVoiceInput: React.FC = () => {
         setIsListeningByClick(false);
         setIsListeningByKeyboard(false);
       });
-  }, [isBrowserSupported, toast]);
+  }, [isBrowserSupported, toast, isListeningByClick, isListeningByKeyboard]);
 
   const stopRecognition = useCallback(() => {
     if (speechRecognitionRef.current && isActuallyListening) {
-      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current.stop(); // This will trigger onend
+    } else {
+      // If not actually listening, ensure states are reset
+      setIsListeningByClick(false);
+      setIsListeningByKeyboard(false);
     }
-    // onend handler will set listening states to false
   }, [isActuallyListening]);
 
-  // Click handler
   const toggleListeningByClick = () => {
     if (!isBrowserSupported) return;
-    if (isListeningByKeyboard) { // If keyboard is active, click stops everything
+    if (isListeningByKeyboard) { 
       stopRecognition();
       return;
     }
     if (isListeningByClick) {
       stopRecognition();
     } else {
-      setIsListeningByClick(true); // Set state before starting
+      setIsListeningByClick(true); 
       startRecognition();
     }
   };
   
-  // Keyboard "push-to-talk" effect for Control key
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Control' && !event.repeat && !isActuallyListening) {
@@ -232,7 +229,6 @@ export const FloatingVoiceInput: React.FC = () => {
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key === 'Control' && isListeningByKeyboard) {
-        // isListeningByKeyboard will be set to false by onend
         stopRecognition();
       }
     };
@@ -243,8 +239,8 @@ export const FloatingVoiceInput: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      if (isListeningByKeyboard && speechRecognitionRef.current) { // Cleanup if component unmounts while key is held
-          speechRecognitionRef.current.stop();
+      if (isListeningByKeyboard && speechRecognitionRef.current) {
+          speechRecognitionRef.current.abort();
       }
     };
   }, [isActuallyListening, isListeningByKeyboard, startRecognition, stopRecognition]);
@@ -254,10 +250,8 @@ export const FloatingVoiceInput: React.FC = () => {
     return null;
   }
 
-  const buttonTitle = isListeningByClick 
-    ? "শোনা বন্ধ করতে ক্লিক করুন" 
-    : isListeningByKeyboard 
-    ? "Control কী ধরে কথা বলুন..." 
+  const buttonTitle = isActuallyListening 
+    ? (isListeningByClick ? "শোনা বন্ধ করতে ক্লিক করুন" : "Control কী ছাড়ুন...")
     : (error ? `ত্রুটি: ${error} (পুনরায় চেষ্টা করতে ক্লিক করুন)` : "বাংলায় ভয়েস টাইপিং শুরু করতে ক্লিক করুন (অথবা Control কী ধরে রাখুন)");
 
   return (
@@ -279,7 +273,7 @@ export const FloatingVoiceInput: React.FC = () => {
       ) : error && !isActuallyListening ? (
         <AlertCircle className="h-7 w-7" />
       ) : (
-        <Keyboard className="h-6 w-6" /> // Keyboard icon to signify it can be used with keyboard
+        <Keyboard className="h-6 w-6" /> 
       )}
     </Button>
   );
