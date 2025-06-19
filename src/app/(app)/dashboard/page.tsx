@@ -535,16 +535,15 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
-      <Suspense fallback={<div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div>}>
-        {selectedPatientForPaymentModal && currentVisitIdForPaymentModal && (
-          <CreatePaymentSlipModal
-            patient={selectedPatientForPaymentModal}
-            visitId={currentVisitIdForPaymentModal}
-            isOpen={isPaymentModalOpen}
-            onClose={(slipCreated) => handlePaymentModalClose(slipCreated)}
-          />
-        )}
-      </Suspense>
+      
+      {selectedPatientForPaymentModal && currentVisitIdForPaymentModal && (
+        <CreatePaymentSlipModal
+          patient={selectedPatientForPaymentModal}
+          visitId={currentVisitIdForPaymentModal}
+          isOpen={isPaymentModalOpen}
+          onClose={(slipCreated) => handlePaymentModalClose(slipCreated)}
+        />
+      )}
        {/* Footer removed as per request */}
     </div>
     </TooltipProvider>
