@@ -502,13 +502,13 @@ export default function EnhancedReportPage() {
           .report-table-container td.text-right, .report-table-container th.text-right { text-align: right; }
           .report-table-container td.text-center, .report-table-container th.text-center { text-align: center; }
           .print\\:hidden { display: none !important; }
-          .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
-          .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
-          .print\\:whitespace-normal { white-space: normal !important; }
-          .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
-          .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
-          .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
-          .print\\:w-\\[80px\\] { width: 80px !important; }
+ .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
+ .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
+ .print\\:whitespace-normal { white-space: normal !important; }
+ .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
+ .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
+ .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
+ .print\\:w-\\[80px\\] { width: 80px !important; }
         }
         @page {
           size: A4 landscape;
