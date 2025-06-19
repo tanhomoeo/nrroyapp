@@ -88,8 +88,8 @@ body {
     --card-foreground: 210 40% 90%;
     --popover: 215 28% 22%;
     --popover-foreground: 210 40% 90%;
-    --primary: 180 55% 55%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 180 60% 48%; /* Adjusted for better white text contrast */
+    --primary-foreground: 0 0% 100%; /* Changed to white */
     --secondary: 215 25% 25%;
     --secondary-foreground: 210 30% 80%;
     --muted: 215 25% 20%;
@@ -113,7 +113,7 @@ body {
     --sidebar-background-gradient-end-dark: 215 28% 15%;   /* Dark slate subtle gradient end */
     --sidebar-foreground: 210 30% 80%;
     --sidebar-primary: hsl(var(--primary));
-    --sidebar-primary-foreground: hsl(0 0% 0%);
+    --sidebar-primary-foreground: hsl(0 0% 100%); /* Changed to white */
     --sidebar-accent: 215 20% 28%; /* Slightly lighter accent for dark mode active sub-menu */
     /* --sidebar-accent-foreground: 0 0% 100%; /* White text for active sub-menu - Replaced by direct styling */
     --sidebar-border: 215 15% 20%;
@@ -374,20 +374,16 @@ body {
   /* Submenu active button color fix */
   [data-sidebar="menu-sub-button"][data-active="true"] {
     background-color: hsl(var(--sidebar-accent)) !important;
-    /* Explicit text color for active sub-menu in light theme for max contrast */
-    color: hsl(var(--foreground)) !important; 
+    color: hsl(var(--foreground)) !important;
   }
   [data-sidebar="menu-sub-button"][data-active="true"] svg {
-     /* Explicit SVG color for active sub-menu in light theme */
     color: hsl(var(--foreground)) !important;
   }
   .dark [data-sidebar="menu-sub-button"][data-active="true"] {
-     /* Explicit text color for active sub-menu in dark theme */
-    color: hsl(var(--primary-foreground)) !important;
+    color: hsl(var(--primary-foreground)) !important; /* Ensure white text on dark theme for active submenu */
   }
   .dark [data-sidebar="menu-sub-button"][data-active="true"] svg {
-    /* Explicit SVG color for active sub-menu in dark theme */
-    color: hsl(var(--primary-foreground)) !important;
+    color: hsl(var(--primary-foreground)) !important; /* Ensure white icon on dark theme for active submenu */
   }
 }
 
