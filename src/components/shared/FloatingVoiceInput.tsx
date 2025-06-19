@@ -15,16 +15,14 @@ declare global {
 }
 
 export const FloatingVoiceInput: React.FC = () => {
-  const [isListeningByClick, setIsListeningByClick] = useState(false);
-  const [isListeningByKeyboard, setIsListeningByKeyboard] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [listeningMode, setListeningMode] = useState<'click' | 'keyboard' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isBrowserSupported, setIsBrowserSupported] = useState(true);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const activeElementRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const finalTranscriptRef = useRef<string>("");
   const { toast } = useToast();
-  
-  const isActuallyListening = isListeningByClick || isListeningByKeyboard;
 
   const insertTextIntoActiveElement = useCallback((textToInsert: string) => {
     const element = activeElementRef.current || document.activeElement;
@@ -33,10 +31,11 @@ export const FloatingVoiceInput: React.FC = () => {
       const currentValue = inputElement.value;
       const newText = appendFinalTranscript(currentValue, textToInsert);
 
+      // Directly setting value and dispatching events for React compatibility
       const originalValueSetter = Object.getOwnPropertyDescriptor(inputElement.constructor.prototype, 'value')?.set;
       originalValueSetter?.call(inputElement, newText);
       
-      const newCursorPosition = newText.length;
+      const newCursorPosition = newText.length; // Set cursor to end
       inputElement.selectionStart = newCursorPosition;
       inputElement.selectionEnd = newCursorPosition;
 
@@ -46,13 +45,72 @@ export const FloatingVoiceInput: React.FC = () => {
     }
   }, []);
 
+  const stopRecognition = useCallback(() => {
+    if (speechRecognitionRef.current && isListening) {
+      speechRecognitionRef.current.stop();
+    }
+    // onend will handle setIsListening(false) and final transcript insertion
+  }, [isListening]);
+
+  const startRecognition = useCallback(async (mode: 'click' | 'keyboard') => {
+    if (isListening) { // Already listening, probably a bug or race condition
+        console.warn("startRecognition called while already listening. Mode:", mode, "Current Listening Mode:", listeningMode);
+        if(mode !== listeningMode) { // if modes are different, stop current and attempt to restart with new mode.
+             stopRecognition(); // This will eventually set isListening to false via onend
+        } else {
+            return; // if same mode, do nothing.
+        }
+    }
+
+    if (!speechRecognitionRef.current || !isBrowserSupported) {
+      toast({ title: 'ভয়েস রিকগনিশন প্রস্তুত নয়', description: 'অনুগ্রহ করে পৃষ্ঠাটি রিফ্রেশ করুন অথবা একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।', variant: 'destructive' });
+      return;
+    }
+
+    activeElementRef.current = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement
+      ? document.activeElement
+      : null;
+
+    if (!activeElementRef.current) {
+      toast({
+        title: 'ইনপুট ফিল্ড নির্বাচন করুন',
+        description: 'ভয়েস টাইপিং শুরু করার আগে একটি টেক্সট ফিল্ডে ক্লিক করুন।',
+        variant: 'default'
+      });
+      return;
+    }
+    
+    finalTranscriptRef.current = ""; // Clear buffer before starting
+
+    try {
+      // Check for microphone permission explicitly
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Permission granted or already granted
+      speechRecognitionRef.current.start();
+      setIsListening(true);
+      setListeningMode(mode);
+      setError(null);
+    } catch (permissionError: any) {
+      let permErrorMessage = 'মাইক্রোফোন অ্যাক্সেস করা যায়নি।';
+      if (permissionError.name === 'NotAllowedError' || permissionError.name === 'PermissionDeniedError') {
+        permErrorMessage = 'মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংস চেক করুন।';
+      } else if (permissionError.name === 'NotFoundError' || permissionError.name === 'DevicesNotFoundError') {
+        permErrorMessage = 'কোনো মাইক্রোফোন খুঁজে পাওয়া যায়নি।';
+      }
+      setError(permErrorMessage);
+      toast({ title: 'মাইক্রোফোন সমস্যা', description: permErrorMessage, variant: 'destructive' });
+      setIsListening(false);
+      setListeningMode(null);
+    }
+  }, [isBrowserSupported, toast, isListening, listeningMode, stopRecognition]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-
     if (!SpeechRecognitionAPI) {
       setIsBrowserSupported(false);
+      // Avoid repeated toasts if already shown
       if (!sessionStorage.getItem('voiceSupportToastShown')) {
           const unsupportedMessage = 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। অনুগ্রহ করে Chrome এর মতো একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।';
           setError(unsupportedMessage);
@@ -68,62 +126,43 @@ export const FloatingVoiceInput: React.FC = () => {
     }
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true; 
-    recognition.interimResults = true; 
+    recognition.continuous = true; // Keep true to allow longer speech, stop manually
+    recognition.interimResults = true;
     recognition.lang = 'bn-BD';
 
     recognition.onstart = () => {
-      setError(null);
-      finalTranscriptRef.current = ""; 
+      // State update is handled by startRecognition
     };
 
     recognition.onresult = (event) => {
       let interimTranscript = '';
-      let finalSegmentForThisEvent = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalSegmentForThisEvent += transcriptPart;
+          finalTranscriptRef.current += transcriptPart.trim() + " "; // Accumulate final parts
         } else {
           interimTranscript += transcriptPart;
         }
       }
-      // You could use interimTranscript for UI feedback if needed, e.g.,
-      // setInterimDisplay(interimTranscript);
-      if (finalSegmentForThisEvent.trim()) {
-        finalTranscriptRef.current += finalSegmentForThisEvent + " "; 
-      }
+      // Optionally, display interimTranscript somewhere for user feedback
+      // console.log("Interim:", interimTranscript);
     };
     
     recognition.onerror = (event) => {
       let errorMessage = 'একটি অজানা ভয়েস টাইপিং ত্রুটি হয়েছে।';
       switch (event.error) {
-        case 'no-speech':
-          errorMessage = 'কোনো কথা শোনা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
-          break;
-        case 'audio-capture':
-          errorMessage = 'মাইক্রোফোন অ্যাক্সেস করা যায়নি। অনুগ্রহ করে আপনার মাইক্রোফোনের পারমিশন চেক করুন।';
-          break;
-        case 'not-allowed':
-        case 'service-not-allowed':
-          errorMessage = 'মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংস চেক করুন।';
-          break;
-        case 'network':
-          errorMessage = 'নেটওয়ার্ক সমস্যা। ভয়েস টাইপিংয়ের জন্য ইন্টারনেট সংযোগ প্রয়োজন।';
-          break;
-        default:
-          errorMessage = `একটি ত্রুটি হয়েছে: ${event.error}`;
+        case 'no-speech': errorMessage = 'কোনো কথা শোনা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'; break;
+        case 'audio-capture': errorMessage = 'মাইক্রোফোন অ্যাক্সেস করা যায়নি। অনুগ্রহ করে আপনার মাইক্রোফোনের পারমিশন চেক করুন।'; break;
+        case 'not-allowed': case 'service-not-allowed': errorMessage = 'মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংস চেক করুন।'; break;
+        case 'network': errorMessage = 'নেটওয়ার্ক সমস্যা। ভয়েস টাইপিংয়ের জন্য ইন্টারনেট সংযোগ প্রয়োজন।'; break;
+        default: errorMessage = `একটি ত্রুটি হয়েছে: ${event.error}`;
       }
       setError(errorMessage);
-      toast({
-        title: 'ভয়েস টাইপিং ত্রুটি',
-        description: errorMessage,
-        variant: 'destructive',
-        duration: 7000,
-      });
+      toast({ title: 'ভয়েস টাইপিং ত্রুটি', description: errorMessage, variant: 'destructive', duration: 7000 });
       
-      setIsListeningByClick(false);
-      setIsListeningByKeyboard(false);
+      // Ensure listening state is reset
+      setIsListening(false);
+      setListeningMode(null);
       finalTranscriptRef.current = "";
     };
 
@@ -131,17 +170,17 @@ export const FloatingVoiceInput: React.FC = () => {
       if (finalTranscriptRef.current.trim()) {
         insertTextIntoActiveElement(finalTranscriptRef.current.trim());
       }
-      finalTranscriptRef.current = ""; 
-      
-      setIsListeningByClick(false);
-      setIsListeningByKeyboard(false);
+      setIsListening(false);
+      setListeningMode(null);
+      finalTranscriptRef.current = "";
     };
 
     speechRecognitionRef.current = recognition;
 
+    // Cleanup function
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.abort(); 
+        speechRecognitionRef.current.abort(); // Stop recognition if component unmounts
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
@@ -149,94 +188,30 @@ export const FloatingVoiceInput: React.FC = () => {
         speechRecognitionRef.current = null;
       }
     };
-  }, [toast, insertTextIntoActiveElement]);
+  }, [toast, insertTextIntoActiveElement]); // insertTextIntoActiveElement is stable due to useCallback
 
-  const startRecognitionLogic = useCallback(async () => {
-    if (!speechRecognitionRef.current || !isBrowserSupported) {
-        toast({ title: 'ভয়েস রিকগনিশন প্রস্তুত নয়', variant: 'destructive'});
-        return false;
-    }
-    
-    activeElementRef.current = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement 
-      ? document.activeElement 
-      : null;
-
-    if (!activeElementRef.current) {
-      toast({
-        title: 'ইনপুট ফিল্ড নির্বাচন করুন',
-        description: 'ভয়েস টাইপিং শুরু করার আগে একটি টেক্সট ফিল্ডে ক্লিক করুন।',
-        variant: 'default'
-      });
-      return false;
-    }
-    
-    finalTranscriptRef.current = "";
-
-    try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        if (speechRecognitionRef.current) {
-            speechRecognitionRef.current.start();
-            return true; // Indicates successful start
-        }
-        return false;
-    } catch (permissionError: any) {
-        let permErrorMessage = 'মাইক্রোফোন অ্যাক্সেস করা যায়নি।';
-        if (permissionError.name === 'NotAllowedError' || permissionError.name === 'PermissionDeniedError') {
-          permErrorMessage = 'মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংস চেক করুন।';
-        } else if (permissionError.name === 'NotFoundError' || permissionError.name === 'DevicesNotFoundError') {
-          permErrorMessage = 'কোনো মাইক্রোফোন খুঁজে পাওয়া যায়নি।';
-        }
-        setError(permErrorMessage);
-        toast({ title: 'মাইক্রোফোন সমস্যা', description: permErrorMessage, variant: 'destructive' });
-        return false; // Indicates failure
-    }
-  }, [isBrowserSupported, toast]);
-
-  const stopRecognitionLogic = useCallback(() => {
-    if (speechRecognitionRef.current) {
-      speechRecognitionRef.current.stop(); // Will trigger onend
-    } else {
-      // If not actually listening, ensure states are reset. onend should also do this.
-      setIsListeningByClick(false);
-      setIsListeningByKeyboard(false);
-    }
-  }, []);
-
-
-  const toggleListeningByClick = useCallback(async () => {
+  const handleButtonClick = () => {
     if (!isBrowserSupported) return;
-    if (isListeningByKeyboard) { // If keyboard is active, click shouldn't interfere beyond stopping
-      stopRecognitionLogic();
-      return;
-    }
-
-    if (isListeningByClick) {
-      stopRecognitionLogic();
+    if (isListening && listeningMode === 'click') {
+      stopRecognition();
+    } else if (isListening && listeningMode === 'keyboard') {
+      // If keyboard listening is active, button click should stop it.
+      stopRecognition();
     } else {
-      const started = await startRecognitionLogic();
-      if (started) {
-        setIsListeningByClick(true); 
-      } else {
-        setIsListeningByClick(false); // Ensure state is reset on failure
-      }
+      startRecognition('click');
     }
-  }, [isBrowserSupported, isListeningByClick, isListeningByKeyboard, startRecognitionLogic, stopRecognitionLogic]);
+  };
   
   useEffect(() => {
-    const handleKeyDown = async (event: KeyboardEvent) => {
-      if (event.key === 'Control' && !event.repeat && !isListeningByClick && !isListeningByKeyboard) {
-        const started = await startRecognitionLogic();
-        if (started) {
-          setIsListeningByKeyboard(true);
-        } else {
-          setIsListeningByKeyboard(false);
-        }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Control' && !event.repeat && !isListening) {
+        startRecognition('keyboard');
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'Control' && isListeningByKeyboard) {
-        stopRecognitionLogic();
+      if (event.key === 'Control' && isListening && listeningMode === 'keyboard') {
+        stopRecognition();
       }
     };
 
@@ -246,38 +221,39 @@ export const FloatingVoiceInput: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      if (isListeningByKeyboard && speechRecognitionRef.current) { 
+      // Ensure recognition is stopped if component unmounts while keyboard listening
+      if (listeningMode === 'keyboard' && speechRecognitionRef.current) { 
           speechRecognitionRef.current.abort();
       }
     };
-  }, [isListeningByClick, isListeningByKeyboard, startRecognitionLogic, stopRecognitionLogic]); 
+  }, [isListening, listeningMode, startRecognition, stopRecognition]); 
 
 
   if (!isBrowserSupported) {
     return null; 
   }
 
-  const buttonTitle = isActuallyListening 
-    ? (isListeningByClick ? "শোনা বন্ধ করতে ক্লিক করুন" : "Control কী ছাড়ুন...")
+  const buttonTitle = isListening 
+    ? (listeningMode === 'click' ? "শোনা বন্ধ করতে ক্লিক করুন" : "Control কী ছাড়ুন...")
     : (error ? `ত্রুটি: ${error} (পুনরায় চেষ্টা করতে ক্লিক করুন)` : "বাংলায় ভয়েস টাইপিং শুরু করতে ক্লিক করুন (অথবা Control কী ধরে রাখুন)");
 
   return (
     <Button
       variant="outline"
       size="icon"
-      onClick={toggleListeningByClick}
+      onClick={handleButtonClick}
       className={cn(
         "fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full shadow-xl bg-background hover:bg-muted text-primary border-2 border-primary",
         "transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95",
-        isActuallyListening && "bg-red-500 text-white hover:bg-red-600 border-red-600 animate-pulse",
-        error && !isActuallyListening && "bg-yellow-400 text-yellow-900 border-yellow-500 hover:bg-yellow-500"
+        isListening && "bg-red-500 text-white hover:bg-red-600 border-red-600 animate-pulse",
+        error && !isListening && "bg-yellow-400 text-yellow-900 border-yellow-500 hover:bg-yellow-500"
       )}
       title={buttonTitle}
-      aria-label={isActuallyListening ? "Stop voice input" : "Start voice input"}
+      aria-label={isListening ? "Stop voice input" : "Start voice input"}
     >
-      {isActuallyListening ? (
+      {isListening ? (
         <Loader2 className="h-7 w-7 animate-spin" />
-      ) : error && !isActuallyListening ? ( 
+      ) : error && !isListening ? ( 
         <AlertCircle className="h-7 w-7" />
       ) : (
         <Keyboard className="h-6 w-6" /> 

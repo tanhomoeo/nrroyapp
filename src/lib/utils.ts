@@ -17,17 +17,16 @@ export const appendFinalTranscript = (currentValue: string | undefined | null, n
   let textToSet = typeof currentValue === 'string' ? currentValue : ""; 
   let processedTranscript = typeof newTranscript === 'string' ? newTranscript.trim() : ""; 
 
-  if (!processedTranscript) { // If new transcript is empty, return current value as is
+  if (!processedTranscript) {
     return textToSet;
   }
 
-  if (textToSet.length > 0 && !textToSet.endsWith(" ") && !textToSet.endsWith("\n")) {
-    textToSet += " "; // Add a space if current text is not empty and doesn't end with a space
+  // Add a space if current text is not empty and doesn't already end with a space or newline.
+  if (textToSet.length > 0 && !/\s$/.test(textToSet)) {
+    textToSet += " "; 
   }
   
-  // Append the processed transcript. If it's a single word, no trailing space is needed yet.
-  // If it's multiple words, it might already have spaces internally.
-  // A trailing space is generally good for subsequent appends.
+  // Append the processed transcript. Add a trailing space for easy subsequent appends.
   textToSet += processedTranscript + " "; 
   
   return textToSet;
