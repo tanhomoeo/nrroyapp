@@ -40,7 +40,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   const [error, setError] = useState<string | null>(null);
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
-  const finalTranscriptBuffer = useRef<string>(""); // Buffer for final transcript parts
+  const finalTranscriptBuffer = useRef<string>("");
 
   const isCurrentlyListeningForThisField = isListeningGlobal && currentListeningField === fieldKey;
 
@@ -51,7 +51,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     if (!SpeechRecognitionAPI) {
       setIsBrowserSupported(false);
-      // Only show toast once if multiple buttons are rendered and API is not supported
       if (!sessionStorage.getItem('voiceSupportToastShown')) {
           const unsupportedMessage = 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। অনুগ্রহ করে Chrome এর মতো একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।';
           toast({
@@ -66,13 +65,13 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true; // Keep listening even after pauses, good for dictation
-    recognition.interimResults = true; // Get results as they come in
-    recognition.lang = 'bn-BD'; // Bangla (Bangladesh)
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'bn-BD';
 
     recognition.onstart = () => {
       setError(null);
-      finalTranscriptBuffer.current = ""; // Clear buffer on start
+      finalTranscriptBuffer.current = "";
     };
 
     recognition.onresult = (event) => {
@@ -88,7 +87,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
       if (interimTranscriptSegment.trim()) {
         try {
-          onTranscript(interimTranscriptSegment); // For live feedback if needed
+          onTranscript(interimTranscriptSegment);
         } catch (e: any) {
           console.error(`Error in onTranscript callback for field ${fieldKey}:`, e);
         }
@@ -96,18 +95,18 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     };
 
     recognition.onend = () => {
-      if (currentListeningField === fieldKey) { // Only process if this button was the active one
+      if (currentListeningField === fieldKey) {
         if (finalTranscriptBuffer.current.trim()) {
           try {
             onFinalTranscript(finalTranscriptBuffer.current.trim());
-          } catch (e: any) { // Corrected line
+          } catch (e: any) {
             console.error(
               `Error in onFinalTranscript callback for field ${fieldKey}:`,
               e
             );
           }
         }
-        finalTranscriptBuffer.current = ""; // Clear buffer
+        finalTranscriptBuffer.current = "";
         setIsListeningGlobal(false);
         setCurrentListeningField(null);
       }
@@ -133,7 +132,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           errorMessage = `একটি ত্রুটি হয়েছে: ${event.error}`;
       }
       setError(errorMessage);
-      if (currentListeningField === fieldKey) { // Only show toast if this button caused the error
+      if (currentListeningField === fieldKey) {
         toast({
             title: 'ভয়েস টাইপিং ত্রুটি',
             description: errorMessage,
@@ -143,7 +142,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         setIsListeningGlobal(false);
         setCurrentListeningField(null);
       }
-      finalTranscriptBuffer.current = ""; // Clear buffer on error
+      finalTranscriptBuffer.current = "";
     };
 
     speechRecognitionRef.current = recognition;
@@ -157,7 +156,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         speechRecognitionRef.current.onend = null;
       }
     };
-  }, [toast, onTranscript, onFinalTranscript, fieldKey, currentListeningField, isListeningGlobal, setIsListeningGlobal, setCurrentListeningField]);
+  }, [toast, onTranscript, onFinalTranscript, fieldKey, currentListeningField, setIsListeningGlobal, setCurrentListeningField]); // Removed isListeningGlobal from dependency array as it's managed by setCurrentListeningField
 
   const toggleListening = () => {
     if (!isBrowserSupported) {
@@ -178,7 +177,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
 
     if (isCurrentlyListeningForThisField) {
-      speechRecognitionRef.current.stop(); // onend will handle state changes
+      speechRecognitionRef.current.stop();
     } else {
       if (isListeningGlobal && currentListeningField && currentListeningField !== fieldKey) {
           toast({title: `অন্য ফিল্ড (${targetFieldDescription || currentListeningField}) শুনছে`, description: `একই সময়ে একাধিক ফিল্ডের জন্য ভয়েস ইনপুট চালু করা যাবে না।`, variant: "default"});
@@ -190,7 +189,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
           if (speechRecognitionRef.current) {
             setIsListeningGlobal(true);
             setCurrentListeningField(fieldKey);
-            finalTranscriptBuffer.current = ""; // Clear buffer before starting a new session
+            finalTranscriptBuffer.current = "";
             speechRecognitionRef.current.start();
           }
         })
@@ -237,7 +236,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       className={cn(
         "h-full w-auto px-2 text-primary hover:text-primary/80 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1",
         isCurrentlyListeningForThisField && "text-red-500 hover:text-red-600 animate-pulse",
-        error && !isCurrentlyListeningForThisField && "text-yellow-600 hover:text-yellow-700",
+        error && !isCurrentlyListeningForThisField && !isListeningGlobal && "text-yellow-600 hover:text-yellow-700",
         className
       )}
       title={isCurrentlyListeningForThisField ? `${targetFieldDescription || 'এই ফিল্ডের'} জন্য শোনা বন্ধ করুন` : (error ? `ত্রুটি (পুনরায় চেষ্টা করুন)` : `${targetFieldDescription || 'এই ফিল্ডের'} জন্য ভয়েস টাইপিং শুরু করুন`)}
@@ -245,7 +244,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     >
       {isCurrentlyListeningForThisField ? (
         <Loader2 className="h-4 w-4 animate-spin" />
-      ) : error && !isCurrentlyListeningForThisField && !isListeningGlobal ? ( // Show error only if not globally listening for another field
+      ) : error && !isCurrentlyListeningForThisField && !isListeningGlobal ? (
         <AlertCircle className="h-4 w-4" />
       ) : (
         <Mic className="h-4 w-4" />
@@ -253,3 +252,4 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     </Button>
   );
 };
+    

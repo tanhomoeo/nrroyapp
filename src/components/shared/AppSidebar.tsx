@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   useSidebar,
-  SidebarTrigger, // Added SidebarTrigger here
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   ChevronDown,
@@ -138,7 +138,7 @@ export function AppSidebar() {
     <Sidebar side="left" variant="sidebar" collapsible="icon">
       <SidebarHeader className={cn(
         "p-4 flex items-center border-b border-sidebar-border",
-        isSidebarIconOnly ? "justify-center" : "justify-between" // Changed to justify-between
+        "justify-between" 
       )}>
         <Link href={ROUTES.DASHBOARD} className="flex items-center">
           <Avatar className="h-10 w-10 rounded-full bg-sidebar-primary/10 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/30 shadow-sm">
@@ -158,7 +158,7 @@ export function AppSidebar() {
              <span className="ml-2 text-sm font-semibold whitespace-nowrap text-sidebar-foreground font-headline tracking-tight">{APP_NAME}</span>
           )}
         </Link>
-        {!isSidebarIconOnly && <SidebarTrigger className="h-7 w-7" />} {/* SidebarTrigger for non-icon only mode */}
+        <SidebarTrigger className="h-7 w-7" />
       </SidebarHeader>
       <SidebarContent className="flex-grow px-2 space-y-0">
         <CollapsibleSidebarSection title="প্রধান মেনু" defaultOpen>
@@ -186,5 +186,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
     

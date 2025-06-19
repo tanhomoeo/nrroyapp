@@ -27,10 +27,9 @@ export const FloatingVoiceInput: React.FC = () => {
 
     if (!SpeechRecognitionAPI) {
       setIsBrowserSupported(false);
-      // Only show toast once if multiple buttons are rendered and API is not supported
       if (!sessionStorage.getItem('voiceSupportToastShown')) {
           const unsupportedMessage = 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। অনুগ্রহ করে Chrome এর মতো একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।';
-          setError(unsupportedMessage); // Set error state for the button
+          setError(unsupportedMessage);
           toast({
             title: 'ব্রাউজার সাপোর্ট করে না',
             description: unsupportedMessage,
@@ -43,7 +42,7 @@ export const FloatingVoiceInput: React.FC = () => {
     }
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = false; // Stop listening after a pause for this global button
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'bn-BD';
 
@@ -58,8 +57,6 @@ export const FloatingVoiceInput: React.FC = () => {
         if (event.results[i].isFinal) {
           finalTranscriptSegment += event.results[i][0].transcript;
         }
-        // We don't need to explicitly handle interim for this global button's direct insertion
-        // as we only insert final text.
       }
 
       if (finalTranscriptSegment.trim()) {
@@ -104,7 +101,7 @@ export const FloatingVoiceInput: React.FC = () => {
 
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.stop(); // Use stop, not abort, to allow final results to process
+        speechRecognitionRef.current.stop();
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
@@ -190,8 +187,6 @@ export const FloatingVoiceInput: React.FC = () => {
   };
 
   if (!isBrowserSupported) {
-    // Do not render the button if the browser is not supported and error state is set.
-    // The toast for unsupported browser is shown once from useEffect.
     return null;
   }
 
@@ -219,3 +214,4 @@ export const FloatingVoiceInput: React.FC = () => {
     </Button>
   );
 };
+    
