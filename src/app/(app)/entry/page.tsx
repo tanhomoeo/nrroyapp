@@ -149,7 +149,8 @@ export default function PatientEntryPage() {
           description="নতুন রোগী নিবন্ধন করতে নিচের বিবরণগুলি পূরণ করুন। ডেটা সিস্টেমে সংরক্ষিত হবে।"
           actions={<UserPlus className="h-8 w-8 text-white" />}
           wrapperClassName="bg-gradient-to-br from-sky-500 to-indigo-600 text-white"
-          className="text-white [&_div>h2]:text-white [&_div>p]:text-sky-100 dark:[&_div>h2]:text-white dark:[&_div>p]:text-sky-100 [&_svg]:text-white"
+          titleClassName="!text-white"
+          descriptionClassName="!text-sky-100"
         />
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Card className="shadow-md">
@@ -486,5 +487,3 @@ export default function PatientEntryPage() {
     </div>
   );
 }
-
-    
