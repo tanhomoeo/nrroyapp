@@ -109,7 +109,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { state: sidebarState, setOpenMobile } = useSidebar();
   const isSidebarIconOnly = sidebarState === 'collapsed';
-  const [logoSrc, setLogoSrc] = useState("/image/icon.png"); // Corrected logo path
+  const [logoSrc, setLogoSrc] = useState("/icons/icon.png"); // Updated logo path
 
 
   const renderNavItems = (items: typeof mainNavItems) => (
@@ -143,7 +143,7 @@ export function AppSidebar() {
         isSidebarIconOnly ? "justify-center" : "justify-start"
       )}>
         <Link href={ROUTES.DASHBOARD} className="flex items-center">
-          <Avatar className="h-10 w-10 rounded-lg bg-sidebar-primary/10 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/30 shadow-sm">
+          <Avatar className="h-10 w-10 rounded-full bg-sidebar-primary/10 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/30 shadow-sm">
             <Image
               src={logoSrc}
               alt={`${APP_NAME} Logo`}
@@ -152,7 +152,7 @@ export function AppSidebar() {
               className="object-contain"
               data-ai-hint="clinic health logo"
               onError={() => {
-                setLogoSrc("https://placehold.co/32x32.png?text=TAN");
+                setLogoSrc("https://placehold.co/32x32.png?text=TAN"); 
               }}
             />
           </Avatar>

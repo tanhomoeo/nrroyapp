@@ -51,31 +51,20 @@ body {
     --sidebar-section-header-text: hsl(215 25% 45%);
     --sidebar-section-header-border: hsl(210 30% 88%);
 
-    /* Sidebar Menu Button Theming - Light (Based on image's colored icons) */
-    /* Theme 1: Blue (like 'W' icon) */
-    --btn-theme1-bg-light: hsl(210 75% 55%);
-    --btn-theme1-hover-bg-light: hsl(210 75% 50%);
-    --btn-theme1-border-light: hsl(210 60% 45% / 0); /* Transparent Border */
-    /* Theme 2: Purple (like 'UI' icon) */
-    --btn-theme2-bg-light: hsl(265 60% 60%);
-    --btn-theme2-hover-bg-light: hsl(265 60% 55%);
-    --btn-theme2-border-light: hsl(265 45% 50% / 0); /* Transparent Border */
-    /* Theme 3: Orange (like '>' icon) */
-    --btn-theme3-bg-light: hsl(25 85% 60%);
-    --btn-theme3-hover-bg-light: hsl(25 85% 55%);
-    --btn-theme3-border-light: hsl(25 70% 50% / 0); /* Transparent Border */
-    /* Theme 4: Green */
-    --btn-theme4-bg-light: hsl(145 58% 50%);
-    --btn-theme4-hover-bg-light: hsl(145 58% 45%);
-    --btn-theme4-border-light: hsl(145 40% 40% / 0); /* Transparent Border */
-    /* Theme 5: Teal */
-    --btn-theme5-bg-light: hsl(170 60% 45%);
-    --btn-theme5-hover-bg-light: hsl(170 60% 40%);
-    --btn-theme5-border-light: hsl(170 45% 35% / 0); /* Transparent Border */
-    /* Theme 6: Slate Gray */
-    --btn-theme6-bg-light: hsl(215 30% 65%);
-    --btn-theme6-hover-bg-light: hsl(215 30% 60%);
-    --btn-theme6-border-light: hsl(215 20% 55% / 0); /* Transparent Border */
+    /* Sidebar Menu Button Theming - Light (Gradients) */
+    --btn-theme1-gradient-light: linear-gradient(to bottom right, #38bdf8, #6366f1); /* sky-500, indigo-500 */
+    --btn-theme1-gradient-hover-light: linear-gradient(to bottom right, #0ea5e9, #4f46e5); /* sky-600, indigo-600 (darker) */
+    --btn-theme2-gradient-light: linear-gradient(to bottom right, #2dd4bf, #10b981); /* teal-400, emerald-500 */
+    --btn-theme2-gradient-hover-light: linear-gradient(to bottom right, #14b8a6, #059669); /* teal-500, emerald-600 (darker) */
+    --btn-theme3-gradient-light: linear-gradient(to bottom right, #4ade80, #a3e635); /* green-400, lime-400 */
+    --btn-theme3-gradient-hover-light: linear-gradient(to bottom right, #22c55e, #84cc16); /* green-500, lime-500 (darker) */
+    --btn-theme4-gradient-light: linear-gradient(to bottom right, #a78bfa, #8b5cf6); /* purple-400, violet-500 */
+    --btn-theme4-gradient-hover-light: linear-gradient(to bottom right, #8b5cf6, #7c3aed); /* purple-500, violet-600 (darker) */
+    --btn-theme5-gradient-light: linear-gradient(to bottom right, #fb923c, #f59e0b); /* orange-400, amber-500 */
+    --btn-theme5-gradient-hover-light: linear-gradient(to bottom right, #f97316, #d97706); /* orange-500, amber-600 (darker) */
+    --btn-theme6-gradient-light: linear-gradient(to bottom right, #f472b6, #ec4899); /* rose-400, pink-500 */
+    --btn-theme6-gradient-hover-light: linear-gradient(to bottom right, #e11d48, #db2777); /* rose-500, pink-600 (darker) */
+
 
     /* Default Submenu Button Styles (If not themed) - Light - Based on existing but lighter */
     --sidebar-button-bg-light: hsl(210 50% 96%); /* Lighter than previous */
@@ -129,30 +118,19 @@ body {
     --sidebar-section-header-text: hsl(210 30% 70%);
     --sidebar-section-header-border: hsl(215 15% 25%);
 
-    /* Sidebar Menu Button Theming - Dark */
-    --btn-theme1-bg-dark: hsl(210 60% 40%);
-    --btn-theme1-hover-bg-dark: hsl(210 60% 45%);
-    --btn-theme1-border-dark: hsl(210 50% 30% / 0); /* Transparent Border */
-
-    --btn-theme2-bg-dark: hsl(265 50% 45%);
-    --btn-theme2-hover-bg-dark: hsl(265 50% 50%);
-    --btn-theme2-border-dark: hsl(265 35% 35% / 0); /* Transparent Border */
-
-    --btn-theme3-bg-dark: hsl(25 70% 45%);
-    --btn-theme3-hover-bg-dark: hsl(25 70% 50%);
-    --btn-theme3-border-dark: hsl(25 55% 35% / 0); /* Transparent Border */
-
-    --btn-theme4-bg-dark: hsl(145 50% 35%);
-    --btn-theme4-hover-bg-dark: hsl(145 50% 40%);
-    --btn-theme4-border-dark: hsl(145 30% 25% / 0); /* Transparent Border */
-
-    --btn-theme5-bg-dark: hsl(170 50% 30%);
-    --btn-theme5-hover-bg-dark: hsl(170 50% 35%);
-    --btn-theme5-border-dark: hsl(170 30% 20% / 0); /* Transparent Border */
-
-    --btn-theme6-bg-dark: hsl(215 25% 45%);
-    --btn-theme6-hover-bg-dark: hsl(215 25% 50%);
-    --btn-theme6-border-dark: hsl(215 15% 35% / 0); /* Transparent Border */
+    /* Sidebar Menu Button Theming - Dark (Gradients) */
+    --btn-theme1-gradient-dark: linear-gradient(to bottom right, #0ea5e9, #4f46e5); /* sky-600, indigo-600 */
+    --btn-theme1-gradient-hover-dark: linear-gradient(to bottom right, #0284c7, #4338ca); /* sky-700, indigo-700 (darker) */
+    --btn-theme2-gradient-dark: linear-gradient(to bottom right, #14b8a6, #059669); /* teal-500, emerald-600 */
+    --btn-theme2-gradient-hover-dark: linear-gradient(to bottom right, #0d9488, #047857); /* teal-600, emerald-700 (darker) */
+    --btn-theme3-gradient-dark: linear-gradient(to bottom right, #22c55e, #84cc16); /* green-500, lime-500 */
+    --btn-theme3-gradient-hover-dark: linear-gradient(to bottom right, #16a34a, #65a30d); /* green-600, lime-600 (darker) */
+    --btn-theme4-gradient-dark: linear-gradient(to bottom right, #8b5cf6, #7c3aed); /* purple-500, violet-600 */
+    --btn-theme4-gradient-hover-dark: linear-gradient(to bottom right, #7c3aed, #6d28d9); /* purple-600, violet-700 (darker) */
+    --btn-theme5-gradient-dark: linear-gradient(to bottom right, #f97316, #d97706); /* orange-500, amber-600 */
+    --btn-theme5-gradient-hover-dark: linear-gradient(to bottom right, #ea580c, #b45309); /* orange-600, amber-700 (darker) */
+    --btn-theme6-gradient-dark: linear-gradient(to bottom right, #e11d48, #db2777); /* rose-500, pink-600 */
+    --btn-theme6-gradient-hover-dark: linear-gradient(to bottom right, #be123c, #be185d); /* rose-600, pink-700 (darker) */
 
     /* Default Submenu Button Styles - Dark Theme - Based on existing but darker */
     --sidebar-button-bg-dark: hsl(215 20% 20%);
@@ -192,7 +170,7 @@ body {
     background-color: var(--sidebar-button-bg-light);
     border: 1px solid var(--sidebar-button-border); /* Uses transparent border from CSS vars */
     box-shadow: var(--sidebar-button-shadow);
-    transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out, border-color 0.15s ease-out;
+    transition: background-color 0.15s ease-out, background-image 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out, border-color 0.15s ease-out;
   }
   .dark [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"] {
     background-color: var(--sidebar-button-bg-dark);
@@ -226,101 +204,101 @@ body {
     box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important;
   }
 
-  /* Custom Button Themes - Solid Colors */
+  /* Custom Button Themes - Gradients */
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
-    background-color: var(--btn-theme1-bg-light) !important;
-    border-color: var(--btn-theme1-border-light) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme1-gradient-light) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
-    background-color: var(--btn-theme1-bg-dark) !important;
-    border-color: var(--btn-theme1-border-dark) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme1-gradient-dark) !important;
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"]:hover {
-    background-color: var(--btn-theme1-hover-bg-light) !important;
+    background-image: var(--btn-theme1-gradient-hover-light) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"]:hover {
-    background-color: var(--btn-theme1-hover-bg-dark) !important;
+    background-image: var(--btn-theme1-gradient-hover-dark) !important;
   }
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme2"] {
-    background-color: var(--btn-theme2-bg-light) !important;
-    border-color: var(--btn-theme2-border-light) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme2-gradient-light) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme2"] {
-    background-color: var(--btn-theme2-bg-dark) !important;
-    border-color: var(--btn-theme2-border-dark) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme2-gradient-dark) !important;
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme2"]:hover {
-    background-color: var(--btn-theme2-hover-bg-light) !important;
+    background-image: var(--btn-theme2-gradient-hover-light) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme2"]:hover {
-    background-color: var(--btn-theme2-hover-bg-dark) !important;
+    background-image: var(--btn-theme2-gradient-hover-dark) !important;
   }
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme3"] {
-    background-color: var(--btn-theme3-bg-light) !important;
-    border-color: var(--btn-theme3-border-light) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme3-gradient-light) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme3"] {
-    background-color: var(--btn-theme3-bg-dark) !important;
-    border-color: var(--btn-theme3-border-dark) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme3-gradient-dark) !important;
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme3"]:hover {
-    background-color: var(--btn-theme3-hover-bg-light) !important;
+    background-image: var(--btn-theme3-gradient-hover-light) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme3"]:hover {
-    background-color: var(--btn-theme3-hover-bg-dark) !important;
+    background-image: var(--btn-theme3-gradient-hover-dark) !important;
   }
  
   [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
-    background-color: var(--btn-theme4-bg-light) !important;
-    border-color: var(--btn-theme4-border-light) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme4-gradient-light) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
-    background-color: var(--btn-theme4-bg-dark) !important;
-    border-color: var(--btn-theme4-border-dark) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme4-gradient-dark) !important;
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme4"]:hover {
-    background-color: var(--btn-theme4-hover-bg-light) !important;
+    background-image: var(--btn-theme4-gradient-hover-light) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme4"]:hover {
-    background-color: var(--btn-theme4-hover-bg-dark) !important;
+    background-image: var(--btn-theme4-gradient-hover-dark) !important;
   }
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme5"] {
-    background-color: var(--btn-theme5-bg-light) !important;
-    border-color: var(--btn-theme5-border-light) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme5-gradient-light) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme5"] {
-    background-color: var(--btn-theme5-bg-dark) !important;
-    border-color: var(--btn-theme5-border-dark) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme5-gradient-dark) !important;
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme5"]:hover {
-    background-color: var(--btn-theme5-hover-bg-light) !important;
+    background-image: var(--btn-theme5-gradient-hover-light) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme5"]:hover {
-    background-color: var(--btn-theme5-hover-bg-dark) !important;
+    background-image: var(--btn-theme5-gradient-hover-dark) !important;
   }
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme6"] {
-    background-color: var(--btn-theme6-bg-light) !important;
-    border-color: var(--btn-theme6-border-light) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme6-gradient-light) !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
     color: hsl(var(--primary-foreground)) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme6"] {
-    background-color: var(--btn-theme6-bg-dark) !important;
-    border-color: var(--btn-theme6-border-dark) !important; /* Uses transparent border var */
+    background-image: var(--btn-theme6-gradient-dark) !important;
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme6"]:hover {
-    background-color: var(--btn-theme6-hover-bg-light) !important;
+    background-image: var(--btn-theme6-gradient-hover-light) !important;
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme6"]:hover {
-    background-color: var(--btn-theme6-hover-bg-dark) !important;
+    background-image: var(--btn-theme6-gradient-hover-dark) !important;
   }
 
   [data-sidebar="menu-button"][data-menu-item-theme] span,
