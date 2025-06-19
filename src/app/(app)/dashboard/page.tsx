@@ -464,7 +464,9 @@ export default function DashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="font-headline text-xl">আজকের সাক্ষাৎকার</CardTitle>
-            <CardDescription>{format(new Date(), "eeee, MMMM dd, yyyy", { locale: bn })}</CardDescription>
+            <CardDescription>
+              {clientRenderedTimestamp ? format(clientRenderedTimestamp, "eeee, MMMM dd, yyyy", { locale: bn }) : 'লোড হচ্ছে...'}
+            </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={handlePrintAppointments} className="hide-on-print-dashboard"><Printer className="mr-2 h-4 w-4" /> প্রিন্ট তালিকা</Button>
         </CardHeader>
@@ -548,5 +550,4 @@ export default function DashboardPage() {
     </TooltipProvider>
   );
 }
-
     

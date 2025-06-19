@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -88,7 +88,7 @@ export default function MedicineInstructionsClientLogic() {
       patientName: '',
       patientActualId: '',
       visitId: '',
-      instructionDate: undefined, // Changed from new Date()
+      instructionDate: undefined,
       serialNumber: '', 
       followUpDays: '৭',
       instructionTemplate: 'template1',
@@ -104,61 +104,77 @@ export default function MedicineInstructionsClientLogic() {
 
   const currentTemplate = form.watch('instructionTemplate');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoadingPageData(true);
-      const settings = await getClinicSettings();
-      setClinicSettings(settings);
+  const fetchData = useCallback(async () => {
+    setIsLoadingPageData(true);
+    const settings = await getClinicSettings();
+    setClinicSettings(settings);
 
-      const patientIdFromQuery = searchParams.get('patientId');
-      const patientNameFromQuery = searchParams.get('name');
-      const visitIdFromQuery = searchParams.get('visitId');
+    const patientIdFromQuery = searchParams.get('patientId');
+    const patientNameFromQuery = searchParams.get('name');
+    const visitIdFromQuery = searchParams.get('visitId');
 
-      let formDataUpdate: Partial<InstructionsFormValues> = {};
+    let formDataUpdate: Partial<InstructionsFormValues> = {};
 
-      if (visitIdFromQuery) {
-        formDataUpdate.visitId = visitIdFromQuery;
-      }
+    if (visitIdFromQuery) {
+      formDataUpdate.visitId = visitIdFromQuery;
+    }
 
-      if (patientIdFromQuery) {
-        const patient = await getPatientById(patientIdFromQuery);
-        if (patient) {
-          setSelectedPatient(patient);
-          formDataUpdate.patientName = patient.name;
-          formDataUpdate.patientActualId = patient.id;
-          formDataUpdate.serialNumber = patient.diaryNumber ? String(patient.diaryNumber) : 'N/A';
-        } else if (patientNameFromQuery) {
-           formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
-           formDataUpdate.serialNumber = 'N/A';
-           setSelectedPatient(null);
-        }
+    if (patientIdFromQuery) {
+      const patientData = await getPatientById(patientIdFromQuery);
+      if (patientData) {
+        setSelectedPatient(patientData);
+        formDataUpdate.patientName = patientData.name;
+        formDataUpdate.patientActualId = patientData.id;
+        formDataUpdate.serialNumber = patientData.diaryNumber ? String(patientData.diaryNumber) : 'N/A';
       } else if (patientNameFromQuery) {
-        formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
-        formDataUpdate.serialNumber = 'N/A';
-        setSelectedPatient(null);
+         formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
+         formDataUpdate.serialNumber = 'N/A';
+         setSelectedPatient(null);
       } else {
-        setSelectedPatient(null);
-        formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
+        setSelectedPatient(null); 
       }
-      
-      Object.keys(formDataUpdate).forEach(keyStr => {
-          const key = keyStr as keyof InstructionsFormValues;
-          if (formDataUpdate[key] !== undefined) { // Only set if value exists in formDataUpdate
-            form.setValue(key, formDataUpdate[key]);
-          }
-      });
-      
-      // Set instructionDate to new Date() on client-side mount if it's not already set
-      // This happens after potentially loading existing data which might include a date
-      if (!form.getValues('instructionDate')) {
-        form.setValue('instructionDate', new Date());
-      }
+    } else if (patientNameFromQuery) {
+      formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
+      formDataUpdate.serialNumber = 'N/A';
+      setSelectedPatient(null);
+    } else {
+      setSelectedPatient(null);
+      formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
+    }
+    
+    const currentFormValues = form.getValues();
+    let effectiveInstructionDate: Date;
 
-      setPaymentCompleted(false);
-      setIsLoadingPageData(false);
-    };
+    const instructionDateFromUpdate = formDataUpdate.instructionDate; // Could be string if from query or existing data, or Date
+    const instructionDateFromCurrentForm = currentFormValues.instructionDate; // Could be Date or undefined
+
+    if (instructionDateFromUpdate) {
+        effectiveInstructionDate = (typeof instructionDateFromUpdate === 'string' && isValid(new Date(instructionDateFromUpdate))) 
+            ? new Date(instructionDateFromUpdate) 
+            : (instructionDateFromUpdate instanceof Date && isValid(instructionDateFromUpdate)) 
+                ? instructionDateFromUpdate 
+                : new Date();
+    } else if (instructionDateFromCurrentForm && isValid(instructionDateFromCurrentForm)) {
+        effectiveInstructionDate = instructionDateFromCurrentForm;
+    } else {
+        effectiveInstructionDate = new Date(); 
+    }
+    
+    form.reset({
+      ...currentFormValues, // Start with current form values (which includes defaults)
+      ...formDataUpdate,    // Override with fetched/query data
+      instructionDate: effectiveInstructionDate // Ensure this is a Date object
+    });
+    
+    setPaymentCompleted(false);
+    setIsLoadingPageData(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, form.getValues, form.reset]); // Dependencies are stable functions from RHF and searchParams
+
+  useEffect(() => {
     fetchData();
-  }, [form, searchParams]);
+  }, [fetchData]);
+
 
   const generateInstructionText = (data: InstructionsFormValues): string => {
     if (data.instructionTemplate === 'template1') {

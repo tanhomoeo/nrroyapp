@@ -61,6 +61,7 @@ export default function PrescriptionPage() {
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
+  const [pageHeaderDescriptionString, setPageHeaderDescriptionString] = useState<string>('রোগীর তথ্য লোড হচ্ছে...');
 
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionFormSchema),
@@ -81,17 +82,20 @@ export default function PrescriptionPage() {
 
   const fetchPrescriptionData = useCallback(async () => {
     setIsLoading(true);
-    try {
-      const fetchedPatient = await getPatientById(patientId);
-      setPatient(fetchedPatient || null);
-      const currentClinicSettings = await getClinicSettings();
-      setClinicSettings(currentClinicSettings);
+    let fetchedPatient: Patient | null = null;
+    let fetchedVisit: Visit | null = null;
+    let fetchedClinicSettings: ClinicSettings | null = null;
 
-      let visitForDiagnosis: Visit | null = null;
+    try {
+      fetchedPatient = await getPatientById(patientId);
+      setPatient(fetchedPatient || null);
+      fetchedClinicSettings = await getClinicSettings();
+      setClinicSettings(fetchedClinicSettings);
+
       if (visitId) {
         const visit = await getVisitById(visitId);
         setCurrentVisit(visit || null);
-        visitForDiagnosis = visit;
+        fetchedVisit = visit;
       }
       setShowInstructionsButton(false);
 
@@ -101,7 +105,7 @@ export default function PrescriptionPage() {
           followUpDays: 7,
           advice: '',
           diagnosis: '',
-          doctorName: currentClinicSettings?.doctorName || '',
+          doctorName: fetchedClinicSettings?.doctorName || '',
       };
 
       if (prescriptionIdQuery) {
@@ -113,12 +117,12 @@ export default function PrescriptionPage() {
                   items: prescription.items,
                   followUpDays: prescription.followUpDays,
                   advice: prescription.advice,
-                  diagnosis: prescription.diagnosis || (visitForDiagnosis?.diagnosis || visitForDiagnosis?.symptoms || ''),
-                  doctorName: prescription.doctorName || currentClinicSettings?.doctorName || '',
+                  diagnosis: prescription.diagnosis || (fetchedVisit?.diagnosis || fetchedVisit?.symptoms || ''),
+                  doctorName: prescription.doctorName || fetchedClinicSettings?.doctorName || '',
               };
               setShowInstructionsButton(true);
-          } else if (visitForDiagnosis) {
-              resetValues.diagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
+          } else if (fetchedVisit) {
+              resetValues.diagnosis = fetchedVisit.diagnosis || fetchedVisit.symptoms || '';
           }
       } else if (visitId) {
           const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
@@ -130,24 +134,31 @@ export default function PrescriptionPage() {
                   items: currentPrescriptionForVisit.items,
                   followUpDays: currentPrescriptionForVisit.followUpDays,
                   advice: currentPrescriptionForVisit.advice,
-                  diagnosis: currentPrescriptionForVisit.diagnosis || (visitForDiagnosis?.diagnosis || visitForDiagnosis?.symptoms || ''),
-                  doctorName: currentPrescriptionForVisit.doctorName || currentClinicSettings?.doctorName || '',
+                  diagnosis: currentPrescriptionForVisit.diagnosis || (fetchedVisit?.diagnosis || fetchedVisit?.symptoms || ''),
+                  doctorName: currentPrescriptionForVisit.doctorName || fetchedClinicSettings?.doctorName || '',
               };
               setShowInstructionsButton(true);
-          } else if (visitForDiagnosis) {
-             resetValues.diagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
-             resetValues.doctorName = currentClinicSettings?.doctorName || '';
+          } else if (fetchedVisit) {
+             resetValues.diagnosis = fetchedVisit.diagnosis || fetchedVisit.symptoms || '';
+             resetValues.doctorName = fetchedClinicSettings?.doctorName || '';
           }
       }
       
-      if (!resetValues.diagnosis && visitForDiagnosis) {
-          resetValues.diagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
+      if (!resetValues.diagnosis && fetchedVisit) {
+          resetValues.diagnosis = fetchedVisit.diagnosis || fetchedVisit.symptoms || '';
       }
       form.reset(resetValues);
+
+      // Update page header description after data is fetched
+      const patientName = fetchedPatient ? fetchedPatient.name : 'N/A';
+      const diaryNumber = fetchedPatient ? (fetchedPatient.diaryNumber || 'N/A') : 'N/A';
+      const visitDate = fetchedVisit ? format(new Date(fetchedVisit.visitDate), "PP", { locale: bn }) : format(new Date(), "PP", { locale: bn });
+      setPageHeaderDescriptionString(`রোগী: ${patientName} | ডায়েরি নং: ${diaryNumber} | তারিখ: ${visitDate}`);
 
     } catch (error) {
         console.error("Error fetching prescription data:", error);
         toast({ title: "Error", description: "Failed to load prescription data.", variant: "destructive" });
+        setPageHeaderDescriptionString('রোগীর তথ্য লোড করতে সমস্যা হয়েছে।');
     } finally {
         setIsLoading(false);
     }
@@ -225,7 +236,7 @@ export default function PrescriptionPage() {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-3">প্রেসক্রিপশন ডেটা লোড হচ্ছে...</p></div>;
   }
 
-  if (!patient) {
+  if (!patient && !isLoading) { // Check !isLoading here
     return <div className="text-center py-10 text-destructive">রোগী খুঁজে পাওয়া যায়নি। আইডি পরীক্ষা করুন।</div>;
   }
 
@@ -233,7 +244,7 @@ export default function PrescriptionPage() {
     <div className="space-y-6 print:space-y-2">
       <PageHeaderCard
         title="প্রেসক্রিপশন শিট"
-        description={`রোগী: ${patient.name} | ডায়েরি নং: ${patient.diaryNumber || 'N/A'} | তারিখ: ${currentVisit ? format(new Date(currentVisit.visitDate), "PP", { locale: bn }) : format(new Date(), "PP", { locale: bn })}`}
+        description={pageHeaderDescriptionString}
         className="hide-on-print"
         actions={
           <div className="flex gap-2">
@@ -509,22 +520,24 @@ export default function PrescriptionPage() {
         <div className="lg:col-span-1 space-y-6 hide-on-print">
           <DiagnosisAssistant
             initialSymptoms={currentVisit?.symptoms || currentVisit?.diagnosis || ''}
-            initialPatientHistory={`Age: ${patient.age || 'N/A'}, Gender: ${patient.gender || 'N/A'}. Previous history or family context (if any): ${patient.guardianName ? `Guardian (${patient.guardianRelation}): ${patient.guardianName}` : 'N/A'}`}
+            initialPatientHistory={`Age: ${patient?.age || 'N/A'}, Gender: ${patient?.gender || 'N/A'}. Previous history or family context (if any): ${patient?.guardianName ? `Guardian (${patient.guardianRelation}): ${patient.guardianName}` : 'N/A'}`}
             onSuggestion={(suggestionText) => {
               // This functionality is now disabled as DiagnosisAssistant is a placeholder
             }}
           />
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline text-lg">রোগীর তথ্য</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-1">
-              <p><strong>নাম:</strong> {patient.name}</p>
-              <p><strong>ফোন:</strong> {patient.phone}</p>
-              <p><strong>গ্রাম:</strong> {patient.villageUnion || 'N/A'}</p>
-              <p><strong>নিবন্ধিত:</strong> {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}</p>
-            </CardContent>
-          </Card>
+          {patient && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline text-lg">রোগীর তথ্য</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-1">
+                <p><strong>নাম:</strong> {patient.name}</p>
+                <p><strong>ফোন:</strong> {patient.phone}</p>
+                <p><strong>গ্রাম:</strong> {patient.villageUnion || 'N/A'}</p>
+                <p><strong>নিবন্ধিত:</strong> {patient.createdAt ? formatDate(patient.createdAt) : 'N/A'}</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -537,9 +550,9 @@ export default function PrescriptionPage() {
         </div>
 
         <div className="patient-info-grid">
-          <div><strong>রোগী:</strong> {patient.name}</div>
-          <div><strong>বয়স/লিঙ্গ:</strong> {patient.age || 'N/A'} / {patient.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : 'N/A'}</div>
-          <div><strong>ডায়েরি নং:</strong> {patient.diaryNumber || 'N/A'}</div>
+          <div><strong>রোগী:</strong> {patient?.name || 'N/A'}</div>
+          <div><strong>বয়স/লিঙ্গ:</strong> {patient?.age || 'N/A'} / {patient?.gender ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1) : 'N/A'}</div>
+          <div><strong>ডায়েরি নং:</strong> {patient?.diaryNumber || 'N/A'}</div>
           <div><strong>তারিখ:</strong> {format(new Date(form.getValues("items").length > 0 && existingPrescription?.date ? existingPrescription.date : (currentVisit?.visitDate || new Date().toISOString())), "dd MMM, yyyy", { locale: bn })}</div>
         </div>
 
@@ -688,3 +701,4 @@ export default function PrescriptionPage() {
     </div>
   );
 }
+
