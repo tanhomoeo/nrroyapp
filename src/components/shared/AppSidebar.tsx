@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   useSidebar,
+  SidebarTrigger, // Added SidebarTrigger here
 } from '@/components/ui/sidebar';
 import {
   ChevronDown,
@@ -39,7 +40,7 @@ const mainNavItems = [
   { href: ROUTES.DICTIONARY, label: 'রোগীর তালিকা', icon: ListChecks, theme: 'theme4' },
   { href: ROUTES.AI_SUMMARY, label: 'AI অভিযোগ সারাংশ', icon: MessageSquareText, theme: 'theme5' },
   { href: ROUTES.DAILY_REPORT, label: 'দৈনিক প্রতিবেদন', icon: FileText, theme: 'theme6' },
-  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText, theme: 'theme1' }, 
+  { href: ROUTES.SLIP_SEARCH, label: 'পেমেন্ট স্লিপ', icon: ScrollText, theme: 'theme1' },
 ];
 
 const managementNavItems = [
@@ -71,7 +72,7 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
           "flex items-center w-full p-2 rounded-md text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
           "transition-colors duration-150",
           isSidebarIconOnly && "hidden",
-          !isOpen && "sidebar-collapsible-section-header", 
+          !isOpen && "sidebar-collapsible-section-header",
           isOpen && !isSidebarIconOnly && "sidebar-collapsible-section-header border-t-0 mt-0 pt-2",
            isOpen ? "hover:bg-sidebar-accent/20" : "hover:text-[hsl(var(--sidebar-section-header-text)/0.8)]"
         )}
@@ -94,7 +95,7 @@ const CollapsibleSidebarSection: React.FC<CollapsibleSidebarSectionProps> = ({ t
           isSidebarIconOnly ? "max-h-none opacity-100" : (isOpen ? "max-h-[500px] opacity-100 mt-1 pl-1" : "max-h-0 opacity-0")
         )}
       >
-        <div className={cn(!isSidebarIconOnly && "pl-1")}> 
+        <div className={cn(!isSidebarIconOnly && "pl-1")}>
            {children}
         </div>
       </div>
@@ -106,7 +107,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { state: sidebarState, setOpenMobile } = useSidebar();
   const isSidebarIconOnly = sidebarState === 'collapsed';
-  const [logoSrc, setLogoSrc] = useState("/icons/icon.png"); 
+  const [logoSrc, setLogoSrc] = useState("/icons/icon.png");
 
 
   const renderNavItems = (items: typeof mainNavItems) => (
@@ -118,7 +119,7 @@ export function AppSidebar() {
             isActive={pathname === item.href || (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href))}
             tooltip={{ children: item.label, side: 'right', align: 'center' }}
             onClick={() => setOpenMobile(false)}
-            data-menu-item-theme={item.theme || undefined} 
+            data-menu-item-theme={item.theme || undefined}
           >
             <Link href={item.href}>
               <item.icon className="h-5 w-5" />
@@ -136,8 +137,8 @@ export function AppSidebar() {
   return (
     <Sidebar side="left" variant="sidebar" collapsible="icon">
       <SidebarHeader className={cn(
-        "p-4 flex items-center border-b border-sidebar-border", 
-        isSidebarIconOnly ? "justify-center" : "justify-start"
+        "p-4 flex items-center border-b border-sidebar-border",
+        isSidebarIconOnly ? "justify-center" : "justify-between" // Changed to justify-between
       )}>
         <Link href={ROUTES.DASHBOARD} className="flex items-center">
           <Avatar className="h-10 w-10 rounded-full bg-sidebar-primary/10 text-sidebar-primary-foreground flex items-center justify-center p-1 border border-sidebar-primary/30 shadow-sm">
@@ -149,16 +150,17 @@ export function AppSidebar() {
               className="object-contain"
               data-ai-hint="clinic health logo"
               onError={() => {
-                setLogoSrc("https://placehold.co/32x32.png?text=TAN"); 
+                setLogoSrc("https://placehold.co/32x32.png?text=TAN");
               }}
             />
           </Avatar>
           {!isSidebarIconOnly && (
-             <span className="ml-2 text-base font-semibold whitespace-nowrap text-sidebar-foreground font-headline tracking-tight">{APP_NAME}</span>
+             <span className="ml-2 text-sm font-semibold whitespace-nowrap text-sidebar-foreground font-headline tracking-tight">{APP_NAME}</span>
           )}
         </Link>
+        {!isSidebarIconOnly && <SidebarTrigger className="h-7 w-7" />} {/* SidebarTrigger for non-icon only mode */}
       </SidebarHeader>
-      <SidebarContent className="flex-grow px-2 space-y-0"> 
+      <SidebarContent className="flex-grow px-2 space-y-0">
         <CollapsibleSidebarSection title="প্রধান মেনু" defaultOpen>
           {renderNavItems(mainNavItems)}
         </CollapsibleSidebarSection>
@@ -184,3 +186,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+    

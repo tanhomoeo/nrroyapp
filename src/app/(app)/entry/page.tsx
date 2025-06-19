@@ -129,8 +129,6 @@ export default function PatientEntryPage() {
 
   const inputWrapperClass = "flex h-10 items-center w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all duration-150";
   const inputFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 text-base text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500";
-  const textareaWrapperClass = "flex items-start w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary min-h-[80px] transition-all duration-150";
-  const textareaFieldClass = "h-full flex-1 border-0 bg-transparent shadow-none focus:ring-0 focus-visible:ring-0 px-3 py-2 text-base text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 resize-y";
   const selectTriggerClass = "flex h-10 items-center w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-150 text-slate-800 dark:text-slate-100";
 
 
@@ -149,8 +147,8 @@ export default function PatientEntryPage() {
         <PageHeaderCard
           title="নতুন রোগী নিবন্ধন"
           description="নতুন রোগী নিবন্ধন করতে নিচের বিবরণগুলি পূরণ করুন। ডেটা সিস্টেমে সংরক্ষিত হবে।"
-          actions={<UserPlus className="h-8 w-8 text-primary" />}
-          wrapperClassName="bg-gradient-to-br from-sky-400 to-indigo-500 text-white"
+          actions={<UserPlus className="h-8 w-8 text-white" />}
+          wrapperClassName="bg-gradient-to-br from-sky-500 to-indigo-600 text-white"
           className="text-white [&_div>h2]:text-white [&_div>p]:text-sky-100 dark:[&_div>h2]:text-white dark:[&_div>p]:text-sky-100 [&_svg]:text-white"
         />
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -169,7 +167,7 @@ export default function PatientEntryPage() {
                            className={cn(
                             "w-full justify-start text-left font-normal",
                             !field.value && "text-muted-foreground",
-                            selectTriggerClass // Use new selectTriggerClass
+                            selectTriggerClass
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
@@ -315,12 +313,12 @@ export default function PatientEntryPage() {
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-1">
+                  <FormItem className="md:col-span-1"> {/* Phone number now spans 1 column */}
                     <FormLabel>ফোন নম্বর <span className="text-destructive">*</span></FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
@@ -331,31 +329,31 @@ export default function PatientEntryPage() {
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
                 name="guardianRelation"
                 render={({ field }) => (
-                  <FormItem className="space-y-3 md:col-span-1">
+                  <FormItem className="space-y-1 md:col-span-1"> {/* Guardian Relation now spans 1 column */}
                     <FormLabel>অভিভাবকের সম্পর্ক</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         value={field.value || ''}
-                        className="flex space-x-4 pt-1"
+                        className="flex space-x-3 pt-1 items-center h-10" // Adjusted for alignment
                         id="patientGuardianRelationEntry"
                       >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormItem className="flex items-center space-x-1.5 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="father" />
                           </FormControl>
-                          <FormLabel className="font-normal">পিতা</FormLabel>
+                          <FormLabel className="font-normal text-sm">পিতা</FormLabel>
                         </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormItem className="flex items-center space-x-1.5 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="husband" />
                           </FormControl>
-                          <FormLabel className="font-normal">স্বামী</FormLabel>
+                          <FormLabel className="font-normal text-sm">স্বামী</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -368,7 +366,7 @@ export default function PatientEntryPage() {
                 control={form.control}
                 name="guardianName"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem className="md:col-span-1"> {/* Guardian Name now spans 1 column */}
                     <FormLabel>অভিভাবকের নাম (ঐচ্ছিক)</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
@@ -390,6 +388,7 @@ export default function PatientEntryPage() {
                   </FormItem>
                 )}
               />
+
 
               <FormField
                 control={form.control}
@@ -487,3 +486,5 @@ export default function PatientEntryPage() {
     </div>
   );
 }
+
+    

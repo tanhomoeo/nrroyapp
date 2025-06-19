@@ -37,62 +37,68 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar specific colors - Light Theme (Modern Light Gradient) */
-    --sidebar-background-gradient-start-light: 205 65% 97%; /* Very light blue */
-    --sidebar-background-gradient-end-light: 215 60% 95%;   /* Slightly different very light blue */
-    --sidebar-foreground: 215 25% 35%; 
+    --sidebar-background-gradient-start-light: 205 65% 98%; /* Very light blue, almost white */
+    --sidebar-background-gradient-end-light: 215 60% 96%;   /* Slightly different very light blue */
+    --sidebar-foreground: 215 25% 35%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: 210 50% 94%; 
-    --sidebar-accent-foreground: hsl(var(--primary));
-    --sidebar-border: 210 30% 90%; 
+    --sidebar-accent: 210 50% 92%; /* Slightly darker/more saturated accent for active sub-menu */
+    --sidebar-accent-foreground: hsl(var(--primary)); /* Primary color for active sub-menu text */
+    --sidebar-border: 210 30% 90%;
     --sidebar-ring: hsl(var(--primary));
-    
+
     /* Section Header Styling - Light Theme (Subtle) */
     --sidebar-section-header-text: hsl(215 25% 45%);
     --sidebar-section-header-border: hsl(210 30% 88%);
 
     /* Sidebar Menu Button Theming - Light (Lighter Gradients) */
-    --btn-theme1-gradient-light: linear-gradient(to bottom right, #38bdf8, #a855f7); /* Lighter sky-400 to purple-500 */
-    --btn-theme1-gradient-hover-light: linear-gradient(to bottom right, #0ea5e9, #9333ea); /* sky-500 to purple-600 (darker) */
-    --btn-theme2-gradient-light: linear-gradient(to bottom right, #2dd4bf, #22d3ee); /* Lighter teal-400 to cyan-400 */
-    --btn-theme2-gradient-hover-light: linear-gradient(to bottom right, #14b8a6, #06b6d4); /* teal-500 to cyan-500 (darker) */
-    --btn-theme3-gradient-light: linear-gradient(to bottom right, #4ade80, #bef264); /* Lighter green-400 to lime-300 */
-    --btn-theme3-gradient-hover-light: linear-gradient(to bottom right, #22c55e, #a3e635); /* green-500 to lime-400 (darker) */
-    --btn-theme4-gradient-light: linear-gradient(to bottom right, #a78bfa, #c084fc); /* Lighter violet-400 to fuchsia-400 */
-    --btn-theme4-gradient-hover-light: linear-gradient(to bottom right, #8b5cf6, #a855f7); /* violet-500 to fuchsia-500 (darker) */
-    --btn-theme5-gradient-light: linear-gradient(to bottom right, #fb923c, #facc15); /* Lighter orange-400 to yellow-400 */
-    --btn-theme5-gradient-hover-light: linear-gradient(to bottom right, #f97316, #f59e0b); /* orange-500 to yellow-500 (darker) */
-    --btn-theme6-gradient-light: linear-gradient(to bottom right, #f472b6, #f0abfc); /* Lighter pink-400 to purple-300 */
-    --btn-theme6-gradient-hover-light: linear-gradient(to bottom right, #ec4899, #e879f9); /* pink-500 to purple-400 (darker) */
+    /* Theme 1: Dashboard - Very light blue/grayish, almost white */
+    --btn-theme1-gradient-light: linear-gradient(to bottom right, hsl(210, 40%, 97%), hsl(210, 40%, 93%));
+    --btn-theme1-gradient-hover-light: linear-gradient(to bottom right, hsl(210, 40%, 95%), hsl(210, 40%, 91%));
+    /* Theme 2: নতুন রোগী ভর্তি - Cyan/Teal */
+    --btn-theme2-gradient-light: linear-gradient(to bottom right, hsl(175, 70%, 75%), hsl(185, 70%, 65%));
+    --btn-theme2-gradient-hover-light: linear-gradient(to bottom right, hsl(175, 70%, 70%), hsl(185, 70%, 60%));
+    /* Theme 3: রোগী অনুসন্ধান - Lime Green */
+    --btn-theme3-gradient-light: linear-gradient(to bottom right, hsl(90, 65%, 75%), hsl(100, 65%, 65%));
+    --btn-theme3-gradient-hover-light: linear-gradient(to bottom right, hsl(90, 65%, 70%), hsl(100, 65%, 60%));
+    /* Theme 4: রোগীর তালিকা - Purple */
+    --btn-theme4-gradient-light: linear-gradient(to bottom right, hsl(260, 70%, 80%), hsl(270, 70%, 70%));
+    --btn-theme4-gradient-hover-light: linear-gradient(to bottom right, hsl(260, 70%, 75%), hsl(270, 70%, 65%));
+    /* Theme 5: AI অভিযোগ সারাংশ - Orange/Yellow */
+    --btn-theme5-gradient-light: linear-gradient(to bottom right, hsl(35, 80%, 75%), hsl(45, 80%, 65%));
+    --btn-theme5-gradient-hover-light: linear-gradient(to bottom right, hsl(35, 80%, 70%), hsl(45, 80%, 60%));
+    /* Theme 6: দৈনিক প্রতিবেদন - Pink */
+    --btn-theme6-gradient-light: linear-gradient(to bottom right, hsl(330, 80%, 80%), hsl(340, 80%, 70%));
+    --btn-theme6-gradient-hover-light: linear-gradient(to bottom right, hsl(330, 80%, 75%), hsl(340, 80%, 65%));
 
     /* Default Submenu Button Styles - Light */
-    --sidebar-button-bg-light: hsl(210 50% 97%); 
-    --sidebar-button-hover-bg-light: hsl(210 50% 94%);
+    --sidebar-button-bg-light: hsl(210 50% 98%); /* Lighter default bg */
+    --sidebar-button-hover-bg-light: hsl(210 50% 95%); /* Lighter hover bg */
     --sidebar-button-border: hsl(210 30% 88% / 0); /* Transparent Border */
-    --sidebar-button-shadow: 0 1px 3px hsl(210 20% 50% / 0.08), 0 1px 2px hsl(210 20% 50% / 0.04); /* Softer 3D Shadow */
-    --sidebar-button-hover-shadow: 0 3px 6px hsl(210 20% 50% / 0.1), 0 2px 4px hsl(210 20% 50% / 0.06); /* Enhanced Hover Shadow */
-    --sidebar-button-active-shadow: inset 0 1px 2px hsl(210 20% 50% / 0.1); /* Softer Pressed-in Shadow */
+    --sidebar-button-shadow: 0 1px 2px hsl(210 20% 50% / 0.06), 0 1px 1px hsl(210 20% 50% / 0.03); /* Softer 3D Shadow */
+    --sidebar-button-hover-shadow: 0 2px 4px hsl(210 20% 50% / 0.08), 0 1px 2px hsl(210 20% 50% / 0.05); /* Enhanced Hover Shadow */
+    --sidebar-button-active-shadow: inset 0 1px 1px hsl(210 20% 50% / 0.08); /* Softer Pressed-in Shadow */
   }
 
   .dark {
     /* Dark Theme (Complementary to the new light theme) */
-    --background: 215 28% 17%; 
-    --foreground: 210 40% 90%; 
-    --card: 215 28% 22%; 
+    --background: 215 28% 17%;
+    --foreground: 210 40% 90%;
+    --card: 215 28% 22%;
     --card-foreground: 210 40% 90%;
     --popover: 215 28% 22%;
     --popover-foreground: 210 40% 90%;
-    --primary: 180 55% 55%; 
-    --primary-foreground: 0 0% 0%; 
-    --secondary: 215 25% 25%; 
+    --primary: 180 55% 55%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 215 25% 25%;
     --secondary-foreground: 210 30% 80%;
-    --muted: 215 25% 20%; 
+    --muted: 215 25% 20%;
     --muted-foreground: 210 30% 65%;
-    --accent: 180 50% 70%; 
+    --accent: 180 50% 70%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 215 20% 30%; 
+    --border: 215 20% 30%;
     --input: 215 20% 28%; /* Slightly darker input border for dark mode */
     --ring: 180 55% 60%;
 
@@ -105,39 +111,39 @@ body {
     /* Sidebar specific colors for dark mode (Modern Dark Gradient) */
     --sidebar-background-gradient-start-dark: 215 28% 18%; /* Dark slate subtle gradient start */
     --sidebar-background-gradient-end-dark: 215 28% 15%;   /* Dark slate subtle gradient end */
-    --sidebar-foreground: 210 30% 80%; 
+    --sidebar-foreground: 210 30% 80%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(0 0% 0%);
-    --sidebar-accent: 215 20% 22%; 
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 15% 20%; 
+    --sidebar-accent: 215 20% 28%; /* Slightly lighter accent for dark mode active sub-menu */
+    --sidebar-accent-foreground: 0 0% 100%; /* White text for active sub-menu */
+    --sidebar-border: 215 15% 20%;
     --sidebar-ring: hsl(var(--primary));
-    
+
     /* Section Header Styling - Dark Theme */
     --sidebar-section-header-text: hsl(210 30% 70%);
     --sidebar-section-header-border: hsl(215 15% 25%);
 
-    /* Sidebar Menu Button Theming - Dark (Lighter Gradients) */
-    --btn-theme1-gradient-dark: linear-gradient(to bottom right, #0ea5e9, #8b5cf6); /* sky-500 to purple-500 */
-    --btn-theme1-gradient-hover-dark: linear-gradient(to bottom right, #0284c7, #7e22ce); /* sky-600 to purple-600 (darker) */
-    --btn-theme2-gradient-dark: linear-gradient(to bottom right, #14b8a6, #06b6d4); /* teal-500 to cyan-500 */
-    --btn-theme2-gradient-hover-dark: linear-gradient(to bottom right, #0d9488, #0891b2); /* teal-600 to cyan-600 (darker) */
-    --btn-theme3-gradient-dark: linear-gradient(to bottom right, #22c55e, #a3e635); /* green-500 to lime-400 */
-    --btn-theme3-gradient-hover-dark: linear-gradient(to bottom right, #16a34a, #84cc16); /* green-600 to lime-500 (darker) */
-    --btn-theme4-gradient-dark: linear-gradient(to bottom right, #8b5cf6, #d946ef); /* violet-500 to fuchsia-500 */
-    --btn-theme4-gradient-hover-dark: linear-gradient(to bottom right, #7c3aed, #c026d3); /* violet-600 to fuchsia-600 (darker) */
-    --btn-theme5-gradient-dark: linear-gradient(to bottom right, #f97316, #eab308); /* orange-500 to yellow-500 */
-    --btn-theme5-gradient-hover-dark: linear-gradient(to bottom right, #ea580c, #ca8a04); /* orange-600 to yellow-600 (darker) */
-    --btn-theme6-gradient-dark: linear-gradient(to bottom right, #ec4899, #d946ef); /* pink-500 to fuchsia-500 */
-    --btn-theme6-gradient-hover-dark: linear-gradient(to bottom right, #db2777, #c026d3); /* pink-600 to fuchsia-600 (darker) */
-    
+    /* Sidebar Menu Button Theming - Dark (Adjusted Gradients) */
+    --btn-theme1-gradient-dark: linear-gradient(to bottom right, hsl(210, 25%, 25%), hsl(210, 25%, 20%));
+    --btn-theme1-gradient-hover-dark: linear-gradient(to bottom right, hsl(210, 25%, 23%), hsl(210, 25%, 18%));
+    --btn-theme2-gradient-dark: linear-gradient(to bottom right, hsl(175, 60%, 35%), hsl(185, 60%, 30%));
+    --btn-theme2-gradient-hover-dark: linear-gradient(to bottom right, hsl(175, 60%, 30%), hsl(185, 60%, 25%));
+    --btn-theme3-gradient-dark: linear-gradient(to bottom right, hsl(90, 55%, 35%), hsl(100, 55%, 30%));
+    --btn-theme3-gradient-hover-dark: linear-gradient(to bottom right, hsl(90, 55%, 30%), hsl(100, 55%, 25%));
+    --btn-theme4-gradient-dark: linear-gradient(to bottom right, hsl(260, 60%, 40%), hsl(270, 60%, 35%));
+    --btn-theme4-gradient-hover-dark: linear-gradient(to bottom right, hsl(260, 60%, 35%), hsl(270, 60%, 30%));
+    --btn-theme5-gradient-dark: linear-gradient(to bottom right, hsl(35, 70%, 40%), hsl(45, 70%, 35%));
+    --btn-theme5-gradient-hover-dark: linear-gradient(to bottom right, hsl(35, 70%, 35%), hsl(45, 70%, 30%));
+    --btn-theme6-gradient-dark: linear-gradient(to bottom right, hsl(330, 70%, 45%), hsl(340, 70%, 40%));
+    --btn-theme6-gradient-hover-dark: linear-gradient(to bottom right, hsl(330, 70%, 40%), hsl(340, 70%, 35%));
+
     /* Default Submenu Button Styles - Dark Theme */
-    --sidebar-button-bg-dark: hsl(215 20% 22%);
-    --sidebar-button-hover-bg-dark: hsl(215 20% 26%);
+    --sidebar-button-bg-dark: hsl(215 20% 20%); /* Darker default bg */
+    --sidebar-button-hover-bg-dark: hsl(215 20% 24%); /* Darker hover bg */
     --sidebar-button-border: hsl(215 15% 15% / 0); /* Transparent Border */
-    --sidebar-button-shadow: 0 1px 3px hsl(210 10% 5% / 0.15), 0 1px 2px hsl(210 10% 5% / 0.1); /* Softer 3D Shadow */
-    --sidebar-button-hover-shadow: 0 3px 6px hsl(210 10% 5% / 0.2), 0 2px 4px hsl(210 10% 5% / 0.15); /* Enhanced Hover Shadow */
-    --sidebar-button-active-shadow: inset 0 1px 2px hsl(210 10% 5% / 0.25); /* Softer Pressed-in Shadow */
+    --sidebar-button-shadow: 0 1px 2px hsl(210 10% 5% / 0.1), 0 1px 1px hsl(210 10% 5% / 0.05); /* Softer 3D Shadow */
+    --sidebar-button-hover-shadow: 0 2px 4px hsl(210 10% 5% / 0.15), 0 1px 2px hsl(210 10% 5% / 0.1); /* Enhanced Hover Shadow */
+    --sidebar-button-active-shadow: inset 0 1px 1px hsl(210 10% 5% / 0.2); /* Softer Pressed-in Shadow */
   }
 
   [data-variant="sidebar"] [data-sidebar="sidebar"] {
@@ -148,24 +154,24 @@ body {
   }
 
   .dashboard-main-title {
-    color: hsl(220, 70%, 40%); /* Dark Blue */
-    text-shadow: 0px 1px 1px hsla(0, 0%, 100%, 0.5), /* Top-light for 3D */
-                 0px 2px 3px hsla(220, 70%, 30%, 0.2); /* Darker shadow for depth */
+    color: hsl(220, 70%, 35%); /* Darker Blue */
+    text-shadow: 0px 1px 1px hsla(0, 0%, 100%, 0.6), /* Top-light for 3D */
+                 0px 2px 4px hsla(220, 70%, 25%, 0.25); /* Darker shadow for depth */
   }
   .dark .dashboard-main-title {
-    color: hsl(210, 80%, 75%); /* Lighter Blue for Dark Mode */
-    text-shadow: 0px 1px 1px hsla(0, 0%, 0%, 0.3),  /* Top-dark for 3D */
-                 0px 2px 3px hsla(210, 80%, 25%, 0.4); /* Darker shadow for depth */
+    color: hsl(210, 80%, 80%); /* Lighter Blue for Dark Mode */
+    text-shadow: 0px 1px 1px hsla(0, 0%, 0%, 0.35),  /* Top-dark for 3D */
+                 0px 2px 4px hsla(210, 80%, 20%, 0.45); /* Darker shadow for depth */
   }
   .dashboard-subtitle {
-    color: hsl(215, 50%, 50%); /* Slightly lighter blue */
-    text-shadow: 0px 1px 1px hsla(0, 0%, 100%, 0.3);
-    margin-top: -0.25rem; /* Adjust for 'move up' */
+    color: hsl(215, 50%, 45%); /* Slightly lighter blue */
+    text-shadow: 0px 1px 1px hsla(0, 0%, 100%, 0.4);
+    margin-top: -0.35rem; /* Adjust for 'move up' */
   }
   .dark .dashboard-subtitle {
-    color: hsl(210, 70%, 65%);
-    text-shadow: 0px 1px 1px hsla(0, 0%, 0%, 0.2);
-    margin-top: -0.25rem;
+    color: hsl(210, 70%, 70%);
+    text-shadow: 0px 1px 1px hsla(0, 0%, 0%, 0.25);
+    margin-top: -0.35rem;
   }
 
 }
@@ -190,7 +196,7 @@ body {
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"] {
     @apply rounded-md px-3 py-2 my-0.5 text-sidebar-foreground;
     background-color: var(--sidebar-button-bg-light);
-    border: 1px solid var(--sidebar-button-border); 
+    border: 1px solid var(--sidebar-button-border);
     box-shadow: var(--sidebar-button-shadow);
     transition: background-color 0.15s ease-out, background-image 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.1s ease-out, border-color 0.15s ease-out;
   }
@@ -214,26 +220,36 @@ body {
 
   [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"] {
     @apply bg-sidebar-primary text-sidebar-primary-foreground;
-    background-image: none !important;
+    background-image: none !important; /* Ensure no gradient for default active */
     box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important;
     transform: translateY(0.5px);
     border-color: transparent !important;
   }
    [data-sidebar="menu"] > [data-sidebar="menu-item"] > [data-sidebar="menu-button"][data-active="true"]:hover {
     @apply bg-sidebar-primary/90;
-    background-image: none !important;
+    background-image: none !important; /* Ensure no gradient for default active hover */
     transform: translateY(0.5px);
     box-shadow: inset 0 1px 3px hsla(var(--sidebar-primary-foreground)/0.3), 0 1px 1px hsla(var(--sidebar-primary)/0.5) !important;
+  }
+
+  /* General themed button style override for active state */
+  [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"],
+  [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"]:hover {
+    /* Keep their gradient, but perhaps slightly darken or add an inset shadow */
+    box-shadow: inset 0 1px 4px hsla(0, 0%, 0%, 0.2), 0 1px 1px hsla(0, 0%, 100%, 0.1) !important;
+    transform: translateY(0.5px);
+    border-color: transparent !important;
   }
 
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
     background-image: var(--btn-theme1-gradient-light) !important;
     background-color: transparent !important;
     border-color: transparent !important;
-    color: hsl(var(--primary-foreground)) !important;
+    color: hsl(var(--foreground)) !important; /* Changed to foreground for better contrast on very light bg */
   }
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme1"] {
     background-image: var(--btn-theme1-gradient-dark) !important;
+    color: hsl(var(--primary-foreground)) !important;
   }
   [data-sidebar="menu-button"][data-menu-item-theme="theme1"]:hover {
     background-image: var(--btn-theme1-gradient-hover-light) !important;
@@ -273,7 +289,7 @@ body {
   .dark [data-sidebar="menu-button"][data-menu-item-theme="theme3"]:hover {
     background-image: var(--btn-theme3-gradient-hover-dark) !important;
   }
- 
+
   [data-sidebar="menu-button"][data-menu-item-theme="theme4"] {
     background-image: var(--btn-theme4-gradient-light) !important;
     background-color: transparent !important;
@@ -322,17 +338,47 @@ body {
     background-image: var(--btn-theme6-gradient-hover-dark) !important;
   }
 
+  /* Ensure text color on themed buttons is primary-foreground or visible alternative */
   [data-sidebar="menu-button"][data-menu-item-theme] span,
   [data-sidebar="menu-button"][data-menu-item-theme] svg {
     color: hsl(var(--primary-foreground)) !important;
   }
+  /* Specific override for theme1 if its background is too light for white text */
+  [data-sidebar="menu-button"][data-menu-item-theme="theme1"] span,
+  [data-sidebar="menu-button"][data-menu-item-theme="theme1"] svg {
+    color: hsl(var(--foreground)) !important; /* Darker text for very light theme1 */
+  }
+
+
   .dark [data-sidebar="menu-button"][data-menu-item-theme] span,
   .dark [data-sidebar="menu-button"][data-menu-item-theme] svg {
     color: hsl(var(--primary-foreground)) !important;
   }
-  [data-sidebar="menu-button"][data-active="true"] span,
-  [data-sidebar="menu-button"][data-active="true"] svg {
+
+  /* Active state for default buttons (non-themed) */
+  [data-sidebar="menu-button"][data-active="true"]:not([data-menu-item-theme]) span,
+  [data-sidebar="menu-button"][data-active="true"]:not([data-menu-item-theme]) svg {
      color: hsl(var(--sidebar-primary-foreground)) !important;
+  }
+
+  /* Active state text for THEMED buttons */
+  [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] span,
+  [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] svg {
+    color: hsl(var(--primary-foreground)) !important; /* Keep white text on active themed buttons */
+  }
+  [data-sidebar="menu-button"][data-menu-item-theme="theme1"][data-active="true"] span,
+  [data-sidebar="menu-button"][data-menu-item-theme="theme1"][data-active="true"] svg {
+    color: hsl(var(--foreground)) !important; /* Darker text for active theme1 */
+  }
+
+
+  /* Submenu active button color fix */
+  [data-sidebar="menu-sub-button"][data-active="true"] {
+    background-color: hsl(var(--sidebar-accent)) !important;
+    color: hsl(var(--sidebar-accent-foreground)) !important;
+  }
+  [data-sidebar="menu-sub-button"][data-active="true"] svg {
+    color: hsl(var(--sidebar-accent-foreground)) !important;
   }
 }
 
@@ -345,52 +391,24 @@ body {
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/50; 
+  @apply bg-primary/50;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/70; 
+  @apply bg-primary/70;
 }
 
+/* Remove print footer from dashboard */
 @media print {
-  .hide-on-print-dashboard {
+  body.printing-dashboard-appointments-active .print-footer {
     display: none !important;
   }
-  body.printing-dashboard-appointments-active {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    margin: 0;
-    padding: 0;
-    background-color: #fff !important;
-    color: #000 !important;
-  }
-  body.printing-dashboard-appointments-active .dashboard-appointments-card {
-    box-shadow: none !important;
-    border: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-  body.printing-dashboard-appointments-active .dashboard-appointments-card .card-header,
-  body.printing-dashboard-appointments-active .dashboard-appointments-card .card-content {
-    padding: 10mm !important;
-  }
-   body.printing-dashboard-appointments-active .dashboard-appointments-card table th,
-   body.printing-dashboard-appointments-active .dashboard-appointments-card table td {
-    font-size: 10pt !important;
-    color: #000 !important;
-    border: 1px solid #ccc !important;
-  }
-  body.printing-dashboard-appointments-active .dashboard-appointments-card table th {
-    background-color: #f0f0f0 !important;
-  }
-  body.printing-dashboard-appointments-active .dashboard-appointments-card .badge {
-    border: 1px solid #ccc !important;
-    background-color: #fff !important;
-    color: #000 !important;
+}
+/* Remove print footer from report page */
+@media print {
+  body.printing-report-active .print-footer {
+    display: none !important;
   }
 }
-@page {
-  size: A4 portrait;
-  margin: 15mm;
-}
+
+    

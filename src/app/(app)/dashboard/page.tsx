@@ -42,7 +42,7 @@ interface QuickActionCardProps {
   title: string;
   description: string;
   icon: React.ElementType;
-  className?: string; // Changed from bgColorClass for more flexibility
+  className?: string;
   textColorClass?: string;
   href: string;
 }
@@ -68,7 +68,7 @@ interface ActivityStat {
 interface ActivityCardProps {
   title: string;
   stats: ActivityStat[];
-  className?: string; // Changed from bgColorClass
+  className?: string;
   textColorClass?: string;
   detailsLink?: string;
   icon?: React.ElementType;
@@ -168,7 +168,7 @@ export default function DashboardPage() {
 
         const paymentSlipForVisit = todaySlips.find(s => s.visitId === visit.id && (s.amount ?? 0) > 0);
         const currentStatus: 'Completed' | 'Pending' = paymentSlipForVisit ? 'Completed' : 'Pending';
-        
+
         const visitCreatedAtDate = visit.createdAt ? new Date(visit.createdAt) : null;
         const timeString = visitCreatedAtDate && isValid(visitCreatedAtDate)
           ? format(visitCreatedAtDate, "p", { locale: bn })
@@ -442,7 +442,7 @@ export default function DashboardPage() {
             { label: 'মোট নিবন্ধিত রোগী', value: stats.monthlyTotalRegistered || 0, icon: Users },
             { label: 'আনুমানিক মাসিক আয়', value: formatCurrency(stats.monthlyIncome || 0), icon: TrendingUp },
           ]}
-          className="bg-gradient-to-br from-blue-400 to-purple-500"
+          className="bg-gradient-to-br from-blue-500 to-purple-600"
           textColorClass="text-white"
           detailsLink={ROUTES.DAILY_REPORT}
         />
@@ -454,7 +454,7 @@ export default function DashboardPage() {
             { label: 'অন্যান্য নিবন্ধিত রোগী', value: stats.dailyOtherRegistered || 0, icon: Users },
             { label: 'আজকের আয়', value: formatCurrency(stats.todayRevenue || 0), icon: TrendingUp },
           ]}
-          className="bg-gradient-to-br from-lime-400 to-teal-500" // Updated gradient
+          className="bg-gradient-to-br from-lime-500 to-teal-600"
           textColorClass="text-white"
           detailsLink={ROUTES.DAILY_REPORT}
         />
@@ -543,11 +543,10 @@ export default function DashboardPage() {
           />
         )}
       </Suspense>
-       <div className="print-only-block print-footer">
-         <p>রিপোর্ট তৈরির সময়: {clientRenderedTimestamp ? format(clientRenderedTimestamp, "PPpp", { locale: bn }) : 'সময় লোড হচ্ছে...'}</p>
-         <p>স্বাক্ষর: _________________________</p>
-      </div>
+       {/* Footer removed as per request */}
     </div>
     </TooltipProvider>
   );
 }
+
+    

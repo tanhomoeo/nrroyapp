@@ -20,7 +20,7 @@ import { APP_NAME } from '@/lib/constants';
 interface ReportData {
   visit: Visit;
   patient?: Patient;
-  slips: PaymentSlip[]; 
+  slips: PaymentSlip[];
   totalAmountFromSlips: number;
 }
 
@@ -68,7 +68,7 @@ export default function EnhancedReportPage() {
 
   const generateReport = useCallback(async () => {
     setIsLoading(true);
-    
+
     const [allVisits, allPatients, allSlips] = await Promise.all([
         getVisits(),
         getPatients(),
@@ -78,8 +78,8 @@ export default function EnhancedReportPage() {
     let dateFilteredVisits: Visit[] = [];
     let currentReportStartDate: Date = new Date();
     let currentReportEndDate: Date = new Date();
-    currentReportStartDate.setHours(0, 0, 0, 0); 
-    currentReportEndDate.setHours(23, 59, 59, 999); 
+    currentReportStartDate.setHours(0, 0, 0, 0);
+    currentReportEndDate.setHours(23, 59, 59, 999);
 
     if (reportType === 'daily' && startDate) {
       currentReportStartDate = new Date(startDate);
@@ -105,7 +105,7 @@ export default function EnhancedReportPage() {
         setIsLoading(false);
         return;
     }
-    
+
     dateFilteredVisits = allVisits.filter(visit => {
         const visitDate = new Date(visit.visitDate);
         return visitDate >= currentReportStartDate && visitDate <= currentReportEndDate;
@@ -128,7 +128,7 @@ export default function EnhancedReportPage() {
       if (paymentMethodFilter !== 'all') {
         visitSlips = visitSlips.filter(s => s.paymentMethod === paymentMethodFilter);
       }
-      
+
       const totalAmountFromSlips = visitSlips.reduce((acc, slip) => acc + slip.amount, 0);
 
       return { visit, patient, slips: visitSlips, totalAmountFromSlips };
@@ -138,9 +138,9 @@ export default function EnhancedReportPage() {
         }
         return true; // Include all items if filter is 'all'
     });
-    
+
     setReportData(data.sort((a,b) => new Date(a.visit.visitDate).getTime() - new Date(b.visit.visitDate).getTime() || (a.patient?.name || '').localeCompare(b.patient?.name || '', 'bn')));
-    
+
     const totalRevenue = data.reduce((acc, item) => acc + item.totalAmountFromSlips, 0);
     setSummary({ totalVisits: data.length, totalRevenue });
     setIsLoading(false);
@@ -149,8 +149,8 @@ export default function EnhancedReportPage() {
   useEffect(() => {
     const today = new Date();
     if (reportType === 'daily') {
-        setStartDate(selectedDate); 
-        setEndDate(selectedDate);   
+        setStartDate(selectedDate);
+        setEndDate(selectedDate);
     } else if (reportType === 'weekly') {
         const { start, end } = getWeekRange(selectedDate);
         setStartDate(start);
@@ -163,7 +163,7 @@ export default function EnhancedReportPage() {
         if (!startDate) setStartDate(today);
         if (!endDate) setEndDate(today);
     }
-  }, [reportType, selectedDate, startDate, endDate]); // Added startDate, endDate dependencies for custom
+  }, [reportType, selectedDate, startDate, endDate]);
 
 
   useEffect(() => {
@@ -197,7 +197,7 @@ export default function EnhancedReportPage() {
     }
     return format(startDate, "PPP", { locale: bn });
   };
-  
+
   const pageTitle = reportTypeOptions.find(opt => opt.value === reportType)?.label || "প্রতিবেদন";
   const pageDescription = `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`;
 
@@ -343,7 +343,7 @@ export default function EnhancedReportPage() {
                       <TableCell className="print:hidden">{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
                       <TableCell className="print:max-w-[120px] print:whitespace-normal print:truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
                       <TableCell className="print:max-w-[70px] print:whitespace-normal print:truncate">
-                        {item.slips.length > 0 ? 
+                        {item.slips.length > 0 ?
                           item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'
                         }
                       </TableCell>
@@ -366,10 +366,7 @@ export default function EnhancedReportPage() {
               </TableFooter>
             </Table>
         </div>
-         <div className="print-footer">
-            <p>রিপোর্ট তৈরির সময়: {clientRenderedTimestamp ? format(clientRenderedTimestamp, "PPpp", { locale: bn }) : 'সময় লোড হচ্ছে...'}</p>
-            <p>স্বাক্ষর: _________________________</p>
-        </div>
+         {/* Footer removed as per request */}
       </div>
 
       {isLoading && !reportData.length ? (
@@ -414,7 +411,7 @@ export default function EnhancedReportPage() {
                       <TableCell>{item.patient?.phone || 'N/A'}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
                        <TableCell className="max-w-[100px] truncate">
-                         {item.slips.length > 0 ? 
+                         {item.slips.length > 0 ?
                             item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'
                          }
                        </TableCell>
@@ -457,7 +454,7 @@ export default function EnhancedReportPage() {
             padding: 5mm;
             box-sizing: border-box;
             font-family: 'PT Sans', Arial, sans-serif;
-            font-size: 8.5pt; 
+            font-size: 8.5pt;
             line-height: 1.2;
             color: #000 !important;
           }
@@ -470,18 +467,18 @@ export default function EnhancedReportPage() {
           .report-table-container th { background-color: #f0f0f0 !important; font-weight: bold; }
           .report-table-container td.text-right, .report-table-container th.text-right { text-align: right; }
           .report-table-container td.text-center, .report-table-container th.text-center { text-align: center; }
-          .print-footer { margin-top: 6mm; padding-top: 2mm; border-top: 1px solid #666; font-size: 7pt; display: flex; justify-content: space-between; }
+          /* Footer removed as per request */
           .print\\:hidden { display: none !important; }
           .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
           .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
           .print\\:whitespace-normal { white-space: normal !important; }
           .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
-          .print\\:col-span-5 { grid-column: span 5 / span 5 !important; } 
+          .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
           .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
           .print\\:w-\\[80px\\] { width: 80px !important; }
         }
         @page {
-          size: A4 landscape; 
+          size: A4 landscape;
           margin: 10mm;
         }
       `}</style>
@@ -489,3 +486,4 @@ export default function EnhancedReportPage() {
   );
 }
 
+    
