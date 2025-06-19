@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'; // Added FormDescription
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Calendar } from '@/components/ui/calendar';
@@ -134,22 +134,24 @@ export default function MedicineInstructionsClientLogic() {
                 formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
                 formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
             } else {
+                // No patient ID or name, create a generic serial
                 formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
             }
         } else if (patientNameFromQuery) {
             formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
             formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
         } else {
+            // Default serial if no info at all
             formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
         }
         
         setSelectedPatient(localSelectedPatient);
         form.reset({
-            ...form.getValues(),
-            ...formDataUpdate,
-            instructionDate: formDataUpdate.instructionDate || undefined,
+            ...form.getValues(), // Keep existing form values (like template selection)
+            ...formDataUpdate, // Override with fetched/derived data
+            instructionDate: formDataUpdate.instructionDate || undefined, // Ensure instructionDate is properly set or undefined
         });
-        setPaymentCompleted(false);
+        setPaymentCompleted(false); // Reset payment status for new context
 
     } catch (error) {
         console.error("Error fetching initial data for medicine instructions:", error);
@@ -157,17 +159,17 @@ export default function MedicineInstructionsClientLogic() {
     } finally {
         setIsLoadingPageData(false);
     }
-  }, [searchParams, form, toast]);
+  }, [searchParams, form, toast]); // form and toast are stable
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData]); // fetchData is memoized
 
   useEffect(() => {
     if (!isLoadingPageData && !form.getValues('instructionDate')) {
       form.setValue('instructionDate', new Date());
     }
-  }, [isLoadingPageData, form]);
+  }, [isLoadingPageData, form]); // form is stable
 
 
   const generateInstructionText = (data: InstructionsFormValues): string => {
@@ -217,7 +219,7 @@ export default function MedicineInstructionsClientLogic() {
     setIsPaymentModalOpen(false);
     if (slipCreated) {
       setPaymentCompleted(true);
-      window.dispatchEvent(new CustomEvent('firestoreDataChange'));
+      window.dispatchEvent(new CustomEvent('firestoreDataChange')); // To refresh dashboard or other listeners
     }
   };
 
@@ -234,17 +236,20 @@ export default function MedicineInstructionsClientLogic() {
   const previewSlipNumber = useMemo(() => currentValues.serialNumber || 'N/A', [currentValues.serialNumber]);
   const isPatientNamePrefilled = !!searchParams.get('name') || !!selectedPatient;
 
-  let pageHeaderDescriptionText;
+  let pageHeaderDescriptionText: string;
   if (isLoadingPageData) {
     pageHeaderDescriptionText = "ঔষধের নিয়মাবলী লোড হচ্ছে...";
   } else if (selectedPatient) {
     const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
     pageHeaderDescriptionText = `রোগী: ${selectedPatient.name}${diaryStr}`;
+  } else if (form.getValues('patientName')) {
+    pageHeaderDescriptionText = `রোগী: ${form.getValues('patientName')}`;
   } else {
     pageHeaderDescriptionText = "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
   }
 
-  if (isLoadingPageData && !selectedPatient && !searchParams.get('name')) { 
+
+  if (isLoadingPageData && !selectedPatient && !searchParams.get('name') && !form.getValues('patientName')) { 
       return (
         <div className="flex h-screen items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -258,8 +263,8 @@ export default function MedicineInstructionsClientLogic() {
       <PageHeaderCard
         title="ঔষধ খাওয়ার নিয়মাবলী"
         description={pageHeaderDescriptionText}
-        actions={<ClipboardList className="h-8 w-8 text-primary" />}
         className="hide-on-print"
+        actions={<ClipboardList className="h-8 w-8 text-primary" />}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -581,63 +586,8 @@ export default function MedicineInstructionsClientLogic() {
           />
         )}
       </Suspense>
-
-      <style jsx global>{\`
-        .print-only-block { display: none; }
-        @media print {
-          .hide-on-print { display: none !important; }
-          .print-only-block { display: block !important; }
-          body.printing-active {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            margin: 0; padding: 0;
-            background-color: #fff !important;
-          }
-          .print-instruction-container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 10mm 12mm;
-            box-sizing: border-box;
-            font-family: 'PT Sans', Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.6;
-            color: #000 !important;
-          }
-          .print-instruction-container .print-header { text-align: center; margin-bottom: 6mm; border-bottom: 1px solid #555; padding-bottom: 4mm; }
-          .print-instruction-container .print-header h1 { font-family: 'Poppins', 'PT Sans', sans-serif; margin: 0 0 1mm 0; font-size: 18pt; }
-          .print-instruction-container .print-header p { font-size: 10pt; margin: 0.5mm 0; }
-
-          .print-instruction-container .meta-info { display: flex; justify-content: space-between; font-size: 10pt; margin-bottom: 1mm; }
-          .print-instruction-container .patient-name { font-size: 11pt; margin-bottom: 1mm; }
-          .print-instruction-container .patient-diary-no-print { font-size: 10pt; margin-bottom: 3mm; line-height: 1.3; }
-
-          .print-instruction-container .instruction-title { text-align: center; font-size: 14pt; font-weight: bold; text-decoration: underline; margin: 5mm 0; }
-          .print-instruction-container .main-instruction {
-            font-size: 12pt;
-            text-align: center;
-            margin: 8mm 0;
-            padding: 5mm;
-            border: 1px dashed #888;
-            border-radius: 4px;
-            min-h: 50px;
-          }
-
-          .print-instruction-container .advice-section { margin-top: 6mm; }
-          .print-instruction-container .advice-title { font-size: 12pt; font-weight: bold; color: #D32F2F; margin-bottom: 2mm; }
-          .print-instruction-container .advice-list { list-style: none; padding-left: 0; font-size: 10.5pt; }
-          .print-instruction-container .advice-list li { margin-bottom: 1.5mm; display: flex; align-items: flex-start; }
-          .print-instruction-container .advice-list li .text-red-500 { color: #D32F2F !important; font-weight: bold; }
-
-          .print-instruction-container .print-footer { margin-top: 10mm; padding-top: 4mm; position: relative; height: 30mm; }
-          .print-instruction-container .signature-area { text-align: right; font-size: 10pt; position: absolute; bottom: 0mm; right: 0mm; }
-          .print-instruction-container .signature-line { display: block; width: 150px; border-bottom: 1px solid #333; margin-bottom: 2mm; margin-left: auto; }
-          .print-instruction-container .signature-area p { margin: 1mm 0; font-size: 10pt; }
-        }
-        @page {
-          size: A4 portrait;
-          margin: 15mm;
-        }
-      \`}</style>
+      {/* Removed the <style jsx global> block */}
     </div>
   );
 }
+
