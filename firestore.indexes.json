@@ -18,14 +18,6 @@
       ]
     },
     {
-      "collectionGroup": "visits",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "visitDate", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "patients",
       "queryScope": "COLLECTION",
       "fields": [
@@ -79,4 +71,3 @@
   ],
   "fieldOverrides": []
 }
-

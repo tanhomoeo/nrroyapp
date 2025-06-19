@@ -93,73 +93,58 @@ export default function PrescriptionPage() {
         setCurrentVisit(visit || null);
         visitForDiagnosis = visit;
       }
-
-      let initialDiagnosis = '';
-      let initialDoctorName = form.getValues('doctorName') || currentClinicSettings?.doctorName || '';
       setShowInstructionsButton(false);
 
-      if (prescriptionIdQuery) {
-        const prescription = await getPrescriptionById(prescriptionIdQuery);
-        if (prescription) {
-          setExistingPrescription(prescription);
-          initialDiagnosis = prescription.diagnosis || '';
-          initialDoctorName = prescription.doctorName || initialDoctorName;
-          form.reset({
-            prescriptionType: prescription.prescriptionType,
-            items: prescription.items,
-            followUpDays: prescription.followUpDays,
-            advice: prescription.advice,
-            diagnosis: initialDiagnosis,
-            doctorName: initialDoctorName,
-          });
-          setShowInstructionsButton(true);
-        }
-      } else if (visitId) {
-        const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
-        if (prescriptionsForVisit.length > 0) {
-          const currentPrescriptionForVisit = prescriptionsForVisit[0];
-          setExistingPrescription(currentPrescriptionForVisit);
-          initialDiagnosis = currentPrescriptionForVisit.diagnosis || '';
-          initialDoctorName = currentPrescriptionForVisit.doctorName || initialDoctorName;
-          form.reset({
-            prescriptionType: currentPrescriptionForVisit.prescriptionType,
-            items: currentPrescriptionForVisit.items,
-            followUpDays: currentPrescriptionForVisit.followUpDays,
-            advice: currentPrescriptionForVisit.advice,
-            diagnosis: initialDiagnosis,
-            doctorName: initialDoctorName,
-          });
-          setShowInstructionsButton(true);
-        } else { // No existing prescription for this visit
-          if (visitForDiagnosis) {
-            initialDiagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
-          }
-          form.reset({
-            prescriptionType: form.getValues('prescriptionType') || 'adult',
-            items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
-            followUpDays: 7,
-            advice: '',
-            diagnosis: initialDiagnosis,
-            doctorName: initialDoctorName,
-          });
-        }
-      } else { // No prescriptionIdQuery and no visitId
-        form.reset({
-            prescriptionType: 'adult',
-            items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
-            followUpDays: 7,
-            advice: '',
-            diagnosis: '',
-            doctorName: initialDoctorName,
-        });
-      }
+      let resetValues: PrescriptionFormValues = {
+          prescriptionType: 'adult',
+          items: [{ medicineName: '', dosage: '', frequency: '', duration: '', notes: '' }],
+          followUpDays: 7,
+          advice: '',
+          diagnosis: '',
+          doctorName: currentClinicSettings?.doctorName || '',
+      };
 
-      if (!form.getValues('diagnosis') && visitForDiagnosis) {
-        const diagnosisFromVisit = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
-        if (diagnosisFromVisit) {
-            form.setValue('diagnosis', diagnosisFromVisit);
-        }
+      if (prescriptionIdQuery) {
+          const prescription = await getPrescriptionById(prescriptionIdQuery);
+          if (prescription) {
+              setExistingPrescription(prescription);
+              resetValues = {
+                  prescriptionType: prescription.prescriptionType,
+                  items: prescription.items,
+                  followUpDays: prescription.followUpDays,
+                  advice: prescription.advice,
+                  diagnosis: prescription.diagnosis || (visitForDiagnosis?.diagnosis || visitForDiagnosis?.symptoms || ''),
+                  doctorName: prescription.doctorName || currentClinicSettings?.doctorName || '',
+              };
+              setShowInstructionsButton(true);
+          } else if (visitForDiagnosis) {
+              resetValues.diagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
+          }
+      } else if (visitId) {
+          const prescriptionsForVisit = (await getPrescriptionsByPatientId(patientId)).filter(p => p.visitId === visitId);
+          if (prescriptionsForVisit.length > 0) {
+              const currentPrescriptionForVisit = prescriptionsForVisit[0];
+              setExistingPrescription(currentPrescriptionForVisit);
+              resetValues = {
+                  prescriptionType: currentPrescriptionForVisit.prescriptionType,
+                  items: currentPrescriptionForVisit.items,
+                  followUpDays: currentPrescriptionForVisit.followUpDays,
+                  advice: currentPrescriptionForVisit.advice,
+                  diagnosis: currentPrescriptionForVisit.diagnosis || (visitForDiagnosis?.diagnosis || visitForDiagnosis?.symptoms || ''),
+                  doctorName: currentPrescriptionForVisit.doctorName || currentClinicSettings?.doctorName || '',
+              };
+              setShowInstructionsButton(true);
+          } else if (visitForDiagnosis) {
+             resetValues.diagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
+             resetValues.doctorName = currentClinicSettings?.doctorName || '';
+          }
       }
+      
+      if (!resetValues.diagnosis && visitForDiagnosis) {
+          resetValues.diagnosis = visitForDiagnosis.diagnosis || visitForDiagnosis.symptoms || '';
+      }
+      form.reset(resetValues);
+
     } catch (error) {
         console.error("Error fetching prescription data:", error);
         toast({ title: "Error", description: "Failed to load prescription data.", variant: "destructive" });
@@ -195,7 +180,7 @@ export default function PrescriptionPage() {
       if (existingPrescription) {
         await updatePrescription(existingPrescription.id, {
           ...prescriptionDataPayload,
-          serialNumber: existingPrescription.serialNumber,
+          serialNumber: existingPrescription.serialNumber, 
         });
         toast({ title: 'প্রেসক্রিপশন আপডেট হয়েছে', description: `রোগী ${patient.name}-এর প্রেসক্রিপশন আপডেট করা হয়েছে।` });
       } else {
@@ -621,7 +606,7 @@ export default function PrescriptionPage() {
         </div>
       </div>
 
-      <style jsx global>{\`
+      <style jsx global>{`
         .print-only-block { display: none; }
         @media print {
           .hide-on-print { display: none !important; }
@@ -698,7 +683,8 @@ export default function PrescriptionPage() {
           size: A4 portrait;
           margin: 15mm;
         }
-      \`}</style>
+      `}
+      </style>
     </div>
   );
 }
