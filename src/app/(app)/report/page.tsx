@@ -57,36 +57,33 @@ export default function EnhancedReportPage() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      setIsLoading(true);
+      setIsLoading(true); // Start loading
       try {
         const settings = await getClinicSettings();
         setClinicSettings(settings);
-        // Initialize dates here after settings are fetched or if needed
         const today = new Date();
-        setSelectedDate(today);
-        setStartDate(today); // Default to daily report for today
-        setEndDate(today);
+        setSelectedDate(today); // Set for non-custom reports
+        setStartDate(startOfDay(today)); // Default to daily report for today
+        setEndDate(endOfDay(today));
       } catch (error) {
         console.error("Failed to fetch clinic settings:", error);
         toast({ title: "ত্রুটি", description: "ক্লিনিক সেটিংস লোড করা যায়নি।", variant: "destructive" });
-        // Fallback dates if settings fetch fails
         const today = new Date();
         setSelectedDate(today);
-        setStartDate(today);
-        setEndDate(today);
+        setStartDate(startOfDay(today));
+        setEndDate(endOfDay(today));
       }
-      // setIsLoading(false); // Moved to generateReport
+      // setIsLoading(false); // Loading will be set to false in generateReport
     };
     fetchInitialData();
   }, [toast]);
 
+
   const generateReport = useCallback(async () => {
     if (!startDate || (reportType === 'custom' && !endDate)) {
-        // For custom, ensure both dates are set before loading.
-        // For other types, startDate is enough to determine range.
         setReportData([]);
         setSummary({ totalVisits: 0, totalRevenue: 0 });
-        setIsLoading(false); // Ensure loading stops if dates are not ready
+        setIsLoading(false); 
         return;
     }
     setIsLoading(true);
@@ -108,16 +105,17 @@ export default function EnhancedReportPage() {
           currentReportEndDate = endOfDay(startDate);
         } else if (reportType === 'weekly' && baseDateForRange) {
           const { start, end } = getWeekRange(baseDateForRange);
-          currentReportStartDate = start;
-          currentReportEndDate = end;
+          currentReportStartDate = startOfDay(start);
+          currentReportEndDate = endOfDay(end);
         } else if (reportType === 'monthly' && baseDateForRange) {
           const { start, end } = getMonthRange(baseDateForRange);
-          currentReportStartDate = start;
-          currentReportEndDate = end;
+          currentReportStartDate = startOfDay(start);
+          currentReportEndDate = endOfDay(end);
         } else if (reportType === 'custom' && startDate && isValid(startDate) && endDate && isValid(endDate) && startDate <= endDate) {
           currentReportStartDate = startOfDay(startDate);
           currentReportEndDate = endOfDay(endDate);
         }
+
 
         if (!currentReportStartDate || !currentReportEndDate) {
             setReportData([]);
@@ -125,10 +123,13 @@ export default function EnhancedReportPage() {
             setIsLoading(false);
             return;
         }
+        
+        const finalStartDate = currentReportStartDate;
+        const finalEndDate = currentReportEndDate;
 
         const dateFilteredVisits = allVisits.filter(visit => {
             const visitDate = new Date(visit.visitDate);
-            return isValid(visitDate) && visitDate >= currentReportStartDate! && visitDate <= currentReportEndDate!;
+            return isValid(visitDate) && visitDate >= finalStartDate && visitDate <= finalEndDate;
         });
 
         let processedVisits = dateFilteredVisits;
@@ -140,11 +141,11 @@ export default function EnhancedReportPage() {
         const data: ReportData[] = processedVisits.map(visit => {
           const patient = allPatients.find(p => p.id === visit.patientId);
           let visitSlips = allSlips.filter(s => {
-            const slipDate = new Date(s.date);
+            const slipDate = new Date(s.date); // Assuming slip.date is ISO string
             return s.visitId === visit.id && 
                    isValid(slipDate) &&
-                   slipDate >= currentReportStartDate! && 
-                   slipDate <= currentReportEndDate!;
+                   slipDate >= finalStartDate && 
+                   slipDate <= finalEndDate;
           });
 
           if (paymentMethodFilter !== 'all') {
@@ -178,34 +179,31 @@ export default function EnhancedReportPage() {
   useEffect(() => {
     const baseDate = (selectedDate && isValid(selectedDate)) ? selectedDate : new Date();
     if (reportType === 'daily') {
-        setStartDate(baseDate);
-        setEndDate(baseDate);
+        setStartDate(startOfDay(baseDate));
+        setEndDate(endOfDay(baseDate));
     } else if (reportType === 'weekly') {
         const { start, end } = getWeekRange(baseDate);
-        setStartDate(start);
-        setEndDate(end);
+        setStartDate(startOfDay(start));
+        setEndDate(endOfDay(end));
     } else if (reportType === 'monthly') {
         const { start, end } = getMonthRange(baseDate);
-        setStartDate(start);
-        setEndDate(end);
+        setStartDate(startOfDay(start));
+        setEndDate(endOfDay(end));
     }
+    // For 'custom', startDate and endDate are set by the user via Popovers
   }, [reportType, selectedDate]);
 
   useEffect(() => {
     if (startDate && (reportType !== 'custom' || (reportType === 'custom' && endDate && isValid(endDate) && startDate <= endDate))) {
         generateReport();
-    } else if (reportType !== 'custom' && !startDate) {
-        // If not custom and startDate becomes undefined, reset to today
-        const today = new Date();
-        setSelectedDate(today);
-        setStartDate(today);
-        setEndDate(today);
-    } else if (reportType === 'custom' && (!startDate || !endDate || startDate > endDate)) {
-        // If custom and dates are invalid/incomplete, clear report
+    } else if (reportType === 'custom' && (!startDate || !endDate || (endDate && isValid(endDate) && startDate && startDate > endDate))) {
+        // For custom reports, if dates are incomplete or invalid range, clear the report.
         setReportData([]);
         setSummary({ totalVisits: 0, totalRevenue: 0 });
+        setIsLoading(false); // Ensure loading stops
     }
   }, [startDate, endDate, reportType, paymentMethodFilter, courierDeliveryOnly, generateReport]);
+
 
   const handlePrintReport = () => {
     if (typeof window !== 'undefined') {
@@ -222,34 +220,27 @@ export default function EnhancedReportPage() {
     if (!startDate || !isValid(startDate)) return "একটি তারিখ নির্বাচন করুন";
     if (reportType === 'daily') return format(startDate, "eeee, dd MMMM, yyyy", { locale: bn });
     if (reportType === 'weekly') {
-      const { start, end } = getWeekRange(startDate);
+      const { start, end } = getWeekRange(startDate); // Use current startDate
       return `${format(start, "dd MMM", { locale: bn })} - ${format(end, "dd MMM, yyyy", { locale: bn })}`;
     }
-    if (reportType === 'monthly') return format(startDate, "MMMM, yyyy", { locale: bn });
+    if (reportType === 'monthly') return format(startDate, "MMMM, yyyy", { locale: bn }); // Use current startDate
     if (reportType === 'custom' && endDate && isValid(endDate) && startDate <= endDate) {
       return `${format(startDate, "dd MMM, yyyy", { locale: bn })} থেকে ${format(endDate, "dd MMM, yyyy", { locale: bn })}`;
     }
-    return format(startDate, "PPP", { locale: bn });
+    // Fallback for custom if endDate is not set or invalid
+    if (reportType === 'custom') return `${format(startDate, "dd MMM, yyyy", { locale: bn })} থেকে (শেষ তারিখ নির্বাচন করুন)`;
+    
+    return format(startDate, "PPP", { locale: bn }); // General fallback
   }, [startDate, endDate, reportType]);
 
   const pageTitle = reportTypeOptions.find(opt => opt.value === reportType)?.label || "প্রতিবেদন";
   
-  const pageDescription = useMemo(() => {
-    if (isLoading && (!startDate || (reportType === 'custom' && !endDate))) { // Show loading if initial dates not set
-      return "রিপোর্টের তথ্য লোড হচ্ছে...";
-    }
-    const dateRangeStr = getReportDateRangeString();
-    const paymentFilterStr = paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : '';
-    const courierFilterStr = courierDeliveryOnly ? ' | শুধু কুরিয়ার' : '';
-    return `তারিখ/পরিসীমা: ${dateRangeStr}${paymentFilterStr}${courierFilterStr}`;
-  }, [isLoading, startDate, endDate, reportType, getReportDateRangeString, paymentMethodFilter, courierDeliveryOnly]);
-
 
   return (
     <div className="space-y-6 print:space-y-2">
       <PageHeaderCard
         title={pageTitle}
-        description={pageDescription}
+        description={isLoading ? "রিপোর্টের তথ্য লোড হচ্ছে..." : `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}
         className="hide-on-print"
         actions={
           <Button onClick={handlePrintReport} variant="outline" disabled={isLoading}><Printer className="mr-2 h-4 w-4" /> প্রিন্ট করুন</Button>
@@ -276,7 +267,7 @@ export default function EnhancedReportPage() {
                     {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date); setSelectedDate(date || new Date());}} initialFocus locale={bn} /></PopoverContent>
+                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date ? startOfDay(date) : undefined); setSelectedDate(date || new Date()); setEndDate(date ? endOfDay(date) : undefined);}} initialFocus locale={bn} /></PopoverContent>
               </Popover>
             </div>
           )}
@@ -322,7 +313,7 @@ export default function EnhancedReportPage() {
                       {startDate && isValid(startDate) ? format(startDate, "PPP", { locale: bn }) : <span>শুরুর তারিখ</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus locale={bn} /></PopoverContent>
+                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(date) => setStartDate(date ? startOfDay(date) : undefined)} initialFocus locale={bn} /></PopoverContent>
                 </Popover>
               </div>
               <div className="space-y-1">
@@ -334,7 +325,7 @@ export default function EnhancedReportPage() {
                       {endDate && isValid(endDate) ? format(endDate, "PPP", { locale: bn }) : <span>শেষ তারিখ</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus locale={bn} disabled={(date) => startDate && isValid(startDate) ? date < startDate : false} /></PopoverContent>
+                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={(date) => setEndDate(date ? endOfDay(date) : undefined)} initialFocus locale={bn} disabled={(date) => startDate && isValid(startDate) ? date < startDate : false} /></PopoverContent>
                 </Popover>
               </div>
             </>
@@ -361,7 +352,7 @@ export default function EnhancedReportPage() {
           {clinicSettings?.clinicAddress && <p className="text-xs">{clinicSettings.clinicAddress}</p>}
           {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {clinicSettings.clinicContact}</p>}
           <h2 className="print-title text-lg font-semibold mt-1">{pageTitle}</h2>
-          <p className="text-xs">{pageDescription}</p>
+          <p className="text-xs">{`তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}</p>
         </div>
 
         <div className="report-table-container">
@@ -412,7 +403,7 @@ export default function EnhancedReportPage() {
         </div>
       </div>
 
-      {isLoading && !startDate ? (
+      {isLoading && (!startDate || (reportType === 'custom' && !endDate)) ? ( // Updated loading condition
         <div className="flex justify-center items-center py-10 hide-on-print">
             <p className="text-muted-foreground">রিপোর্ট দেখতে অনুগ্রহ করে তারিখ নির্বাচন করুন।</p>
         </div>

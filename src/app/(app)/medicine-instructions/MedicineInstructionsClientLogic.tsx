@@ -145,9 +145,9 @@ export default function MedicineInstructionsClientLogic() {
         
         setSelectedPatient(localSelectedPatient);
         form.reset({
-            ...form.getValues(),
-            ...formDataUpdate,
-            instructionDate: undefined, // Will be set by client-side effect
+            ...form.getValues(), // keep existing form values (like template selection)
+            ...formDataUpdate, // apply fetched data
+            instructionDate: formDataUpdate.instructionDate || undefined, // Ensure instructionDate is handled correctly or reset
         });
         setPaymentCompleted(false);
 
@@ -157,17 +157,18 @@ export default function MedicineInstructionsClientLogic() {
     } finally {
         setIsLoadingPageData(false);
     }
-  }, [searchParams, form, toast]);
+  }, [searchParams, form, toast]); // form added as dependency because form.reset is used
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   useEffect(() => {
-    if (!isLoadingPageData && form.getValues('instructionDate') === undefined) {
+    if (!isLoadingPageData && !form.getValues('instructionDate')) {
       form.setValue('instructionDate', new Date());
     }
   }, [isLoadingPageData, form]);
+
 
   const generateInstructionText = (data: InstructionsFormValues): string => {
     if (data.instructionTemplate === 'template1') {
@@ -181,7 +182,8 @@ export default function MedicineInstructionsClientLogic() {
   };
 
   const onSubmit: SubmitHandler<InstructionsFormValues> = (data) => {
-    if (!data.instructionDate || !isValid(data.instructionDate)) {
+    const instructionDate = form.getValues('instructionDate');
+    if (!instructionDate || !isValid(instructionDate)) {
         toast({
             title: "তারিখ নির্বাচন করুন",
             description: "অনুগ্রহ করে নির্দেশনার জন্য একটি বৈধ তারিখ নির্বাচন করুন।",
@@ -232,7 +234,8 @@ export default function MedicineInstructionsClientLogic() {
   const previewSlipNumber = currentValues.serialNumber || 'N/A';
   const isPatientNamePrefilled = !!searchParams.get('name') || !!selectedPatient;
 
-  const pageHeaderDescription = useMemo(() => {
+
+  const pageHeaderDescriptionText = useMemo(() => {
     if (isLoadingPageData) {
       return "ঔষধের নিয়মাবলী লোড হচ্ছে...";
     }
@@ -243,7 +246,8 @@ export default function MedicineInstructionsClientLogic() {
     return "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
   }, [isLoadingPageData, selectedPatient]);
 
-  if (isLoadingPageData && !selectedPatient && !searchParams.get('name')) { // Show full page loader only if no patient context at all
+
+  if (isLoadingPageData && !selectedPatient && !searchParams.get('name')) { 
       return (
         <div className="flex h-screen items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -252,11 +256,18 @@ export default function MedicineInstructionsClientLogic() {
       );
   }
 
+
   return (
     <div className="space-y-6">
       <PageHeaderCard
         title="ঔষধ খাওয়ার নিয়মাবলী"
-        description={pageHeaderDescription}
+        description={
+            isLoadingPageData 
+            ? "ঔষধের নিয়মাবলী লোড হচ্ছে..." 
+            : selectedPatient 
+              ? `রোগী: ${selectedPatient.name}${selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : ''}`
+              : "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।"
+        }
         actions={<ClipboardList className="h-8 w-8 text-primary" />}
         className="hide-on-print"
       />
