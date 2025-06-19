@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,14 +14,14 @@ import { addPaymentSlip, formatCurrency } from '@/lib/firestoreService';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Receipt } from 'lucide-react';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
-import { appendFinalTranscript } from '@/lib/utils'; // Import consolidated helper
+import { appendFinalTranscript } from '@/lib/utils';
 
 interface CreatePaymentSlipModalProps {
   patient: Patient;
   isOpen: boolean;
   onClose: (slipCreated?: boolean) => void;
-  onSlipCreated?: (slip: PaymentSlip) => void; 
-  visitId?: string; 
+  onSlipCreated?: (slip: PaymentSlip) => void;
+  visitId?: string;
 }
 
 const paymentMethodOptions: { value: Exclude<PaymentMethod, ''>; label: string }[] = [
@@ -34,15 +34,14 @@ const paymentMethodOptions: { value: Exclude<PaymentMethod, ''>; label: string }
 ];
 
 const paymentSlipSchema = z.object({
-  purpose: z.string().min(1, "Purpose is required."),
-  amount: z.coerce.number().nonnegative("Amount must be a non-negative number."),
+  amount: z.coerce.number().nonnegative("টাকার পরিমাণ অবশ্যই একটি অ-ঋণাত্মক সংখ্যা হতে হবে।"),
   paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other', '']).optional(),
   receivedBy: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.amount > 0 && !data.paymentMethod) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Payment method is required when amount is greater than 0.",
+      message: "টাকার পরিমাণ ০ এর বেশি হলে পেমেন্ট মাধ্যম আবশ্যক।",
       path: ["paymentMethod"],
     });
   }
@@ -58,23 +57,32 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
   const form = useForm<PaymentSlipFormValues>({
     resolver: zodResolver(paymentSlipSchema),
     defaultValues: {
-      purpose: '',
       amount: 0,
-      paymentMethod: 'cash', 
+      paymentMethod: 'cash',
       receivedBy: '',
     },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        amount: 0,
+        paymentMethod: 'cash',
+        receivedBy: '',
+      });
+    }
+  }, [isOpen, form]);
 
   const onSubmit: SubmitHandler<PaymentSlipFormValues> = async (data) => {
     try {
       const newSlipData: Omit<PaymentSlip, 'id' | 'createdAt'> = {
         patientId: patient.id,
-        visitId: visitId, 
-        slipNumber: `SLIP-${Date.now().toString().slice(-6)}`, 
+        visitId: visitId,
+        slipNumber: `SLIP-${Date.now().toString().slice(-6)}`,
         date: new Date().toISOString(),
         amount: data.amount,
-        purpose: data.purpose,
-        paymentMethod: data.amount > 0 ? data.paymentMethod as Exclude<PaymentMethod, ''> : undefined, 
+        purpose: "সাধারণ পেমেন্ট", // Default purpose since UI field is removed
+        paymentMethod: data.amount > 0 ? data.paymentMethod as Exclude<PaymentMethod, ''> : undefined,
         receivedBy: data.receivedBy,
       };
       const slipId = await addPaymentSlip(newSlipData);
@@ -82,22 +90,22 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
         throw new Error("Failed to save payment slip to Firestore.");
       }
       const createdSlip = { ...newSlipData, id: slipId, createdAt: new Date().toISOString() };
-      
+
       toast({
-        title: 'Payment Slip Created',
-        description: `Slip ${createdSlip.slipNumber} for ${formatCurrency(createdSlip.amount)} successfully created.`,
+        title: 'পেমেন্ট স্লিপ তৈরি হয়েছে',
+        description: `স্লিপ ${createdSlip.slipNumber} (${formatCurrency(createdSlip.amount)}) সফলভাবে তৈরি করা হয়েছে।`,
       });
       if (onSlipCreated) {
         onSlipCreated(createdSlip);
       }
-      form.reset({ purpose: '', amount: 0, paymentMethod: 'cash', receivedBy: '' });
-      onClose(true); 
-      window.dispatchEvent(new CustomEvent('firestoreDataChange')); 
+      form.reset({ amount: 0, paymentMethod: 'cash', receivedBy: '' });
+      onClose(true);
+      window.dispatchEvent(new CustomEvent('firestoreDataChange'));
     } catch (error) {
       console.error("Failed to create payment slip:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to create payment slip.',
+        title: 'ত্রুটি',
+        description: 'পেমেন্ট স্লিপ তৈরি করতে ব্যর্থ হয়েছে।',
         variant: 'destructive',
       });
       onClose(false);
@@ -110,50 +118,25 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { form.reset({ purpose: '', amount: 0, paymentMethod: 'cash', receivedBy: '' }); onClose(); } }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { form.reset({ amount: 0, paymentMethod: 'cash', receivedBy: '' }); onClose(); } }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center">
             <Receipt className="mr-2 h-5 w-5 text-primary" />
-            Create Payment Slip for {patient.name}
+            {patient.name}-এর জন্য পেমেন্ট স্লিপ তৈরি করুন
           </DialogTitle>
           <DialogDescription>
-            Enter the details for the new payment slip.
+            নতুন পেমেন্ট স্লিপের বিবরণ লিখুন।
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField
               control={form.control}
-              name="purpose"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Purpose</FormLabel>
-                  <div className={inputWrapperClass}>
-                    <FormControl className="flex-1">
-                      <Input placeholder="e.g., Consultation Fee, Medicine" {...field} className={inputFieldClass} id="slipPurposeModal"/>
-                    </FormControl>
-                    <MicrophoneButton
-                        onTranscript={(t) => field.onChange(field.value + t)}
-                        onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
-                        targetFieldDescription="উদ্দেশ্য (স্লিপ)"
-                        fieldKey="slipPurposeModal"
-                        isListeningGlobal={isListeningGlobal}
-                        setIsListeningGlobal={setIsListeningGlobal}
-                        currentListeningField={currentListeningField}
-                        setCurrentListeningField={setCurrentListeningField}
-                      />
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount (BDT)</FormLabel>
+                  <FormLabel>টাকার পরিমাণ (BDT)</FormLabel>
                    <div className={inputWrapperClass}>
                     <FormControl>
                       <Input type="number" placeholder="0.00" {...field} className={inputFieldClass}/>
@@ -168,9 +151,9 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Method</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
+                  <FormLabel>পেমেন্ট মাধ্যম</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
                     value={field.value || ''}
                     defaultValue="cash"
                   >
@@ -194,16 +177,16 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
               name="receivedBy"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Received By (Optional)</FormLabel>
+                  <FormLabel>গ্রহণকারী (ঐচ্ছিক)</FormLabel>
                   <div className={inputWrapperClass}>
                     <FormControl className="flex-1">
-                      <Input placeholder="Name of receiver" {...field} className={inputFieldClass} id="slipReceivedByModal"/>
+                      <Input placeholder="গ্রহণকারীর নাম" {...field} className={inputFieldClass} id="slipReceivedByModalBengali"/>
                     </FormControl>
                     <MicrophoneButton
                         onTranscript={(t) => field.onChange(field.value + t)}
                         onFinalTranscript={(t) => field.onChange(appendFinalTranscript(field.value, t))}
-                        targetFieldDescription="গ্রহণকারী (স্লিপ)"
-                        fieldKey="slipReceivedByModal"
+                        targetFieldDescription="গ্রহণকারী"
+                        fieldKey="slipReceivedByModalBengali"
                         isListeningGlobal={isListeningGlobal}
                         setIsListeningGlobal={setIsListeningGlobal}
                         currentListeningField={currentListeningField}
@@ -216,15 +199,15 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
             />
             <DialogFooter className="pt-4">
               <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={() => onClose(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => onClose(false)}>বাতিল</Button>
               </DialogClose>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Receipt className="mr-2 h-4 w-4" /> 
+                  <Receipt className="mr-2 h-4 w-4" />
                 )}
-                Create Slip
+                স্লিপ তৈরি করুন
               </Button>
             </DialogFooter>
           </form>
@@ -233,3 +216,5 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
     </Dialog>
   );
 }
+
+    
