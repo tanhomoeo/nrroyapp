@@ -71,25 +71,20 @@ const complaintAnalyzerFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      console.log('Calling complaintAnalysisPrompt with input:', JSON.stringify(input, null, 2));
       const { output } = await complaintAnalysisPrompt(input);
 
       if (!output) {
-        console.error('Complaint analysis flow did not produce an output from the LLM.');
         throw new Error('AI বিশ্লেষণ থেকে কোনো উত্তর পাওয়া যায়নি। মডেলটি কোনো আউটপুট দেয়নি।');
       }
       
-      // Validate the output from LLM against the schema (Genkit does this implicitly, but good for debugging)
       const validation = ComplaintAnalyzerOutputSchema.safeParse(output);
       if (!validation.success) {
           console.error('LLM output validation failed:', validation.error.format());
           throw new Error('AI মডেল থেকে প্রাপ্ত উত্তরটি সঠিক ফরম্যাটে নেই।');
       }
 
-      console.log('Complaint analysis flow received output:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
-      console.error('Error in complaintAnalyzerFlow:', error);
       // Provide a more user-friendly error message
       let errorMessage = 'অভিযোগ বিশ্লেষণ করার সময় একটি অপ্রত্যাশিত ত্রুটি হয়েছে।';
       if (error.message) {

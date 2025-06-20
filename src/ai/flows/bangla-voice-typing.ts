@@ -7,8 +7,6 @@
 // this file can be reinstated with appropriate Genkit setup.
 
 // To prevent build errors from lingering imports, this file can be deleted
-// or kept empty with a comment. For now, it's emptied with a comment.
-
-console.warn("Genkit AI flow 'bangla-voice-typing.ts' is no longer active and can be removed.");
+// or kept empty with a comment.
 
 export {}; // Ensures the file is treated as a module if it's not deleted.

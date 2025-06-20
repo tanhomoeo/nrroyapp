@@ -35,7 +35,6 @@ export default function AiSummaryPage() {
       const result = await analyzeComplaint(input);
       setAnalysisResult(result);
     } catch (err: any) {
-      console.error("AI Analysis Error:", err);
       let errorMessage = "অভিযোগ বিশ্লেষণ করার সময় একটি ত্রুটি হয়েছে।";
       if (err.message) {
            errorMessage = err.message; // Use the error message from the flow directly

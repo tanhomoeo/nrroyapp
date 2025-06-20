@@ -60,7 +60,6 @@ export default function ClinicInformationPage() {
           // nextDiaryNumber removed from reset
         });
       } catch (error) {
-          console.error("Failed to fetch clinic settings for form:", error);
           toast({ title: "Error", description: "Could not load clinic settings.", variant: "destructive" });
       } finally {
         setIsLoading(false);

@@ -22,8 +22,5 @@ export const ai = genkit({
   // For client-side/Next.js Genkit usage, tracing might be observed via other means if configured.
 });
 
-console.log("Genkit initialized in src/ai/genkit.ts with the Google AI plugin.");
-
 // All example code previously here has been removed to prevent build issues.
 // Flows should be defined in separate files under src/ai/flows/.
-

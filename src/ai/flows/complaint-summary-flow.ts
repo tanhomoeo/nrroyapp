@@ -5,6 +5,5 @@
 import type { ComplaintSummaryInput, ComplaintSummaryOutput } from '@/lib/types';
 
 export async function summarizeComplaints(input: ComplaintSummaryInput): Promise<ComplaintSummaryOutput> {
-  console.warn('Old complaint summary flow (summarizeComplaints) has been removed. Use analyzeComplaint from complaint-analyzer-flow.ts instead. Returning empty summary.');
   return { summary: "AI summary feature is temporarily unavailable. Please use the new AI Complaint Analyzer." };
 }
