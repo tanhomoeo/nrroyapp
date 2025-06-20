@@ -34,7 +34,6 @@ const reportTypeOptions: { value: ReportType; label: string }[] = [
   { value: 'custom', label: 'কাস্টম তারিখ পরিসীমা' },
 ];
 
-// Updated paymentMethodFilterOptions
 const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string }[] = [
   { value: 'all', label: 'সকল পেমেন্ট মাধ্যম' },
   ...Object.entries(PAYMENT_METHOD_LABELS)
@@ -135,7 +134,6 @@ export default function EnhancedReportPage() {
         let processedVisits = dateFilteredVisits;
 
         if (courierDeliveryOnly) {
-          // Filter visits based on medicineDeliveryMethod
           processedVisits = processedVisits.filter(visit => visit.medicineDeliveryMethod === 'courier');
         }
 
@@ -157,8 +155,6 @@ export default function EnhancedReportPage() {
 
           return { visit, patient, slips: visitSlips, totalAmountFromSlips };
         }).filter(item => { 
-            // If courierDeliveryOnly is true, only items with courier delivery are already in processedVisits.
-            // If paymentMethodFilter is active, only items with matching slips should be shown.
             if (paymentMethodFilter !== 'all') {
                 return item.slips.length > 0; 
             }
@@ -236,12 +232,15 @@ export default function EnhancedReportPage() {
   const currentReportTypeOption = reportTypeOptions.find(opt => opt.value === reportType);
   const pageTitle = currentReportTypeOption ? currentReportTypeOption.label : "প্রতিবেদন";
   
-  let reportPageDescriptionText: string;
-  if (isLoading) {
-    reportPageDescriptionText = "রিপোর্টের তথ্য লোড হচ্ছে...";
-  } else {
-    reportPageDescriptionText = `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`;
-  }
+  const reportPageDescriptionText = useMemo(() => {
+    if (isLoading) {
+      return "রিপোর্টের তথ্য লোড হচ্ছে...";
+    }
+    const dateStr = getReportDateRangeString();
+    const paymentStr = paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : '';
+    const courierStr = courierDeliveryOnly ? ' | শুধু কুরিয়ার' : '';
+    return `তারিখ/পরিসীমা: ${dateStr}${paymentStr}${courierStr}`;
+  }, [isLoading, getReportDateRangeString, paymentMethodFilter, courierDeliveryOnly]);
 
   return (
     <React.Fragment>
@@ -383,8 +382,8 @@ export default function EnhancedReportPage() {
                         <TableCell className="text-center">{index + 1}</TableCell>
                         <TableCell>{format(new Date(item.visit.visitDate), "dd/MM/yy", { locale: bn })}</TableCell>
                         <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
- <TableCell className="print:hidden">{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
- <TableCell className="print:max-w-[120px] print:whitespace-normal print:truncate">{item.visit.symptoms || item.slips.map(s => s.purpose).join(', ') || 'N/A'}</TableCell>
+                        <TableCell className="print:hidden">{item.patient?.diaryNumber || 'N/A'}</TableCell>
+                        <TableCell className="print:max-w-[120px] print:whitespace-normal print:truncate">{item.visit.symptoms || item.slips.map(s => s.purpose).join(', ') || 'N/A'}</TableCell>
                         <TableCell className="print:max-w-[70px] print:whitespace-normal print:truncate">
                           {item.slips.length > 0 ? item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'}
                         </TableCell>
@@ -451,9 +450,9 @@ export default function EnhancedReportPage() {
                         <TableCell className="text-center">{index + 1}</TableCell>
                         <TableCell>{formatDate(item.visit.visitDate)}</TableCell>
                         <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
-                        <TableCell>{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
+                        <TableCell>{item.patient?.diaryNumber || 'N/A'}</TableCell>
                         <TableCell>{item.patient?.phone || 'N/A'}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
+                        <TableCell className="max-w-[150px] truncate">{item.visit.symptoms || item.slips.map(s => s.purpose).join(', ') || 'N/A'}</TableCell>
                          <TableCell className="max-w-[100px] truncate">
                            {item.slips.length > 0 ?
                               item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'
@@ -529,4 +528,3 @@ export default function EnhancedReportPage() {
     </React.Fragment>
   );
 }
-
