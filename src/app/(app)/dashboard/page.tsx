@@ -144,26 +144,20 @@ export default function DashboardPage() {
   }, []);
 
 
-  const loadAppointments = useCallback(async () => {
+  const loadAppointments = useCallback(async (allPatients: Patient[]) => {
     const todayStart = startOfDay(new Date());
     const todayEnd = endOfDay(new Date());
 
-    const todayVisits = await getVisitsWithinDateRange(todayStart, todayEnd);
-    const todaySlips = await getPaymentSlipsWithinDateRange(todayStart, todayEnd);
+    const [todayVisits, todaySlips] = await Promise.all([
+      getVisitsWithinDateRange(todayStart, todayEnd),
+      getPaymentSlipsWithinDateRange(todayStart, todayEnd),
+    ]);
 
-    const patientIdsForTodayVisits = Array.from(new Set(todayVisits.map(v => v.patientId)));
-    const patientsData: Record<string, Patient> = {};
+    const patientsDataMap = new Map(allPatients.map(p => [p.id, p]));
 
-    for (const patientId of patientIdsForTodayVisits) {
-        if (!patientsData[patientId]) {
-            const patient = await getPatientById(patientId);
-            if (patient) patientsData[patientId] = patient;
-        }
-    }
-
-    const appointmentsDataPromises: Promise<AppointmentDisplayItem | null>[] = todayVisits
-      .map(async visit => {
-        const patient = patientsData[visit.patientId];
+    const appointmentsData = todayVisits
+      .map(visit => {
+        const patient = patientsDataMap.get(visit.patientId);
         if (!patient) return null;
 
         const paymentSlipForVisit = todaySlips.find(s => s.visitId === visit.id && (s.amount ?? 0) > 0);
@@ -187,10 +181,10 @@ export default function DashboardPage() {
           paymentAmount: paymentSlipForVisit ? formatCurrency(paymentSlipForVisit.amount) : 'N/A',
           createdAt: visit.createdAt,
         };
-      });
+      })
+      .filter((item): item is AppointmentDisplayItem => item !== null);
 
-    const resolvedAppointmentsData = (await Promise.all(appointmentsDataPromises)).filter(Boolean) as AppointmentDisplayItem[];
-    setTodaysAppointments(resolvedAppointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+    setTodaysAppointments(appointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
   }, []);
 
 
@@ -242,7 +236,7 @@ export default function DashboardPage() {
       monthlyTotalRegistered: allPatients.length,
     });
 
-    await loadAppointments();
+    await loadAppointments(allPatients); // Pass the fetched patients to loadAppointments
     setLoading(false);
   }, [loadAppointments]);
 
@@ -290,8 +284,8 @@ export default function DashboardPage() {
     setSelectedPatientForPaymentModal(null);
     setCurrentVisitIdForPaymentModal(null);
     if (slipCreated) {
-        await loadAppointments();
-        window.dispatchEvent(new CustomEvent('firestoreDataChange'));
+        // Instead of just loading appointments, reload all dashboard data
+        await loadDashboardData();
     }
   };
 

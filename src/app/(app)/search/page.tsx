@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useRef, Suspense } from 'react'; 
+import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react'; 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,39 +55,49 @@ export default function SearchPatientsPage() {
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      setIsLoading(true);
-      const patientsData = await getPatients();
-      setAllPatients(patientsData);
-      setIsLoading(false);
+  const fetchPatients = useCallback(async () => {
+    setIsLoading(true);
+    const patientsData = await getPatients();
+    setAllPatients(patientsData);
+    setIsLoading(false);
+    return patientsData;
+  }, []);
 
+  useEffect(() => {
+    fetchPatients().then(patientsData => {
       const querySearchTerm = searchParams.get('q');
       const queryPhone = searchParams.get('phone');
-
-      if (querySearchTerm) {
-        setSearchTerm(querySearchTerm);
-      } else if (queryPhone) {
-        setSearchTerm(queryPhone);
-      } else {
-        setFilteredPatients([]); 
+      const term = querySearchTerm || queryPhone || '';
+      if (term) {
+        setSearchTerm(term);
+        filterPatients(term, patientsData);
       }
-    };
-    fetchPatients();
-  }, [searchParams]); 
+    });
 
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredPatients([]); 
+    const handleDataChange = () => {
+      fetchPatients().then(patientsData => {
+         filterPatients(searchTerm, patientsData);
+      });
+    };
+    window.addEventListener('firestoreDataChange', handleDataChange);
+    return () => {
+      window.removeEventListener('firestoreDataChange', handleDataChange);
+    };
+
+  }, [searchParams, fetchPatients, searchTerm]); 
+  
+  const filterPatients = (term: string, patients: Patient[]) => {
+     if (!term.trim()) {
+      setFilteredPatients([]);
       return;
     }
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    const results = allPatients.filter(patient => {
+    const lowerSearchTerm = term.toLowerCase();
+    const results = patients.filter(patient => {
       const diaryNumString = (patient.diaryNumber || '').toString().toLowerCase();
       return (
         patient.name.toLowerCase().includes(lowerSearchTerm) ||
         patient.id.toLowerCase().includes(lowerSearchTerm) ||
-        patient.phone.toLowerCase().includes(lowerSearchTerm) || 
+        patient.phone.toLowerCase().includes(lowerSearchTerm) ||
         diaryNumString.includes(lowerSearchTerm) ||
         (patient.villageUnion || '').toLowerCase().includes(lowerSearchTerm) ||
         (patient.district || '').toLowerCase().includes(lowerSearchTerm) ||
@@ -95,7 +105,11 @@ export default function SearchPatientsPage() {
       );
     });
     setFilteredPatients(results);
-  }, [searchTerm, allPatients]); 
+  };
+
+  useEffect(() => {
+    filterPatients(searchTerm, allPatients);
+  }, [searchTerm, allPatients]);
 
   const handleOpenDetailsModal = (patient: Patient, tab: 'info' | 'history' | 'addVisitAndPayment') => {
     setSelectedPatientForModal(patient);
@@ -113,26 +127,10 @@ export default function SearchPatientsPage() {
   };
   
   const handlePatientUpdatedInModal = (updatedPatient: Patient) => {
-    setAllPatients(prevAllPatients => 
-      prevAllPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p)
-    );
-    if (searchTerm.trim()) {
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        const results = allPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p).filter(patient => {
-            const diaryNumString = (patient.diaryNumber || '').toString().toLowerCase();
-            return (
-                patient.name.toLowerCase().includes(lowerSearchTerm) ||
-                patient.id.toLowerCase().includes(lowerSearchTerm) ||
-                patient.phone.toLowerCase().includes(lowerSearchTerm) || 
-                diaryNumString.includes(lowerSearchTerm) ||
-                (patient.villageUnion || '').toLowerCase().includes(lowerSearchTerm) ||
-                (patient.district || '').toLowerCase().includes(lowerSearchTerm) ||
-                (patient.guardianName || '').toLowerCase().includes(lowerSearchTerm)
-            );
-        });
-        setFilteredPatients(results);
-    }
-     window.dispatchEvent(new CustomEvent('firestoreDataChange'));
+    const newAllPatients = allPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p);
+    setAllPatients(newAllPatients);
+    filterPatients(searchTerm, newAllPatients);
+    window.dispatchEvent(new CustomEvent('firestoreDataChange'));
   };
 
   const handleAddTodaysVisitAndPrescribe = async (patient: Patient) => {
@@ -230,7 +228,7 @@ export default function SearchPatientsPage() {
                   <div>
                     <CardTitle className="font-headline text-xl text-primary">{patient.name}</CardTitle>
                     <p className="text-xs text-muted-foreground">
-                      ডায়েরি নং: {patient.diaryNumber?.toLocaleString('bn-BD') || 'N/A'} | ফোন: {patient.phone}
+                      ডায়েরি নং: {patient.diaryNumber?.toString() || 'N/A'} | ফোন: {patient.phone}
                     </p>
                   </div>
                 </div>

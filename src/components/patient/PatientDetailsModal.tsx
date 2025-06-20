@@ -111,7 +111,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
   const visitAndPaymentForm = useForm<VisitAndPaymentFormValues>({
     resolver: zodResolver(visitAndPaymentFormSchema),
     defaultValues: {
-      visitDate: '', 
+      visitDate: formatDateFns(new Date(), 'yyyy-MM-dd'),
       symptoms: '',
       medicineDeliveryMethod: 'direct',
       amount: 0,
@@ -119,7 +119,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       receivedBy: '',
     },
   });
-
+  
   const fetchVisitsAndPrescriptions = useCallback(async (patientId: string) => {
       setIsLoadingVisits(true);
       try {
@@ -149,6 +149,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
   useEffect(() => {
     if (isOpen && patient) {
       setCurrentTab(defaultTab);
+      // Reset forms and set default values when modal opens
       patientInfoForm.reset({
         ...patient,
         diaryNumber: patient.diaryNumber || '',
@@ -159,10 +160,10 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         guardianRelation: patient.guardianRelation || '',
         guardianName: patient.guardianName || '',
         thanaUpazila: patient.thanaUpazila || '',
-        registrationDate: patient.registrationDate ? formatDateFns(new Date(patient.registrationDate), 'yyyy-MM-dd') : '',
+        registrationDate: patient.registrationDate ? formatDateFns(new Date(patient.registrationDate), 'yyyy-MM-dd') : formatDateFns(new Date(), 'yyyy-MM-dd'),
       });
       visitAndPaymentForm.reset({
-        visitDate: '',
+        visitDate: formatDateFns(new Date(), 'yyyy-MM-dd'),
         symptoms: '',
         medicineDeliveryMethod: 'direct',
         amount: 0,
@@ -171,22 +172,11 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       });
       setIsEditingInfo(false);
 
-      if (currentTab === 'history' || defaultTab === 'history') {
+      if (defaultTab === 'history') {
         fetchVisitsAndPrescriptions(patient.id);
       }
     }
-  }, [isOpen, patient, patientInfoForm, visitAndPaymentForm, defaultTab, currentTab, fetchVisitsAndPrescriptions]);
-
-  useEffect(() => {
-    if (isOpen && patient) {
-      if (patientInfoForm.getValues('registrationDate') === '') {
-        patientInfoForm.setValue('registrationDate', formatDateFns(new Date(), 'yyyy-MM-dd'));
-      }
-      if (visitAndPaymentForm.getValues('visitDate') === '') {
-        visitAndPaymentForm.setValue('visitDate', new Date().toISOString().split('T')[0]);
-      }
-    }
-  }, [isOpen, patient, patientInfoForm, visitAndPaymentForm]);
+  }, [isOpen, patient, defaultTab, patientInfoForm, visitAndPaymentForm, fetchVisitsAndPrescriptions]);
 
 
   const handlePatientInfoSubmit: SubmitHandler<PatientInfoValues> = async (data) => {
@@ -260,7 +250,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     }
 
     visitAndPaymentForm.reset({
-      visitDate: '', 
+      visitDate: formatDateFns(new Date(), 'yyyy-MM-dd'),
       symptoms: '',
       medicineDeliveryMethod: 'direct',
       amount: 0,
@@ -310,7 +300,13 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue={defaultTab} value={currentTab} onValueChange={(value) => setCurrentTab(value as 'info' | 'history' | 'addVisitAndPayment')} className="w-full">
+        <Tabs defaultValue={defaultTab} value={currentTab} onValueChange={(value) => {
+            const newTab = value as 'info' | 'history' | 'addVisitAndPayment';
+            setCurrentTab(newTab);
+            if (newTab === 'history' && visits.length === 0) {
+              fetchVisitsAndPrescriptions(patient.id);
+            }
+        }} className="w-full">
           <TabsList className="grid w-full grid-cols-3 sticky top-0 bg-background z-10 px-6 pt-2 border-b">
             <TabsTrigger value="info">সাধারণ তথ্য</TabsTrigger>
             <TabsTrigger value="history">ভিজিটের বিবরণ</TabsTrigger>
@@ -816,4 +812,3 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     </Dialog>
   );
 }
-
