@@ -362,13 +362,16 @@ body {
   }
 
   /* Active state text for THEMED buttons */
-  [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] span,
-  [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] svg {
-    color: hsl(var(--primary-foreground)) !important; /* Keep white text on active themed buttons */
+  /* Light theme: active themed buttons (all themes) text to foreground (dark) */
+  :root [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] span,
+  :root [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] svg {
+    color: hsl(var(--foreground)) !important;
   }
-  [data-sidebar="menu-button"][data-menu-item-theme="theme1"][data-active="true"] span,
-  [data-sidebar="menu-button"][data-menu-item-theme="theme1"][data-active="true"] svg {
-    color: hsl(var(--foreground)) !important; /* Darker text for active theme1 */
+
+  /* Dark theme: active themed buttons (all themes) text to primary-foreground (white) */
+  .dark [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] span,
+  .dark [data-sidebar="menu-button"][data-menu-item-theme][data-active="true"] svg {
+    color: hsl(var(--primary-foreground)) !important;
   }
 
   /* Submenu active button color fix */
