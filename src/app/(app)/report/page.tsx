@@ -383,12 +383,10 @@ export default function EnhancedReportPage() {
                         <TableCell className="text-center">{index + 1}</TableCell>
                         <TableCell>{format(new Date(item.visit.visitDate), "dd/MM/yy", { locale: bn })}</TableCell>
                         <TableCell className="font-medium">{item.patient?.name || 'N/A'}</TableCell>
-                        <TableCell className="print:hidden">{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
-                        <TableCell className="print:max-w-[120px] print:whitespace-normal print:truncate">{item.visit.symptoms || item.slips.map(s=>s.purpose).join(', ') || 'N/A'}</TableCell>
+ <TableCell className="print:hidden">{item.patient?.diaryNumber?.toLocaleString('bn-BD') || 'N/A'}</TableCell>
+ <TableCell className="print:max-w-[120px] print:whitespace-normal print:truncate">{item.visit.symptoms || item.slips.map(s => s.purpose).join(', ') || 'N/A'}</TableCell>
                         <TableCell className="print:max-w-[70px] print:whitespace-normal print:truncate">
-                          {item.slips.length > 0 ?
-                            item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'
-                          }
+                          {item.slips.length > 0 ? item.slips.map(s => getPaymentMethodLabel(s.paymentMethod)).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '-' : '-'}
                         </TableCell>
                         <TableCell className="text-right">{item.totalAmountFromSlips > 0 ? formatCurrency(item.totalAmountFromSlips) : '-'}</TableCell>
                       </TableRow>

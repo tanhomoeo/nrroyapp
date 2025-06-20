@@ -24,17 +24,6 @@ const pt_sans = PT_Sans({
 export const metadata: Metadata = {
   title: APP_NAME,
   description: `Patient Management System for ${APP_NAME}`,
-  manifest: "/manifest.json", // Link to the manifest file
-  icons: {
-    icon: [
-      { url: '/icons/favicon.ico', sizes: 'any', rel: 'icon', type: 'image/x-icon' }, // Updated favicon path
-      { url: '/image/icon-16x16.png', type: 'image/png', sizes: '16x16' },
-      { url: '/image/icon-32x32.png', type: 'image/png', sizes: '32x32' },
-      { url: '/icons/icon.png', type: 'image/png', sizes: '192x192' }, // PWA icon
-      { url: '/icons/icon.png', type: 'image/png', sizes: '512x512' }, // PWA icon
-    ],
-    apple: '/image/apple-touch-icon.png',
-  },
 };
 
 export default function RootLayout({
@@ -47,7 +36,7 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#1D9A9A" />
       </head>
-      <body className="font-body antialiased">
+      <body>
         <ThemeProvider
             attribute="class"
             defaultTheme="system"

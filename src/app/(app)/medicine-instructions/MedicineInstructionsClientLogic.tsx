@@ -548,7 +548,7 @@ export default function MedicineInstructionsClientLogic() {
         <div className="print-header">
           <h1 className="font-headline text-2xl font-bold">{clinicSettings?.clinicName || APP_NAME}</h1>
           {clinicSettings?.clinicAddress && <p className="text-sm">{clinicSettings.clinicAddress}</p>}
-          {clinicSettings?.clinicContact && <p className="text-sm">যোগাযোগ: {(clinicSettings.clinicContact || '').toLocaleString('bn-BD')}</p>}
+ {clinicSettings?.clinicContact && <p className="text-sm">যোগাযোগ: {(clinicSettings.clinicContact || '')}</p>}
         </div>
 
         <div className="meta-info">
