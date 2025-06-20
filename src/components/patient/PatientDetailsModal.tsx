@@ -48,13 +48,11 @@ const patientInfoSchema = z.object({
 });
 type PatientInfoValues = z.infer<typeof patientInfoSchema>;
 
-// Updated paymentMethodOptions
 const paymentMethodOptions: { value: Exclude<PaymentMethod, ''>; label: string }[] = [
   { value: 'cash', label: 'ক্যাশ' },
   { value: 'bkash', label: 'বিকাশ' },
   { value: 'nagad', label: 'নগদ' },
   { value: 'rocket', label: 'রকেট' },
-  // 'courier_medicine' removed
   { value: 'other', label: 'অন্যান্য' },
 ];
 
@@ -63,13 +61,12 @@ const medicineDeliveryMethodOptions: { value: 'direct' | 'courier'; label: strin
     { value: 'courier', label: 'কুরিয়ারের মাধ্যমে প্রেরণ' },
 ];
 
-// Updated visitAndPaymentFormSchema
 const visitAndPaymentFormSchema = z.object({
   visitDate: z.string().refine((date) => date === '' || !isNaN(Date.parse(date)), { message: "অবৈধ তারিখ" }),
   symptoms: z.string().min(3, "উপসর্গ/উদ্দেশ্য আবশ্যক"),
+  medicineDeliveryMethod: z.enum(['direct', 'courier'], { required_error: "ঔষধ প্রদানের মাধ্যম নির্বাচন করুন।" }),
   amount: z.coerce.number().nonnegative("টাকার পরিমাণ অবশ্যই একটি অ-ঋণাত্মক সংখ্যা হতে হবে।"),
-  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'other', '']).optional(), // 'courier_medicine' removed
-  medicineDeliveryMethod: z.enum(['direct', 'courier'], { required_error: "ঔষধ প্রদানের মাধ্যম নির্বাচন করুন।" }), // New field
+  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'other', '']).optional(),
   receivedBy: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.amount > 0 && !data.paymentMethod) {
@@ -116,9 +113,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     defaultValues: {
       visitDate: '', 
       symptoms: '',
+      medicineDeliveryMethod: 'direct',
       amount: 0,
       paymentMethod: 'cash',
-      medicineDeliveryMethod: 'direct', // Default for new field
       receivedBy: '',
     },
   });
@@ -167,9 +164,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       visitAndPaymentForm.reset({
         visitDate: '',
         symptoms: '',
+        medicineDeliveryMethod: 'direct',
         amount: 0,
         paymentMethod: 'cash',
-        medicineDeliveryMethod: 'direct', // Reset new field
         receivedBy: '',
       });
       setIsEditingInfo(false);
@@ -230,7 +227,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         patientId: patient.id,
         visitDate: visitDateToUse,
         symptoms: data.symptoms,
-        medicineDeliveryMethod: data.medicineDeliveryMethod, // Save new field
+        medicineDeliveryMethod: data.medicineDeliveryMethod,
     };
     const visitId = await addVisit(newVisitData);
 
@@ -265,9 +262,9 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     visitAndPaymentForm.reset({
       visitDate: '', 
       symptoms: '',
+      medicineDeliveryMethod: 'direct',
       amount: 0,
       paymentMethod: 'cash',
-      medicineDeliveryMethod: 'direct', // Reset new field
       receivedBy: '',
     });
 
@@ -708,6 +705,32 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                     />
                     <FormField
                       control={visitAndPaymentForm.control}
+                      name="medicineDeliveryMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="medicineDeliveryMethodModal">ঔষধ প্রদানের মাধ্যম</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue="direct"
+                          >
+                            <FormControl>
+                              <SelectTrigger id="medicineDeliveryMethodModal" className={inputWrapperClass}>
+                                <SelectValue placeholder="ঔষধ প্রদানের মাধ্যম নির্বাচন করুন" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {medicineDeliveryMethodOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={visitAndPaymentForm.control}
                       name="amount"
                       render={({ field }) => (
                         <FormItem>
@@ -739,32 +762,6 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                             </FormControl>
                             <SelectContent>
                               {paymentMethodOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={visitAndPaymentForm.control}
-                      name="medicineDeliveryMethod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel htmlFor="medicineDeliveryMethodModal">ঔষধ প্রদানের মাধ্যম</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            defaultValue="direct"
-                          >
-                            <FormControl>
-                              <SelectTrigger id="medicineDeliveryMethodModal" className={inputWrapperClass}>
-                                <SelectValue placeholder="ঔষধ প্রদানের মাধ্যম নির্বাচন করুন" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {medicineDeliveryMethodOptions.map(option => (
                                 <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                               ))}
                             </SelectContent>
