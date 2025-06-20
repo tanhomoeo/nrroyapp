@@ -20,25 +20,12 @@ const firebaseConfig = {
 
 // --- Firebase SDK Configuration Check ---
 if (typeof window !== 'undefined') {
-  console.log("====================================================================");
-  console.log("Firebase SDK Configuration Check (src/lib/firebase.ts):");
-  console.log("--------------------------------------------------------------------");
-  console.log("Attempting to connect to Firebase project with this configuration:");
-  console.log("Project ID:", firebaseConfig.projectId);
-  console.log("API Key (first 5 chars):", firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) + "..." : "NOT SET");
-  console.log("Auth Domain:", firebaseConfig.authDomain);
-  console.log("Storage Bucket:", firebaseConfig.storageBucket);
-  console.log("Messaging Sender ID:", firebaseConfig.messagingSenderId);
-  console.log("App ID:", firebaseConfig.appId);
-  console.log("Measurement ID:", firebaseConfig.measurementId || "NOT SET");
-  console.log("--------------------------------------------------------------------");
-  console.log("ACTION REQUIRED: Please METICULOUSLY verify these values against your Firebase project settings in the Firebase Console (console.firebase.google.com) for the project ID '" + firebaseConfig.projectId + "'. They MUST match exactly.");
-  console.log("Ensure your Firestore security rules (firestore.rules) are published to THIS SAME project ID ('" + firebaseConfig.projectId + "').");
-  console.log("====================================================================");
-
   if (firebaseConfig.projectId !== "dr-nihar") { // Check against the intended new project ID
     console.error(`CRITICAL ERROR: 'projectId' in src/lib/firebase.ts ('${firebaseConfig.projectId}') does NOT match the intended 'dr-nihar'. This is likely the cause of permission errors if rules are set on 'dr-nihar'.`);
-    alert(`CRITICAL Firebase Configuration Error: 'projectId' in src/lib/firebase.ts ('${firebaseConfig.projectId}') does not match 'dr-nihar'. Please check the developer console (F12) for details and update src/lib/firebase.ts if this is not intended.`);
+    // Alert removed as it can be problematic depending on execution context
+    // alert(`CRITICAL Firebase Configuration Error: 'projectId' in src/lib/firebase.ts ('${firebaseConfig.projectId}') does not match 'dr-nihar'. Please check the developer console (F12) for details and update src/lib/firebase.ts if this is not intended.`);
+  } else {
+    console.log("Firebase project ID in src/lib/firebase.ts matches 'dr-nihar'. Ensure Firebase Console settings and firestore.rules also target this project.");
   }
 }
 
@@ -81,5 +68,5 @@ export {
   db,
   storage,
   analytics,
-  firebaseConfig // Exporting config for easy access in test page
+  firebaseConfig // Exporting config for easy access
 };

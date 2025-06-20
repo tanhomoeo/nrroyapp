@@ -1,5 +1,4 @@
-
-'use client';
+'use client'; // Add this directive at the very top
 import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -491,7 +490,7 @@ export default function MedicineInstructionsClientLogic() {
                 <div className="print-header-preview text-center mb-3">
                   <h2 className="text-lg font-bold">{clinicSettings?.clinicName || APP_NAME}</h2>
                   {clinicSettings?.clinicAddress && <p className="text-xs">{clinicSettings.clinicAddress}</p>}
-                  {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {(clinicSettings.clinicContact || '').toLocaleString('bn-BD')}</p>}
+ {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {(clinicSettings.clinicContact || '')}</p>}
                 </div>
 
                 <div className="flex justify-between text-xs mb-1">
@@ -516,7 +515,7 @@ export default function MedicineInstructionsClientLogic() {
                   <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> ঔষধ সেবনকালীন পেস্ট সহ যাবতীয় দেশী ও বিদেশী ঔষধি নিষিদ্ধ।</li>
                   <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> ঔষধ সেবনের আধাঘন্টা আগে ও পরে কোন প্রকার খাবার ও পানীয় গ্রহণ করবেন না (সাধারণ জল ব্যতীত)।</li>
                   {clinicSettings?.clinicContact &&
-                    <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '').toLocaleString('bn-BD')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
+ <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
                   }
                   <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> {currentValues.followUpDays || "..."} দিন পরে আবার সাক্ষাৎ করবেন।</li>
                 </ul>
@@ -534,7 +533,7 @@ export default function MedicineInstructionsClientLogic() {
         <div className="print-only-block print-instruction-container bg-white text-black">
           <div className="print-header">
             <h1 className="font-headline text-2xl font-bold">{clinicSettings?.clinicName || APP_NAME}</h1>
-            {clinicSettings?.clinicAddress && <p className="text-sm">{clinicSettings.clinicAddress}</p>}
+ {clinicSettings?.clinicAddress && <p className="text-sm">{clinicSettings.clinicAddress}</p>}
             {clinicSettings?.clinicContact && <p className="text-sm">যোগাযোগ: {(clinicSettings.clinicContact || '').toLocaleString('bn-BD')}</p>}
           </div>
 
@@ -561,7 +560,7 @@ export default function MedicineInstructionsClientLogic() {
               <li><span className="text-red-500 mr-1">*</span> ঔষধ সেবনকালীন পেস্ট সহ যাবতীয় দেশী ও বিদেশী ঔষধি নিষিদ্ধ।</li>
               <li><span className="text-red-500 mr-1">*</span> ঔষধ সেবনের আধাঘন্টা আগে ও পরে কোন প্রকার খাবার ও পানীয় গ্রহণ করবেন না (সাধারণ জল ব্যতীত)।</li>
               {clinicSettings?.clinicContact &&
-                <li><span className="text-red-500 mr-1">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '').toLocaleString('bn-BD')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
+ <li><span className="text-red-500 mr-1">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
               }
               <li><span className="text-red-500 mr-1">*</span> {currentValues.followUpDays} দিন পরে আবার সাক্ষাৎ করবেন।</li>
             </ul>
@@ -571,7 +570,7 @@ export default function MedicineInstructionsClientLogic() {
               <div className="signature-area">
                   {(clinicSettings?.doctorName || clinicSettings?.bmRegNo) && <p className="signature-line"></p>}
                   {clinicSettings?.doctorName && <p>{clinicSettings.doctorName}</p>}
-                  {clinicSettings?.bmRegNo && <p>{(clinicSettings.bmRegNo || '').toLocaleString('bn-BD')}</p>}
+ {clinicSettings?.bmRegNo && <p>{(clinicSettings.bmRegNo || '')}</p>}
               </div>
           </div>
         </div> {/* Print-only block ends here */}
