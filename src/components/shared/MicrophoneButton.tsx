@@ -44,7 +44,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
   const isCurrentlyListeningForThisField = isListeningGlobal && currentListeningField === fieldKey;
 
-  // Use refs to store the latest callbacks to avoid re-running the main useEffect unnecessarily
   const onTranscriptRef = useRef(onTranscript);
   const onFinalTranscriptRef = useRef(onFinalTranscript);
 
@@ -97,6 +96,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         }
       }
       
+      // Use current props directly here as they are the latest from parent re-render
       if (interimTranscript.trim() && isListeningGlobal && currentListeningField === fieldKey) {
         try {
           onTranscriptRef.current(interimTranscript);
@@ -107,6 +107,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     };
 
     recognition.onend = () => {
+      // Use current props directly
       if (isListeningGlobal && currentListeningField === fieldKey) {
         if (finalTranscriptBuffer.current.trim()) {
           try {
@@ -132,6 +133,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       }
       setError(errorMessage);
       
+      // Use current props directly
       if (isListeningGlobal && currentListeningField === fieldKey) {
         toast({
             title: 'ভয়েস টাইপিং ত্রুটি',
@@ -149,7 +151,8 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.abort();
+        speechRecognitionRef.current.abort(); // Ensure any active session is stopped
+        // Detach handlers to prevent memory leaks or calls on unmounted component
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
@@ -157,7 +160,10 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         speechRecognitionRef.current = null;
       }
     };
-  }, [toast, fieldKey, setIsListeningGlobal, setCurrentListeningField, isListeningGlobal, currentListeningField]);
+  // Dependency array refined: remove isListeningGlobal and currentListeningField (values)
+  // as their changes shouldn't re-initialize the SpeechRecognition object itself.
+  // The handlers will use the most current prop values due to closure or re-render.
+  }, [toast, fieldKey, setIsListeningGlobal, setCurrentListeningField]);
 
 
   const toggleListening = async () => {
@@ -171,22 +177,25 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     }
 
     if (isCurrentlyListeningForThisField) {
-      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current.stop(); // onend will handle global state updates
     } else {
       if (isListeningGlobal && currentListeningField && currentListeningField !== fieldKey) {
-          const otherFieldDesc = targetFieldDescription || currentListeningField;
+          const otherFieldDesc = targetFieldDescription || currentListeningField; // Prefer targetFieldDescription if available
           toast({title: `অন্য একটি ফিল্ড (${otherFieldDesc}) শুনছে`, description: `একই সময়ে একাধিক ফিল্ডের জন্য ভয়েস ইনপুট চালু করা যাবে না।`, variant: "default"});
           return;
       }
       
       try {
+        // Check for microphone permission explicitly before starting
         await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Ensure speechRecognitionRef.current still exists (it should, unless unmounted during await)
         if (speechRecognitionRef.current) {
             setIsListeningGlobal(true);
             setCurrentListeningField(fieldKey);
-            finalTranscriptBuffer.current = "";
+            finalTranscriptBuffer.current = ""; // Clear buffer before starting
             speechRecognitionRef.current.start();
-            setError(null);
+            setError(null); // Clear previous errors
         }
       } catch (permissionError: any) {
         let permErrorMessage = 'মাইক্রোফোন অ্যাক্সেস করা যায়নি।';
@@ -197,7 +206,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         }
         setError(permErrorMessage);
         toast({ title: 'মাইক্রোফোন সমস্যা', description: permErrorMessage, variant: 'destructive' });
-        setIsListeningGlobal(false);
+        setIsListeningGlobal(false); // Ensure global state is reset
         setCurrentListeningField(null);
       }
     }
