@@ -232,12 +232,14 @@ export default function EnhancedReportPage() {
   const currentReportTypeOption = reportTypeOptions.find(opt => opt.value === reportType);
   const pageTitle = currentReportTypeOption ? currentReportTypeOption.label : "প্রতিবেদন";
   
+  const reportPageDescription = isLoading ? "রিপোর্টের তথ্য লোড হচ্ছে..." : `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`;
+
   return (
-    <>
+    <React.Fragment>
       <div className="space-y-6 print:space-y-2">
         <PageHeaderCard
           title={pageTitle}
-          description={isLoading ? "রিপোর্টের তথ্য লোড হচ্ছে..." : `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}
+          description={reportPageDescription}
           className="hide-on-print"
           actions={
             <Button onClick={handlePrintReport} variant="outline" disabled={isLoading}><Printer className="mr-2 h-4 w-4" /> প্রিন্ট করুন</Button>
@@ -300,7 +302,7 @@ export default function EnhancedReportPage() {
               </div>
             )}
             {reportType === 'custom' && (
-              <>
+              <React.Fragment>
                 <div className="space-y-1">
                   <Label htmlFor="startDateCustom">শুরুর তারিখ</Label>
                   <Popover>
@@ -325,7 +327,7 @@ export default function EnhancedReportPage() {
                     <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={(date) => setEndDate(date ? endOfDay(date) : undefined)} initialFocus locale={bn} disabled={(date) => startDate && isValid(startDate) ? date < startDate : false} /></PopoverContent>
                   </Popover>
                 </div>
-              </>
+              </React.Fragment>
             )}
              <div className="space-y-1">
               <Label htmlFor="paymentMethodFilter">পেমেন্ট মাধ্যম</Label>
@@ -503,13 +505,13 @@ export default function EnhancedReportPage() {
             .report-table-container td.text-right, .report-table-container th.text-right { text-align: right; }
             .report-table-container td.text-center, .report-table-container th.text-center { text-align: center; }
             .print\\:hidden { display: none !important; }
-   .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
-   .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
-   .print\\:whitespace-normal { white-space: normal !important; }
-   .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
-   .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
-   .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
-   .print\\:w-\\[80px\\] { width: 80px !important; }
+            .print\\:max-w-\\[120px\\] { max-width: 120px !important; }
+            .print\\:max-w-\\[70px\\] { max-width: 70px !important; }
+            .print\\:whitespace-normal { white-space: normal !important; }
+            .print\\:truncate { overflow: visible !important; white-space: normal !important; text-overflow: clip !important; }
+            .print\\:col-span-5 { grid-column: span 5 / span 5 !important; }
+            .print\\:col-span-1 { grid-column: span 1 / span 1 !important; }
+            .print\\:w-\\[80px\\] { width: 80px !important; }
           }
           @page {
             size: A4 landscape;
@@ -517,6 +519,6 @@ export default function EnhancedReportPage() {
           }
         `}</style>
       </div>
-    </>
+    </React.Fragment>
   );
 }

@@ -1,4 +1,5 @@
-'use client'; // Add this directive at the very top
+
+'use client';
 import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -17,7 +18,7 @@ import { getClinicSettings, getPatientById } from '@/lib/firestoreService';
 import type { ClinicSettings, Patient, PaymentSlip } from '@/lib/types';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { Printer, CalendarIcon, Info, ClipboardList, User, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
-import { format, isValid } from 'date-fns'; // Directly import format
+import { format } from 'date-fns'; // Directly import format
 import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -133,7 +134,7 @@ export default function MedicineInstructionsClientLogic() {
                 formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
                 formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
             } else {
-                formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
+                 formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
             }
         } else if (patientNameFromQuery) {
             formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
@@ -182,7 +183,7 @@ export default function MedicineInstructionsClientLogic() {
 
   const onSubmit: SubmitHandler<InstructionsFormValues> = (data) => {
     const instructionDateValue = form.getValues('instructionDate');
-    if (!instructionDateValue || !isValid(instructionDateValue)) {
+    if (!instructionDateValue || !format(instructionDateValue, "PPP", { locale: bn })) { // isValid check using format
         toast({
             title: "তারিখ নির্বাচন করুন",
             description: "অনুগ্রহ করে নির্দেশনার জন্য একটি বৈধ তারিখ নির্বাচন করুন।",
@@ -244,20 +245,20 @@ export default function MedicineInstructionsClientLogic() {
   } else {
     pageHeaderDescriptionText = "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
   }
-
+  
   if (isLoadingPageData && !selectedPatient && !searchParams.get('name') && !form.getValues('patientName')) { 
       return (
-        <>
+        <React.Fragment>
           <div className="flex h-screen items-center justify-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <p className="ml-3">ঔষধের নিয়মাবলী পাতাটি লোড হচ্ছে...</p>
           </div>
-        </>
+        </React.Fragment>
       );
   }
 
   return (
-    <>
+    <React.Fragment>
       <div className="space-y-6">
         <PageHeaderCard
           title="ঔষধ খাওয়ার নিয়মাবলী"
@@ -325,7 +326,7 @@ export default function MedicineInstructionsClientLogic() {
                                       )}
                                   >
                                   <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
-                                  {field.value && isValid(field.value) ? format(field.value, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
+                                  {field.value ? format(field.value, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
                                   </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0">
@@ -390,7 +391,7 @@ export default function MedicineInstructionsClientLogic() {
                           <FormControl>
                             <RadioGroup
                               onValueChange={(value) => {
-                                  field.onChange(value);
+                                  field.onChange(value as 'template1' | 'template2');
                               }}
                               defaultValue={field.value}
                               className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4"
@@ -490,12 +491,12 @@ export default function MedicineInstructionsClientLogic() {
                 <div className="print-header-preview text-center mb-3">
                   <h2 className="text-lg font-bold">{clinicSettings?.clinicName || APP_NAME}</h2>
                   {clinicSettings?.clinicAddress && <p className="text-xs">{clinicSettings.clinicAddress}</p>}
- {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {(clinicSettings.clinicContact || '')}</p>}
+                  {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {(clinicSettings.clinicContact || '')}</p>}
                 </div>
 
                 <div className="flex justify-between text-xs mb-1">
                   <span>ক্রমিক নং (স্লিপ): {previewSlipNumber}</span>
-                  <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? format(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : "..."}</span>
+                  <span>তারিখ: {currentValues.instructionDate ? format(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : "..."}</span>
                 </div>
                 <div className="text-xs mb-1">নামঃ {currentValues.patientName || "রোগীর নাম"}</div>
                 {selectedPatient?.diaryNumber && (
@@ -515,65 +516,19 @@ export default function MedicineInstructionsClientLogic() {
                   <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> ঔষধ সেবনকালীন পেস্ট সহ যাবতীয় দেশী ও বিদেশী ঔষধি নিষিদ্ধ।</li>
                   <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> ঔষধ সেবনের আধাঘন্টা আগে ও পরে কোন প্রকার খাবার ও পানীয় গ্রহণ করবেন না (সাধারণ জল ব্যতীত)।</li>
                   {clinicSettings?.clinicContact &&
- <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
+                    <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
                   }
                   <li className="flex items-start"><span className="text-red-500 mr-1 mt-0.5">*</span> {currentValues.followUpDays || "..."} দিন পরে আবার সাক্ষাৎ করবেন।</li>
                 </ul>
                  <div className="print-footer-preview text-right mt-6">
                       {(clinicSettings?.doctorName || clinicSettings?.bmRegNo) && <p className="text-xs leading-tight">_________________________</p>}
                       {clinicSettings?.doctorName && <p className="text-xs font-medium">{clinicSettings.doctorName}</p>}
-                      {clinicSettings?.bmRegNo && <p className="text-xs">{(clinicSettings.bmRegNo || '').toLocaleString('bn-BD')}</p>}
+                      {clinicSettings?.bmRegNo && <p className="text-xs">{(clinicSettings.bmRegNo || '')}</p>}
                   </div>
               </CardContent>
             </Card>
           </div>
         </div>
-
-        {/* Print-only block starts here, ensure it's a single root for JSX */}
-        <div className="print-only-block print-instruction-container bg-white text-black">
-          <div className="print-header">
-            <h1 className="font-headline text-2xl font-bold">{clinicSettings?.clinicName || APP_NAME}</h1>
- {clinicSettings?.clinicAddress && <p className="text-sm">{clinicSettings.clinicAddress}</p>}
-            {clinicSettings?.clinicContact && <p className="text-sm">যোগাযোগ: {(clinicSettings.clinicContact || '').toLocaleString('bn-BD')}</p>}
-          </div>
-
-          <div className="meta-info">
-            <span>ক্রমিক নং (স্লিপ): {generatedSlipNumber || currentValues.serialNumber || `N/A`}</span>
-            <span>তারিখ: {currentValues.instructionDate && isValid(currentValues.instructionDate) ? format(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : "..."}</span>
-          </div>
-          <div className="patient-name">নামঃ {currentValues.patientName}</div>
-           {selectedPatient?.diaryNumber &&
-              <div className="patient-diary-no-print text-xs">
-                  ডায়েরি নং: {String(selectedPatient.diaryNumber)}
-              </div>
-          }
-
-          <h2 className="instruction-title">ঔষধ খাওয়ার নিয়মাবলী</h2>
-
-          <p className="main-instruction">
-            {generatedInstruction || previewInstructionText}
-          </p>
-
-          <div className="advice-section">
-            <h3 className="advice-title">পরামর্শঃ</h3>
-            <ul className="advice-list">
-              <li><span className="text-red-500 mr-1">*</span> ঔষধ সেবনকালীন পেস্ট সহ যাবতীয় দেশী ও বিদেশী ঔষধি নিষিদ্ধ।</li>
-              <li><span className="text-red-500 mr-1">*</span> ঔষধ সেবনের আধাঘন্টা আগে ও পরে কোন প্রকার খাবার ও পানীয় গ্রহণ করবেন না (সাধারণ জল ব্যতীত)।</li>
-              {clinicSettings?.clinicContact &&
- <li><span className="text-red-500 mr-1">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
-              }
-              <li><span className="text-red-500 mr-1">*</span> {currentValues.followUpDays} দিন পরে আবার সাক্ষাৎ করবেন।</li>
-            </ul>
-          </div>
-
-          <div className="print-footer">
-              <div className="signature-area">
-                  {(clinicSettings?.doctorName || clinicSettings?.bmRegNo) && <p className="signature-line"></p>}
-                  {clinicSettings?.doctorName && <p>{clinicSettings.doctorName}</p>}
- {clinicSettings?.bmRegNo && <p>{(clinicSettings.bmRegNo || '')}</p>}
-              </div>
-          </div>
-        </div> {/* Print-only block ends here */}
 
         <Suspense fallback={<div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div>}>
           {isPaymentModalOpen && selectedPatient && form.getValues('visitId') && (
@@ -586,6 +541,50 @@ export default function MedicineInstructionsClientLogic() {
           )}
         </Suspense>
       </div>
-    </>
+      <div className="print-only-block print-instruction-container bg-white text-black">
+        <div className="print-header">
+          <h1 className="font-headline text-2xl font-bold">{clinicSettings?.clinicName || APP_NAME}</h1>
+          {clinicSettings?.clinicAddress && <p className="text-sm">{clinicSettings.clinicAddress}</p>}
+          {clinicSettings?.clinicContact && <p className="text-sm">যোগাযোগ: {(clinicSettings.clinicContact || '').toLocaleString('bn-BD')}</p>}
+        </div>
+
+        <div className="meta-info">
+          <span>ক্রমিক নং (স্লিপ): {generatedSlipNumber || currentValues.serialNumber || `N/A`}</span>
+          <span>তারিখ: {currentValues.instructionDate ? format(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : "..."}</span>
+        </div>
+        <div className="patient-name">নামঃ {currentValues.patientName}</div>
+          {selectedPatient?.diaryNumber &&
+            <div className="patient-diary-no-print text-xs">
+                ডায়েরি নং: {String(selectedPatient.diaryNumber)}
+            </div>
+        }
+
+        <h2 className="instruction-title">ঔষধ খাওয়ার নিয়মাবলী</h2>
+
+        <p className="main-instruction">
+          {generatedInstruction || previewInstructionText}
+        </p>
+
+        <div className="advice-section">
+          <h3 className="advice-title">পরামর্শঃ</h3>
+          <ul className="advice-list">
+            <li><span className="text-red-500 mr-1">*</span> ঔষধ সেবনকালীন পেস্ট সহ যাবতীয় দেশী ও বিদেশী ঔষধি নিষিদ্ধ।</li>
+            <li><span className="text-red-500 mr-1">*</span> ঔষধ সেবনের আধাঘন্টা আগে ও পরে কোন প্রকার খাবার ও পানীয় গ্রহণ করবেন না (সাধারণ জল ব্যতীত)।</li>
+            {clinicSettings?.clinicContact &&
+              <li><span className="text-red-500 mr-1">*</span> জরুরি প্রয়োজনে কল করুনঃ {(clinicSettings.clinicContact || '')} (বিকেল ৫টা থেকে সন্ধ্যা ৭টা পর্যন্ত)।</li>
+            }
+            <li><span className="text-red-500 mr-1">*</span> {currentValues.followUpDays} দিন পরে আবার সাক্ষাৎ করবেন।</li>
+          </ul>
+        </div>
+
+        <div className="print-footer">
+            <div className="signature-area">
+                {(clinicSettings?.doctorName || clinicSettings?.bmRegNo) && <p className="signature-line"></p>}
+                {clinicSettings?.doctorName && <p>{clinicSettings.doctorName}</p>}
+                {clinicSettings?.bmRegNo && <p>{(clinicSettings.bmRegNo || '')}</p>}
+            </div>
+        </div>
+      </div>
+    </React.Fragment>
   );
 }
