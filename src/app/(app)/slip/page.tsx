@@ -25,12 +25,14 @@ interface EnrichedSlip extends PaymentSlip {
   patientName?: string;
 }
 
+// Updated paymentMethodFilterOptions
 const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string }[] = [
   { value: 'all', label: 'সকল মাধ্যম' },
   ...Object.entries(PAYMENT_METHOD_LABELS)
-    .filter(([key]) => key !== '')
-    .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, ''>, label }))
+    .filter(([key]) => key !== '') // Ensure empty key is not included if PAYMENT_METHOD_LABELS has it for some reason
+    .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, '' | 'courier_medicine'>, label }))
 ];
+
 
 export default function SlipSearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -197,3 +199,4 @@ export default function SlipSearchPage() {
     </div>
   );
 }
+

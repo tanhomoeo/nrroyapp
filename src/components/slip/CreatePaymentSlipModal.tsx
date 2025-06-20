@@ -24,18 +24,20 @@ interface CreatePaymentSlipModalProps {
   visitId?: string;
 }
 
+// Updated paymentMethodOptions
 const paymentMethodOptions: { value: Exclude<PaymentMethod, ''>; label: string }[] = [
   { value: 'cash', label: 'ক্যাশ' },
   { value: 'bkash', label: 'বিকাশ' },
   { value: 'nagad', label: 'নগদ' },
   { value: 'rocket', label: 'রকেট' },
-  { value: 'courier_medicine', label: 'কুরিয়ার ও ঔষধ' },
+  // 'courier_medicine' removed
   { value: 'other', label: 'অন্যান্য' },
 ];
 
+// Updated paymentSlipSchema
 const paymentSlipSchema = z.object({
   amount: z.coerce.number().nonnegative("টাকার পরিমাণ অবশ্যই একটি অ-ঋণাত্মক সংখ্যা হতে হবে।"),
-  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other', '']).optional(),
+  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'other', '']).optional(), // 'courier_medicine' removed
   receivedBy: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.amount > 0 && !data.paymentMethod) {
@@ -81,7 +83,7 @@ export function CreatePaymentSlipModal({ patient, isOpen, onClose, onSlipCreated
         slipNumber: `SLIP-${Date.now().toString().slice(-6)}`,
         date: new Date().toISOString(),
         amount: data.amount,
-        purpose: "সাধারণ পেমেন্ট", // Default purpose since UI field is removed
+        purpose: "সাধারণ পেমেন্ট", 
         paymentMethod: data.amount > 0 ? data.paymentMethod as Exclude<PaymentMethod, ''> : undefined,
         receivedBy: data.receivedBy,
       };

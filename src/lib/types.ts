@@ -28,7 +28,7 @@ export interface Visit {
   prescriptionId?: string;
   paymentSlipId?: string;
   createdAt: string;
-  medicineDeliveryMethod?: 'direct' | 'courier' | '';
+  medicineDeliveryMethod?: 'direct' | 'courier' | ''; // Added this line
 }
 
 export type PrescriptionItem = {
@@ -54,7 +54,8 @@ export interface Prescription {
   diagnosis?: string;
 }
 
-export type PaymentMethod = 'cash' | 'bkash' | 'nagad' | 'rocket' | 'courier_medicine' | 'other' | '';
+// Updated PaymentMethod type
+export type PaymentMethod = 'cash' | 'bkash' | 'nagad' | 'rocket' | 'other' | '';
 
 export interface PaymentSlip {
   id: string;
@@ -133,3 +134,4 @@ export interface MedicineInstruction {
     serialNumber: string;
     createdAt: string;
 }
+

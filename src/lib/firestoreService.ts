@@ -181,7 +181,7 @@ export const createVisitForPrescription = async (
       patientId,
       visitDate: new Date().toISOString(), 
       symptoms,
-      medicineDeliveryMethod,
+      medicineDeliveryMethod, // Added this field
     };
     const newVisit = {
       ...visitData,
@@ -442,12 +442,12 @@ export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('bn-BD', { style: 'currency', currency: 'BDT' }).format(amount);
 };
 
+// Updated PAYMENT_METHOD_LABELS
 export const PAYMENT_METHOD_LABELS: Record<Exclude<PaymentMethod, ''>, string> = {
   cash: 'ক্যাশ',
   bkash: 'বিকাশ',
   nagad: 'নগদ',
   rocket: 'রকেট',
-  courier_medicine: 'কুরিয়ার ও ঔষধ',
   other: 'অন্যান্য',
 };
 
@@ -593,3 +593,4 @@ export const clearAllLocalStorageData = () => {
     window.location.reload();
   }
 };
+

@@ -34,11 +34,12 @@ const reportTypeOptions: { value: ReportType; label: string }[] = [
   { value: 'custom', label: 'কাস্টম তারিখ পরিসীমা' },
 ];
 
+// Updated paymentMethodFilterOptions
 const paymentMethodFilterOptions: { value: PaymentMethod | 'all'; label: string }[] = [
   { value: 'all', label: 'সকল পেমেন্ট মাধ্যম' },
   ...Object.entries(PAYMENT_METHOD_LABELS)
     .filter(([key]) => key !== '')
-    .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, ''>, label }))
+    .map(([value, label]) => ({ value: value as Exclude<PaymentMethod, '' | 'courier_medicine'>, label }))
 ];
 
 export default function EnhancedReportPage() {
@@ -134,6 +135,7 @@ export default function EnhancedReportPage() {
         let processedVisits = dateFilteredVisits;
 
         if (courierDeliveryOnly) {
+          // Filter visits based on medicineDeliveryMethod
           processedVisits = processedVisits.filter(visit => visit.medicineDeliveryMethod === 'courier');
         }
 
@@ -155,6 +157,8 @@ export default function EnhancedReportPage() {
 
           return { visit, patient, slips: visitSlips, totalAmountFromSlips };
         }).filter(item => { 
+            // If courierDeliveryOnly is true, only items with courier delivery are already in processedVisits.
+            // If paymentMethodFilter is active, only items with matching slips should be shown.
             if (paymentMethodFilter !== 'all') {
                 return item.slips.length > 0; 
             }
@@ -232,14 +236,19 @@ export default function EnhancedReportPage() {
   const currentReportTypeOption = reportTypeOptions.find(opt => opt.value === reportType);
   const pageTitle = currentReportTypeOption ? currentReportTypeOption.label : "প্রতিবেদন";
   
-  const reportPageDescription = isLoading ? "রিপোর্টের তথ্য লোড হচ্ছে..." : `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`;
+  let reportPageDescriptionText: string;
+  if (isLoading) {
+    reportPageDescriptionText = "রিপোর্টের তথ্য লোড হচ্ছে...";
+  } else {
+    reportPageDescriptionText = `তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`;
+  }
 
   return (
     <React.Fragment>
       <div className="space-y-6 print:space-y-2">
         <PageHeaderCard
           title={pageTitle}
-          description={reportPageDescription}
+          description={reportPageDescriptionText}
           className="hide-on-print"
           actions={
             <Button onClick={handlePrintReport} variant="outline" disabled={isLoading}><Printer className="mr-2 h-4 w-4" /> প্রিন্ট করুন</Button>
@@ -351,7 +360,7 @@ export default function EnhancedReportPage() {
             {clinicSettings?.clinicAddress && <p className="text-xs">{clinicSettings.clinicAddress}</p>}
             {clinicSettings?.clinicContact && <p className="text-xs">যোগাযোগ: {clinicSettings.clinicContact}</p>}
             <h2 className="print-title text-lg font-semibold mt-1">{pageTitle}</h2>
-            <p className="text-xs">{`তারিখ/পরিসীমা: ${getReportDateRangeString()}${paymentMethodFilter !== 'all' ? ` | পেমেন্ট: ${getPaymentMethodLabel(paymentMethodFilter as PaymentMethod)}` : ''}${courierDeliveryOnly ? ' | শুধু কুরিয়ার' : ''}`}</p>
+            <p className="text-xs">{reportPageDescriptionText}</p>
           </div>
 
           <div className="report-table-container">
@@ -522,3 +531,4 @@ export default function EnhancedReportPage() {
     </React.Fragment>
   );
 }
+

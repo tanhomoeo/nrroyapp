@@ -48,12 +48,13 @@ const patientInfoSchema = z.object({
 });
 type PatientInfoValues = z.infer<typeof patientInfoSchema>;
 
+// Updated paymentMethodOptions
 const paymentMethodOptions: { value: Exclude<PaymentMethod, ''>; label: string }[] = [
   { value: 'cash', label: 'ক্যাশ' },
   { value: 'bkash', label: 'বিকাশ' },
   { value: 'nagad', label: 'নগদ' },
   { value: 'rocket', label: 'রকেট' },
-  { value: 'courier_medicine', label: 'কুরিয়ার ও ঔষধ' },
+  // 'courier_medicine' removed
   { value: 'other', label: 'অন্যান্য' },
 ];
 
@@ -62,12 +63,13 @@ const medicineDeliveryMethodOptions: { value: 'direct' | 'courier'; label: strin
     { value: 'courier', label: 'কুরিয়ারের মাধ্যমে প্রেরণ' },
 ];
 
+// Updated visitAndPaymentFormSchema
 const visitAndPaymentFormSchema = z.object({
   visitDate: z.string().refine((date) => date === '' || !isNaN(Date.parse(date)), { message: "অবৈধ তারিখ" }),
   symptoms: z.string().min(3, "উপসর্গ/উদ্দেশ্য আবশ্যক"),
   amount: z.coerce.number().nonnegative("টাকার পরিমাণ অবশ্যই একটি অ-ঋণাত্মক সংখ্যা হতে হবে।"),
-  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'courier_medicine', 'other', '']).optional(),
-  medicineDeliveryMethod: z.enum(['direct', 'courier'], { required_error: "ঔষধ প্রদানের মাধ্যম নির্বাচন করুন।" }),
+  paymentMethod: z.enum(['cash', 'bkash', 'nagad', 'rocket', 'other', '']).optional(), // 'courier_medicine' removed
+  medicineDeliveryMethod: z.enum(['direct', 'courier'], { required_error: "ঔষধ প্রদানের মাধ্যম নির্বাচন করুন।" }), // New field
   receivedBy: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.amount > 0 && !data.paymentMethod) {
@@ -105,18 +107,18 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         guardianRelation: '',
         guardianName: '',
         thanaUpazila: '',
-        registrationDate: '', // Initialize as empty string
+        registrationDate: '', 
     },
   });
 
   const visitAndPaymentForm = useForm<VisitAndPaymentFormValues>({
     resolver: zodResolver(visitAndPaymentFormSchema),
     defaultValues: {
-      visitDate: '', // Initialize as empty string
+      visitDate: '', 
       symptoms: '',
       amount: 0,
       paymentMethod: 'cash',
-      medicineDeliveryMethod: 'direct',
+      medicineDeliveryMethod: 'direct', // Default for new field
       receivedBy: '',
     },
   });
@@ -167,7 +169,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         symptoms: '',
         amount: 0,
         paymentMethod: 'cash',
-        medicineDeliveryMethod: 'direct',
+        medicineDeliveryMethod: 'direct', // Reset new field
         receivedBy: '',
       });
       setIsEditingInfo(false);
@@ -178,14 +180,11 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     }
   }, [isOpen, patient, patientInfoForm, visitAndPaymentForm, defaultTab, currentTab, fetchVisitsAndPrescriptions]);
 
-  // Client-side effect to set default dates AFTER initial render and form reset
   useEffect(() => {
     if (isOpen && patient) {
-      // For PatientInfoForm: if registrationDate is still empty, set it to today.
       if (patientInfoForm.getValues('registrationDate') === '') {
         patientInfoForm.setValue('registrationDate', formatDateFns(new Date(), 'yyyy-MM-dd'));
       }
-      // For VisitAndPaymentForm: if visitDate is empty, set it to today.
       if (visitAndPaymentForm.getValues('visitDate') === '') {
         visitAndPaymentForm.setValue('visitDate', new Date().toISOString().split('T')[0]);
       }
@@ -231,7 +230,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         patientId: patient.id,
         visitDate: visitDateToUse,
         symptoms: data.symptoms,
-        medicineDeliveryMethod: data.medicineDeliveryMethod,
+        medicineDeliveryMethod: data.medicineDeliveryMethod, // Save new field
     };
     const visitId = await addVisit(newVisitData);
 
@@ -264,11 +263,11 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     }
 
     visitAndPaymentForm.reset({
-      visitDate: '', // Reset to empty, will be set by client-side effect
+      visitDate: '', 
       symptoms: '',
       amount: 0,
       paymentMethod: 'cash',
-      medicineDeliveryMethod: 'direct',
+      medicineDeliveryMethod: 'direct', // Reset new field
       receivedBy: '',
     });
 
@@ -820,3 +819,4 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     </Dialog>
   );
 }
+
