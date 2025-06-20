@@ -18,7 +18,7 @@ import { getClinicSettings, getPatientById } from '@/lib/firestoreService';
 import type { ClinicSettings, Patient, PaymentSlip } from '@/lib/types';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { Printer, CalendarIcon, Info, ClipboardList, User, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
-import { format as formatDateFns } from 'date-fns'; // Renamed to avoid conflict with our formatDate
+import { format } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -26,9 +26,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const CreatePaymentSlipModal = dynamic(() =>
   import('@/components/slip/CreatePaymentSlipModal').then((mod) => mod.CreatePaymentSlipModal),
-  { 
+  {
     ssr: false,
-    loading: () => <div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div> 
+    loading: () => <div className="flex justify-center items-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <span className="ml-2">পেমেন্ট মডাল লোড হচ্ছে...</span></div>
   }
 );
 
@@ -83,7 +83,7 @@ export default function MedicineInstructionsClientLogic() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [generatedInstruction, setGeneratedInstruction] = useState<string>('');
   const [generatedSlipNumber, setGeneratedSlipNumber] = useState<string>('');
-  
+
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [isLoadingPageData, setIsLoadingPageData] = useState(true);
@@ -133,25 +133,25 @@ export default function MedicineInstructionsClientLogic() {
                 localSelectedPatient = patientData;
                 formDataUpdate.patientName = patientData.name;
                 formDataUpdate.patientActualId = patientData.id;
-                formDataUpdate.serialNumber = patientData.diaryNumber ? String(patientData.diaryNumber) : \`MI-\${String(Date.now()).slice(-6)}\`;
+                formDataUpdate.serialNumber = patientData.diaryNumber ? String(patientData.diaryNumber) : `MI-${String(Date.now()).slice(-6)}`;
             } else if (patientNameFromQuery) {
                 formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
-                formDataUpdate.serialNumber = \`MI-\${String(Date.now()).slice(-6)}\`;
+                formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
             } else {
-                 formDataUpdate.serialNumber = \`MI-\${String(Date.now()).slice(-6)}\`;
+                formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
             }
         } else if (patientNameFromQuery) {
             formDataUpdate.patientName = decodeURIComponent(patientNameFromQuery);
-            formDataUpdate.serialNumber = \`MI-\${String(Date.now()).slice(-6)}\`;
+            formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
         } else {
-            formDataUpdate.serialNumber = \`MI-\${String(Date.now()).slice(-6)}\`;
+            formDataUpdate.serialNumber = `MI-${String(Date.now()).slice(-6)}`;
         }
-        
+
         setSelectedPatient(localSelectedPatient);
         form.reset({
-            ...form.getValues(), 
-            ...formDataUpdate, 
-            instructionDate: formDataUpdate.instructionDate || undefined, 
+            ...form.getValues(),
+            ...formDataUpdate,
+            instructionDate: formDataUpdate.instructionDate || undefined,
         });
         setPaymentCompleted(false);
 
@@ -161,11 +161,11 @@ export default function MedicineInstructionsClientLogic() {
     } finally {
         setIsLoadingPageData(false);
     }
-  }, [searchParams, form, toast]); 
+  }, [searchParams, form, toast]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); 
+  }, [fetchData]);
 
   useEffect(() => {
     if (!isLoadingPageData && !form.getValues('instructionDate')) {
@@ -177,17 +177,17 @@ export default function MedicineInstructionsClientLogic() {
   const generateInstructionText = (data: InstructionsFormValues): string => {
     if (data.instructionTemplate === 'template1') {
       if (!data.dropsT1 || !data.intervalT1 || !data.intakeTimeT1) return "অনুগ্রহ করে টেমপ্লেট ১ এর জন্য সকল তথ্য পূরণ করুন।";
-      return \`\${data.dropsT1} ফোঁটা ঔষধ সামান্য ঠান্ডা জলের সাথে মিশিয়ে \${data.intervalT1} ঘন্টা পর পর \${data.intakeTimeT1} খাবেন।\`;
+ return `${data.dropsT1} ফোঁটা ঔষধ সামান্য ঠান্ডা জলের সাথে মিশিয়ে ${data.intervalT1} ঘন্টা পর পর ${data.intakeTimeT1} খাবেন।`;
     } else if (data.instructionTemplate === 'template2') {
       if (!data.shakesT2 || !data.dropsT2 || !data.intervalT2 || !data.intakeTimeT2) return "অনুগ্রহ করে টেমপ্লেট ২ এর জন্য সকল তথ্য পূরণ করুন।";
-      return \`প্রতিবার ঔষধ সেবনের পূর্বে শিশিটিকে হাতের তালুর উপরে সজরে \${data.shakesT2} বার ঝাঁকি দিয়ে \${data.dropsT2} ফোটা ঔষধ এক কাপ জলে ভালোভাবে মিশিয়ে \${data.intervalT2} ঘন্টা পর পর মিশ্রণ থেকে এক চামচ করে \${data.intakeTimeT2} সেবন করুন।\`;
+      return `প্রতিবার ঔষধ সেবনের পূর্বে শিশিটিকে হাতের তালুর উপরে সজরে ${data.shakesT2} বার ঝাঁকি দিয়ে ${data.dropsT2} ফোটা ঔষধ এক কাপ জলে ভালোভাবে মিশিয়ে ${data.intervalT2} ঘন্টা পর পর মিশ্রণ থেকে এক চামচ করে ${data.intakeTimeT2} সেবন করুন।`;
     }
     return "একটি নির্দেশিকা টেমপ্লেট নির্বাচন করুন।";
   };
 
   const onSubmit: SubmitHandler<InstructionsFormValues> = (data) => {
     const instructionDateValue = form.getValues('instructionDate');
-    if (!instructionDateValue || !formatDateFns(instructionDateValue, "PPP", { locale: bn })) { // isValid check using format
+    if (!instructionDateValue || !format(instructionDateValue, "PPP", { locale: bn })) {
         toast({
             title: "তারিখ নির্বাচন করুন",
             description: "অনুগ্রহ করে নির্দেশনার জন্য একটি বৈধ তারিখ নির্বাচন করুন।",
@@ -242,15 +242,15 @@ export default function MedicineInstructionsClientLogic() {
   if (isLoadingPageData) {
     pageHeaderDescriptionText = "ঔষধের নিয়মাবলী লোড হচ্ছে...";
   } else if (selectedPatient) {
-    const diaryStr = selectedPatient.diaryNumber ? \` (ডায়েরি নং: \${String(selectedPatient.diaryNumber)})\` : '';
-    pageHeaderDescriptionText = \`রোগী: \${selectedPatient.name}\${diaryStr}\`;
+    const diaryStr = selectedPatient.diaryNumber ? ` (ডায়েরি নং: ${String(selectedPatient.diaryNumber)})` : '';
+    pageHeaderDescriptionText = `রোগী: ${selectedPatient.name}${diaryStr}`;
   } else if (form.getValues('patientName')) {
-    pageHeaderDescriptionText = \`রোগী: \${form.getValues('patientName')}\`;
+    pageHeaderDescriptionText = `রোগী: ${form.getValues('patientName')}`;
   } else {
     pageHeaderDescriptionText = "রোগীর জন্য ঔষধ খাওয়ার নির্দেশিকা তৈরি ও প্রিন্ট করুন।";
   }
-  
-  if (isLoadingPageData && !selectedPatient && !searchParams.get('name') && !form.getValues('patientName')) { 
+
+  if (isLoadingPageData && !selectedPatient && !searchParams.get('name') && !form.getValues('patientName')) {
       return (
         <React.Fragment>
           <div className="flex h-screen items-center justify-center">
@@ -330,7 +330,7 @@ export default function MedicineInstructionsClientLogic() {
                                       )}
                                   >
                                   <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
-                                  {field.value ? formatDateFns(field.value, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
+                                  {field.value ? format(field.value, "PPP", { locale: bn }) : <span>একটি তারিখ নির্বাচন করুন</span>}
                                   </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0">
@@ -359,7 +359,6 @@ export default function MedicineInstructionsClientLogic() {
                                   <Input {...field} readOnly className={cn(inputFieldClass, readOnlyInputClass)} />
                               </FormControl>
                               </div>
-                              <FormDescription className="text-xs">এটি রোগীর ডায়েরি নম্বর এবং নির্দেশিকা স্লিপের ক্রমিক হিসেবে ব্যবহৃত হবে।</FormDescription>
                               <FormMessage />
                           </FormItem>
                           )}
@@ -424,13 +423,13 @@ export default function MedicineInstructionsClientLogic() {
                         <CardDescription className="mb-3 text-sm font-medium text-primary">টেমপ্লেট ১: সাধারণ নিয়মাবলী</CardDescription>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <FormField control={form.control} name="dropsT1" render={({ field }) => (
-                              <FormItem> <FormLabel>ঔষধের ফোঁটা</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="ফোঁটা" /></SelectTrigger></FormControl> <SelectContent>{dropsOptions.map(o => <SelectItem key={\`t1d\${o}\`} value={o}>{o} ফোঁটা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
+                              <FormItem> <FormLabel>ঔষধের ফোঁটা</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="ফোঁটা" /></SelectTrigger></FormControl> <SelectContent>{dropsOptions.map(o => <SelectItem key={`t1d${o}`} value={o}>{o} ফোঁটা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
                           )} />
                           <FormField control={form.control} name="intervalT1" render={({ field }) => (
-                              <FormItem> <FormLabel>কতক্ষণ পর পর</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="সময়" /></SelectTrigger></FormControl> <SelectContent>{intervalOptions.map(o => <SelectItem key={\`t1i\${o}\`} value={o}>{o} ঘন্টা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
+                              <FormItem> <FormLabel>কতক্ষণ পর পর</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="সময়" /></SelectTrigger></FormControl> <SelectContent>{intervalOptions.map(o => <SelectItem key={`t1i${o}`} value={o}>{o} ঘন্টা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
                           )} />
                           <FormField control={form.control} name="intakeTimeT1" render={({ field }) => (
-                              <FormItem className="md:col-span-3"> <FormLabel>কখন খাবেন</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="খাওয়ার সময়" /></SelectTrigger></FormControl> <SelectContent>{intakeTimeOptionsT1.map(o => <SelectItem key={\`t1t\${o}\`} value={o}>{o}</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
+                              <FormItem className="md:col-span-3"> <FormLabel>কখন খাবেন</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="খাওয়ার সময়" /></SelectTrigger></FormControl> <SelectContent>{intakeTimeOptionsT1.map(o => <SelectItem key={`t1t${o}`} value={o}>{o}</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
                           )} />
                         </div>
                       </Card>
@@ -441,16 +440,16 @@ export default function MedicineInstructionsClientLogic() {
                          <CardDescription className="mb-3 text-sm font-medium text-primary">টেমপ্লেট ২: ঝাঁকি ও মিশ্রণ</CardDescription>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            <FormField control={form.control} name="shakesT2" render={({ field }) => (
-                              <FormItem> <FormLabel>কতবার ঝাঁকি</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="ঝাঁকি" /></SelectTrigger></FormControl> <SelectContent>{shakesOptions.map(o => <SelectItem key={\`t2s\${o}\`} value={o}>{o} বার</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
+                              <FormItem> <FormLabel>কতবার ঝাঁকি</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="ঝাঁকি" /></SelectTrigger></FormControl> <SelectContent>{shakesOptions.map(o => <SelectItem key={`t2s${o}`} value={o}>{o} বার</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
                           )} />
                           <FormField control={form.control} name="dropsT2" render={({ field }) => (
-                              <FormItem> <FormLabel>ঔষধের ফোঁটা (মিশ্রণে)</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="ফোঁটা" /></SelectTrigger></FormControl> <SelectContent>{dropsOptions.map(o => <SelectItem key={\`t2d\${o}\`} value={o}>{o} ফোঁটা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
+                              <FormItem> <FormLabel>ঔষধের ফোঁটা (মিশ্রণে)</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="ফোঁটা" /></SelectTrigger></FormControl> <SelectContent>{dropsOptions.map(o => <SelectItem key={`t2d${o}`} value={o}>{o} ফোঁটা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
                           )} />
                           <FormField control={form.control} name="intervalT2" render={({ field }) => (
-                              <FormItem> <FormLabel>কতক্ষণ পর (মিশ্রণ)</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="সময়" /></SelectTrigger></FormControl> <SelectContent>{intervalOptions.map(o => <SelectItem key={\`t2i\${o}\`} value={o}>{o} ঘন্টা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
+                              <FormItem> <FormLabel>কতক্ষণ পর (মিশ্রণ)</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="সময়" /></SelectTrigger></FormControl> <SelectContent>{intervalOptions.map(o => <SelectItem key={`t2i${o}`} value={o}>{o} ঘন্টা</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
                           )} />
                           <FormField control={form.control} name="intakeTimeT2" render={({ field }) => (
-                              <FormItem> <FormLabel>কখন খাবেন (মিশ্রণ)</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="খাওয়ার সময়" /></SelectTrigger></FormControl> <SelectContent>{intakeTimeOptionsT2.map(o => <SelectItem key={\`t2t\${o}\`} value={o}>{o}</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
+                              <FormItem> <FormLabel>কখন খাবেন (মিশ্রণ)</FormLabel> <Select onValueChange={field.onChange} value={field.value}> <FormControl><SelectTrigger className={inputWrapperClass}><SelectValue placeholder="খাওয়ার সময়" /></SelectTrigger></FormControl> <SelectContent>{intakeTimeOptionsT2.map(o => <SelectItem key={`t2t${o}`} value={o}>{o}</SelectItem>)}</SelectContent></Select> <FormMessage /> </FormItem>
                           )} />
                         </div>
                       </Card>
@@ -500,7 +499,7 @@ export default function MedicineInstructionsClientLogic() {
 
                 <div className="flex justify-between text-xs mb-1">
                   <span>ক্রমিক নং (স্লিপ): {previewSlipNumber}</span>
-                  <span>তারিখ: {currentValues.instructionDate ? formatDateFns(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : "..."}</span>
+                  <span>তারিখ: {currentValues.instructionDate ? format(currentValues.instructionDate, "dd/MM/yyyy", {locale: bn}) : "..."}</span>
                 </div>
                 <div className="text-xs mb-1">নামঃ {currentValues.patientName || "রোগীর নাম"}</div>
                 {selectedPatient?.diaryNumber && (
@@ -553,8 +552,8 @@ export default function MedicineInstructionsClientLogic() {
         </div>
 
         <div className="meta-info">
-          <span>ক্রমিক নং (স্লিপ): {generatedSlipNumber || currentValues.serialNumber || \`N/A\`}</span>
-          <span>তারিখ: {currentValues.instructionDate ? formatDateFns(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : "..."}</span>
+          <span>ক্রমিক নং (স্লিপ): {generatedSlipNumber || currentValues.serialNumber || `N/A`}</span>
+          <span>তারিখ: {currentValues.instructionDate ? format(currentValues.instructionDate, "dd MMMM, yyyy", { locale: bn }) : "..."}</span>
         </div>
         <div className="patient-name">নামঃ {currentValues.patientName}</div>
           {selectedPatient?.diaryNumber &&
@@ -590,5 +589,5 @@ export default function MedicineInstructionsClientLogic() {
         </div>
       </div>
     </React.Fragment>
-    
-    
+  );
+}
