@@ -33,7 +33,9 @@ export const FloatingVoiceInput: React.FC = () => {
 
       // Directly setting value and dispatching events for React compatibility
       const originalValueSetter = Object.getOwnPropertyDescriptor(inputElement.constructor.prototype, 'value')?.set;
-      originalValueSetter?.call(inputElement, newText);
+      if (originalValueSetter) {
+        originalValueSetter.call(inputElement, newText);
+      }
       
       const newCursorPosition = newText.length; // Set cursor to end
       inputElement.selectionStart = newCursorPosition;

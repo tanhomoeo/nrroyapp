@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { Settings as SettingsIcon, Download, Upload, AlertTriangle, Info, DatabaseZap, Trash2 } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, AlertTriangle, Info, DatabaseZap, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { getPatients, getVisits, getPrescriptions, getPaymentSlips, getClinicSettings, migrateLocalStorageToFirestore, clearAllLocalStorageData } from '@/lib/firestoreService';
@@ -189,7 +189,7 @@ export default function AppSettingsPage() {
                         <AlertTriangle className="mr-2 h-5 w-5 text-destructive"/> ডেটা ইম্পোর্ট নিশ্চিত করুন
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                       আপনি কি "{selectedFileName}" থেকে ডেটা Firestore-এ ইম্পোর্ট করতে চান? এই প্রক্রিয়াটি জটিল এবং বর্তমানে এই ডেমো অ্যাপে সম্পূর্ণ স্বয়ংক্রিয়ভাবে সমর্থিত নয়। এটি শুধুমাত্র একটি প্লেসহোল্ডার।
+                       আপনি কি &quot;{selectedFileName}&quot; থেকে ডেটা Firestore-এ ইম্পোর্ট করতে চান? এই প্রক্রিয়াটি জটিল এবং বর্তমানে এই ডেমো অ্যাপে সম্পূর্ণ স্বয়ংক্রিয়ভাবে সমর্থিত নয়। এটি শুধুমাত্র একটি প্লেসহোল্ডার।
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

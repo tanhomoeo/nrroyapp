@@ -63,6 +63,27 @@ export default function SearchPatientsPage() {
     return patientsData;
   }, []);
 
+  const filterPatients = useCallback((term: string, patients: Patient[]) => {
+    if (!term.trim()) {
+      setFilteredPatients([]);
+      return;
+    }
+    const lowerSearchTerm = term.toLowerCase();
+    const results = patients.filter(patient => {
+      const diaryNumString = (patient.diaryNumber || '').toString().toLowerCase();
+      return (
+        patient.name.toLowerCase().includes(lowerSearchTerm) ||
+        patient.id.toLowerCase().includes(lowerSearchTerm) ||
+        patient.phone.toLowerCase().includes(lowerSearchTerm) ||
+        diaryNumString.includes(lowerSearchTerm) ||
+        (patient.villageUnion || '').toLowerCase().includes(lowerSearchTerm) ||
+        (patient.district || '').toLowerCase().includes(lowerSearchTerm) ||
+        (patient.guardianName || '').toLowerCase().includes(lowerSearchTerm)
+      );
+    });
+    setFilteredPatients(results);
+  }, []);
+
   useEffect(() => {
     fetchPatients().then(patientsData => {
       const querySearchTerm = searchParams.get('q');
@@ -84,32 +105,11 @@ export default function SearchPatientsPage() {
       window.removeEventListener('firestoreDataChange', handleDataChange);
     };
 
-  }, [searchParams, fetchPatients, searchTerm]); 
+  }, [searchParams, fetchPatients, searchTerm, filterPatients]); 
   
-  const filterPatients = (term: string, patients: Patient[]) => {
-     if (!term.trim()) {
-      setFilteredPatients([]);
-      return;
-    }
-    const lowerSearchTerm = term.toLowerCase();
-    const results = patients.filter(patient => {
-      const diaryNumString = (patient.diaryNumber || '').toString().toLowerCase();
-      return (
-        patient.name.toLowerCase().includes(lowerSearchTerm) ||
-        patient.id.toLowerCase().includes(lowerSearchTerm) ||
-        patient.phone.toLowerCase().includes(lowerSearchTerm) ||
-        diaryNumString.includes(lowerSearchTerm) ||
-        (patient.villageUnion || '').toLowerCase().includes(lowerSearchTerm) ||
-        (patient.district || '').toLowerCase().includes(lowerSearchTerm) ||
-        (patient.guardianName || '').toLowerCase().includes(lowerSearchTerm)
-      );
-    });
-    setFilteredPatients(results);
-  };
-
   useEffect(() => {
     filterPatients(searchTerm, allPatients);
-  }, [searchTerm, allPatients]);
+  }, [searchTerm, allPatients, filterPatients]);
 
   const handleOpenDetailsModal = (patient: Patient, tab: 'info' | 'history' | 'addVisitAndPayment') => {
     setSelectedPatientForModal(patient);
@@ -209,7 +209,7 @@ export default function SearchPatientsPage() {
         </div>
       ) : searchTerm.trim() && filteredPatients.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">
-          "{searchTerm}" এর জন্য কোন রোগী খুঁজে পাওয়া যায়নি।
+          &quot;{searchTerm}&quot; এর জন্য কোন রোগী খুঁজে পাওয়া যায়নি।
         </div>
       ) : !searchTerm.trim() ? (
          <div className="text-center py-10 text-muted-foreground">

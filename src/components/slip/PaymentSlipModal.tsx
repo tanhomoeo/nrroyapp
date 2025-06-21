@@ -1,7 +1,7 @@
 
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog'; // DialogDescription imported
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { PaymentSlip, ClinicSettings, PaymentMethod } from '@/lib/types';
 import { formatDate, formatCurrency, getClinicSettings, getPaymentMethodLabel } from '@/lib/firestoreService';
@@ -138,7 +138,7 @@ export function PaymentSlipModal({ slip, isOpen, onClose }: PaymentSlipModalProp
       <DialogContent className="sm:max-w-lg w-full">
           <DialogHeader className="text-center border-b pb-3 mb-3">
             <DialogTitle className="font-headline text-xl text-primary">Payment Slip Details</DialogTitle>
-            <DialogDescription>পেমেন্ট স্লিপের বিস্তারিত তথ্য এখানে দেখানো হচ্ছে।</DialogDescription> {/* Added DialogDescription */}
+            <DialogDescription>পেমেন্ট স্লিপের বিস্তারিত তথ্য এখানে দেখানো হচ্ছে।</DialogDescription>
           </DialogHeader>
 
         <div id="slip-print-area-content">
