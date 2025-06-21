@@ -8,10 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
-import { Settings as SettingsIcon, Download, Upload, AlertTriangle, Info, DatabaseZap, Trash2, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { getPatients, getVisits, getPrescriptions, getPaymentSlips, getClinicSettings, migrateLocalStorageToFirestore, clearAllLocalStorageData } from '@/lib/firestoreService';
+import { getPatients, getVisits, getPrescriptions, getPaymentSlips, getClinicSettings } from '@/lib/firestoreService';
 import { APP_NAME, APP_VERSION } from '@/lib/constants';
 import type { Patient, Visit, Prescription, PaymentSlip, ClinicSettings } from '@/lib/types';
 
@@ -30,7 +30,6 @@ export default function AppSettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [fileToImport, setFileToImport] = useState<File | null>(null);
-  const [isMigrating, setIsMigrating] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -92,20 +91,7 @@ export default function AppSettingsPage() {
     setFileToImport(null);
     if (fileInputRef.current) fileInputRef.current.value = ""; 
   };
-
-  const handleMigrateData = async () => {
-    setIsMigrating(true);
-    await migrateLocalStorageToFirestore();
-    setIsMigrating(false);
-    // Toast is handled within migrateLocalStorageToFirestore
-  };
   
-  const handleClearLocalStorage = () => {
-    clearAllLocalStorageData();
-    // Toast and reload is handled within clearAllLocalStorageData
-  };
-
-
   if (!mounted) return (
     <div className="space-y-6 animate-pulse">
       <Card className="h-24"><CardHeader><div className="h-6 bg-muted rounded w-1/3"></div><div className="h-4 bg-muted rounded w-2/3 mt-1"></div></CardHeader></Card>
@@ -202,68 +188,6 @@ export default function AppSettingsPage() {
               </AlertDialog>
             )}
           </div>
-          
-          <div className="border-t pt-6 space-y-3">
-            <h3 className="font-semibold">localStorage থেকে Firestore-এ ডেটা মাইগ্রেশন</h3>
-            <p className="text-sm text-muted-foreground">
-              যদি আপনার ব্রাউজারের localStorage-এ আগের ডেটা থাকে, তাহলে সেগুলোকে একবারের জন্য Firestore-এ কপি করতে এই বাটনটি ব্যবহার করুন।
-              <strong className="text-destructive"> এই কাজটি করার আগে নিশ্চিত করুন আপনার Firestore ডেটাবেস খালি আছে অথবা আপনি ডেটা মার্জ করতে প্রস্তুত।</strong>
-            </p>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="default" className="bg-orange-500 hover:bg-orange-600" disabled={isMigrating}>
-                  {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DatabaseZap className="mr-2 h-4 w-4" />}
-                  localStorage থেকে Firestore-এ মাইগ্রেট করুন
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>মাইগ্রেশন নিশ্চিত করুন</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    আপনি কি localStorage-এর সকল ডেটা Firestore-এ কপি করতে চান? যদি Firestore-এ একই আইডি সহ ডেটা থাকে, সেগুলো আপডেট হতে পারে। এই কাজটি করার আগে Firestore ব্যাকআপ নেওয়ার পরামর্শ দেওয়া হচ্ছে।
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isMigrating}>বাতিল</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleMigrateData} disabled={isMigrating} className="bg-orange-500 hover:bg-orange-600">
-                    {isMigrating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "হ্যাঁ, মাইগ্রেট করুন"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-
-          <div className="border-t pt-6 space-y-3">
-            <h3 className="font-semibold text-destructive">localStorage ডেটা মুছে ফেলুন</h3>
-            <p className="text-sm text-muted-foreground">
-              সতর্কতা: এই কাজটি আপনার ব্রাউজারের localStorage থেকে অ্যাপ্লিকেশনের সকল ডেটা (রোগী, ভিজিট, প্রেসক্রিপশন ইত্যাদি) স্থায়ীভাবে মুছে ফেলবে।
-              <strong className="text-destructive"> যদি ডেটা Firestore-এ সফলভাবে মাইগ্রেট হয়ে থাকে, শুধুমাত্র তখনই এটি ব্যবহার করুন।</strong>
-            </p>
-             <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                        <Trash2 className="mr-2 h-4 w-4" /> localStorage ডেটা মুছুন
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center">
-                            <AlertTriangle className="mr-2 h-5 w-5 text-destructive"/> আপনি কি নিশ্চিত?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            এই কাজটি আপনার ব্রাউজারের লোকাল স্টোরেজ থেকে <strong className="text-destructive">সকল অ্যাপ্লিকেশনের ডেটা স্থায়ীভাবে মুছে ফেলবে</strong>। এই ডেটা আর পুনরুদ্ধার করা যাবে না। আপনি যদি ইতিমধ্যে ডেটা Firestore-এ মাইগ্রেট করে থাকেন, তবেই এটি করুন।
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>বাতিল</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleClearLocalStorage} className="bg-destructive hover:bg-destructive/90">
-                            হ্যাঁ, সকল লোকাল ডেটা মুছুন
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-          </div>
-
         </CardContent>
       </Card>
 

@@ -120,6 +120,23 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     },
   });
   
+  const getPatientFormValues = useCallback((p: Patient): PatientInfoValues => {
+    return {
+      name: p.name,
+      phone: p.phone,
+      villageUnion: p.villageUnion || '',
+      district: p.district || '',
+      diaryNumber: p.diaryNumber || '',
+      age: p.age || '',
+      gender: p.gender || '',
+      occupation: p.occupation || '',
+      guardianRelation: p.guardianRelation || '',
+      guardianName: p.guardianName || '',
+      thanaUpazila: p.thanaUpazila || '',
+      registrationDate: p.registrationDate ? formatDateFns(new Date(p.registrationDate), 'yyyy-MM-dd') : formatDateFns(new Date(), 'yyyy-MM-dd'),
+    };
+  }, []);
+
   const fetchVisitsAndPrescriptions = useCallback(async (patientId: string) => {
       setIsLoadingVisits(true);
       try {
@@ -150,20 +167,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
     if (isOpen && patient) {
       setCurrentTab(defaultTab);
       // Reset forms and set default values when modal opens
-      patientInfoForm.reset({
-        name: patient.name,
-        phone: patient.phone,
-        villageUnion: patient.villageUnion || '',
-        district: patient.district || '',
-        diaryNumber: patient.diaryNumber || '',
-        age: patient.age || '',
-        gender: patient.gender || '',
-        occupation: patient.occupation || '',
-        guardianRelation: patient.guardianRelation || '',
-        guardianName: patient.guardianName || '',
-        thanaUpazila: patient.thanaUpazila || '',
-        registrationDate: patient.registrationDate ? formatDateFns(new Date(patient.registrationDate), 'yyyy-MM-dd') : formatDateFns(new Date(), 'yyyy-MM-dd'),
-      });
+      patientInfoForm.reset(getPatientFormValues(patient));
       visitAndPaymentForm.reset({
         visitDate: formatDateFns(new Date(), 'yyyy-MM-dd'),
         symptoms: '',
@@ -178,7 +182,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         fetchVisitsAndPrescriptions(patient.id);
       }
     }
-  }, [isOpen, patient, defaultTab, patientInfoForm, visitAndPaymentForm, fetchVisitsAndPrescriptions]);
+  }, [isOpen, patient, defaultTab, patientInfoForm, visitAndPaymentForm, fetchVisitsAndPrescriptions, getPatientFormValues]);
 
 
   const handlePatientInfoSubmit: SubmitHandler<PatientInfoValues> = async (data) => {
@@ -590,7 +594,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                   <div className="flex justify-end gap-2 mt-4">
                     {isEditingInfo ? (
                       <>
-                        <Button type="button" variant="outline" onClick={() => { setIsEditingInfo(false); patientInfoForm.reset(patient); }}>বাতিল</Button>
+                        <Button type="button" variant="outline" onClick={() => { setIsEditingInfo(false); patientInfoForm.reset(getPatientFormValues(patient)); }}>বাতিল</Button>
                         <Button type="submit" disabled={patientInfoForm.formState.isSubmitting} className="bg-green-600 hover:bg-green-700 text-white">
                           {patientInfoForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} সংরক্ষণ করুন
                         </Button>

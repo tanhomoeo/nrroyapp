@@ -195,48 +195,53 @@ export default function DashboardPage() {
     const monthStart = startOfMonth(today);
     const monthEnd = endOfMonth(today);
 
-    const [
-        allPatients,
-        todayVisits,
-        monthVisits,
-        todaySlips,
-        monthSlips,
-        patientsCreatedThisMonth
-    ] = await Promise.all([
-        getPatients(),
-        getVisitsWithinDateRange(todayStart, todayEnd),
-        getVisitsWithinDateRange(monthStart, monthEnd),
-        getPaymentSlipsWithinDateRange(todayStart, todayEnd),
-        getPaymentSlipsWithinDateRange(monthStart, monthEnd),
-        getPatientsRegisteredWithinDateRange(monthStart, monthEnd)
-    ]);
-
-    const uniqueTodayPatientIds = new Set(todayVisits.map(v => v.patientId));
-
-    const todayRevenue = todaySlips.reduce((sum, s) => sum + s.amount, 0);
-    const monthlyIncome = monthSlips.reduce((sum, s) => sum + s.amount, 0);
-
-    const dailyOtherRegisteredPatientIds = new Set(
-        (await getPatientsRegisteredWithinDateRange(todayStart, todayEnd))
-        .map(p => p.id)
-        .filter(id => !uniqueTodayPatientIds.has(id))
-    );
-
-
-    setStats({
-      totalPatients: allPatients.length,
-      todayPatientCount: uniqueTodayPatientIds.size,
-      monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size,
-      todayRevenue: todayRevenue,
-      monthlyIncome: monthlyIncome,
-      dailyActivePatients: uniqueTodayPatientIds.size,
-      dailyOtherRegistered: dailyOtherRegisteredPatientIds.size,
-      monthlyNewPatients: patientsCreatedThisMonth.length,
-      monthlyTotalRegistered: allPatients.length,
-    });
-
-    await loadAppointments(allPatients); // Pass the fetched patients to loadAppointments
-    setLoading(false);
+    try {
+        const [
+            allPatients,
+            todayVisits,
+            monthVisits,
+            todaySlips,
+            monthSlips,
+            patientsCreatedThisMonth
+        ] = await Promise.all([
+            getPatients(),
+            getVisitsWithinDateRange(todayStart, todayEnd),
+            getVisitsWithinDateRange(monthStart, monthEnd),
+            getPaymentSlipsWithinDateRange(todayStart, todayEnd),
+            getPaymentSlipsWithinDateRange(monthStart, monthEnd),
+            getPatientsRegisteredWithinDateRange(monthStart, monthEnd)
+        ]);
+    
+        const uniqueTodayPatientIds = new Set(todayVisits.map(v => v.patientId));
+    
+        const todayRevenue = todaySlips.reduce((sum, s) => sum + s.amount, 0);
+        const monthlyIncome = monthSlips.reduce((sum, s) => sum + s.amount, 0);
+    
+        const dailyOtherRegisteredPatientIds = new Set(
+            (await getPatientsRegisteredWithinDateRange(todayStart, todayEnd))
+            .map(p => p.id)
+            .filter(id => !uniqueTodayPatientIds.has(id))
+        );
+    
+    
+        setStats({
+          totalPatients: allPatients.length,
+          todayPatientCount: uniqueTodayPatientIds.size,
+          monthlyPatientCount: new Set(monthVisits.map(v => v.patientId)).size,
+          todayRevenue: todayRevenue,
+          monthlyIncome: monthlyIncome,
+          dailyActivePatients: uniqueTodayPatientIds.size,
+          dailyOtherRegistered: dailyOtherRegisteredPatientIds.size,
+          monthlyNewPatients: patientsCreatedThisMonth.length,
+          monthlyTotalRegistered: allPatients.length,
+        });
+    
+        await loadAppointments(allPatients);
+    } catch(error) {
+        console.error("Failed to load dashboard data", error);
+    } finally {
+        setLoading(false);
+    }
   }, [loadAppointments]);
 
   useEffect(() => {
@@ -278,13 +283,12 @@ export default function DashboardPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentModalClose = async (slipCreated: boolean = false) => {
+  const handlePaymentModalClose = (slipCreated: boolean = false) => {
     setIsPaymentModalOpen(false);
     setSelectedPatientForPaymentModal(null);
     setCurrentVisitIdForPaymentModal(undefined);
     if (slipCreated) {
-        // Instead of just loading appointments, reload all dashboard data
-        await loadDashboardData();
+        loadDashboardData();
     }
   };
 
