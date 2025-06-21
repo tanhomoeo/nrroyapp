@@ -17,14 +17,13 @@ import {
     getPaymentSlipsWithinDateRange,
     getPatientsRegisteredWithinDateRange,
     formatCurrency,
-    getPatientById,
     getPaymentMethodLabel
 } from '@/lib/firestoreService';
 import type { ClinicStats, Patient, Visit, PaymentSlip, PaymentMethod } from '@/lib/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ROUTES, APP_NAME } from '@/lib/constants';
-import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday as isTodayFns, isValid } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isValid } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MicrophoneButton } from '@/components/shared/MicrophoneButton';
@@ -543,4 +542,5 @@ export default function DashboardPage() {
     </TooltipProvider>
   );
 }
+    
     

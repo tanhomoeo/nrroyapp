@@ -177,7 +177,7 @@ export default function MedicineInstructionsClientLogic() {
   const generateInstructionText = (data: InstructionsFormValues): string => {
     if (data.instructionTemplate === 'template1') {
       if (!data.dropsT1 || !data.intervalT1 || !data.intakeTimeT1) return "অনুগ্রহ করে টেমপ্লেট ১ এর জন্য সকল তথ্য পূরণ করুন।";
- return `${data.dropsT1} ফোঁটা ঔষধ সামান্য ঠান্ডা জলের সাথে মিশিয়ে ${data.intervalT1} ঘন্টা পর পর ${data.intakeTimeT1} খাবেন।`;
+      return `${data.dropsT1} ফোঁটা ঔষধ সামান্য ঠান্ডা জলের সাথে মিশিয়ে ${data.intervalT1} ঘন্টা পর পর ${data.intakeTimeT1} খাবেন।`;
     } else if (data.instructionTemplate === 'template2') {
       if (!data.shakesT2 || !data.dropsT2 || !data.intervalT2 || !data.intakeTimeT2) return "অনুগ্রহ করে টেমপ্লেট ২ এর জন্য সকল তথ্য পূরণ করুন।";
       return `প্রতিবার ঔষধ সেবনের পূর্বে শিশিটিকে হাতের তালুর উপরে সজরে ${data.shakesT2} বার ঝাঁকি দিয়ে ${data.dropsT2} ফোটা ঔষধ এক কাপ জলে ভালোভাবে মিশিয়ে ${data.intervalT2} ঘন্টা পর পর মিশ্রণ থেকে এক চামচ করে ${data.intakeTimeT2} সেবন করুন।`;
@@ -591,3 +591,5 @@ export default function MedicineInstructionsClientLogic() {
     </React.Fragment>
   );
 }
+
+    
