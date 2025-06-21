@@ -108,8 +108,8 @@ interface AppointmentDisplayItem {
   time: string;
   reason: string;
   status: 'Completed' | 'Pending';
-  paymentMethod?: string;
-  paymentAmount?: string;
+  paymentMethod: string;
+  paymentAmount: string;
   createdAt: string;
 }
 
@@ -277,7 +277,7 @@ export default function DashboardPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentModalClose = (slipCreated: boolean = false) => {
+  const handlePaymentModalClose = (slipCreated: boolean) => {
     setIsPaymentModalOpen(false);
     setSelectedPatientForPaymentModal(null);
     setCurrentVisitIdForPaymentModal(undefined);

@@ -106,7 +106,7 @@ export default function ClinicInformationPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeaderCard
+      <PageHeaderCard 
         title="Clinic Information"
         description="Manage your clinic&apos;s details for display on printed documents."
         actions={<Building className="h-8 w-8 text-primary" />}

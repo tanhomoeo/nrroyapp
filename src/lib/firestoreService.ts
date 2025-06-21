@@ -453,7 +453,7 @@ export const PAYMENT_METHOD_LABELS: Record<Exclude<PaymentMethod, ''>, string> =
 };
 
 export const getPaymentMethodLabel = (methodValue?: PaymentMethod): string => {
-  if (!methodValue || methodValue === '') return 'N/A';
+  if (!methodValue) return 'N/A';
   return PAYMENT_METHOD_LABELS[methodValue as Exclude<PaymentMethod, ''>] || 'N/A';
 };
 

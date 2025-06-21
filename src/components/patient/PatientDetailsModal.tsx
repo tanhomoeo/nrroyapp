@@ -252,7 +252,7 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
                 description: `স্লিপ ${newSlipData.slipNumber} ভিজিট ${visitId} এর সাথে যুক্ত করা হয়েছে।`,
             });
         } else {
-            toast({ title: 'ত্রুটি', description: 'পেমেন্ট স্লিপ তৈরি করতে সমস্যা হয়েছে।', variant: 'warning' });
+            toast({ title: 'ত্রুটি', description: 'পেমেন্ট স্লিপ তৈরি করতে সমস্যা হয়েছে।', variant: 'default' });
         }
     }
 

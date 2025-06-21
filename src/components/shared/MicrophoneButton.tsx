@@ -18,13 +18,6 @@ interface MicrophoneButtonProps {
   fieldKey: string; // Unique key for this button's target field
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
-}
-
 export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   onTranscript,
   onFinalTranscript,
@@ -38,7 +31,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 }) => {
   const [isBrowserSupported, setIsBrowserSupported] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const speechRecognitionRef = useRef<any | null>(null);
   const { toast } = useToast();
   const finalTranscriptBuffer = useRef<string>("");
 
@@ -58,7 +51,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) {
       setIsBrowserSupported(false);
@@ -85,7 +78,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       finalTranscriptBuffer.current = "";
     };
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let interimTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const transcriptPart = event.results[i][0].transcript;
@@ -120,7 +113,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       finalTranscriptBuffer.current = "";
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       let errorMessage = 'একটি অজানা ভয়েস টাইপিং ত্রুটি হয়েছে।';
        switch (event.error) {
         case 'no-speech': errorMessage = 'কোনো কথা শোনা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'; break;
@@ -164,7 +157,9 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       toast({ title: 'ব্রাউজার সাপোর্ট করে না', description: 'আপনার ব্রাউজারে ভয়েস টাইপিং সুবিধাটি নেই। অনুগ্রহ করে Chrome এর মতো একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।', variant: 'destructive' });
       return;
     }
-    if (!speechRecognitionRef.current) {
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI || !speechRecognitionRef.current) {
        toast({ title: 'ভয়েস টাইপিং প্রস্তুত নয়', description: error || 'একটি ত্রুটি হয়েছে। অনুগ্রহ করে পৃষ্ঠাটি রিফ্রেশ করুন।', variant: 'destructive' });
       return;
     }

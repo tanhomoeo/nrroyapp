@@ -7,19 +7,12 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { appendFinalTranscript } from '@/lib/utils';
 
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
-}
-
 export const FloatingVoiceInput: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [listeningMode, setListeningMode] = useState<'click' | 'keyboard' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isBrowserSupported, setIsBrowserSupported] = useState(true);
-  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const speechRecognitionRef = useRef<any | null>(null);
   const activeElementRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const finalTranscriptRef = useRef<string>("");
   const { toast } = useToast();
@@ -63,8 +56,10 @@ export const FloatingVoiceInput: React.FC = () => {
             return; // if same mode, do nothing.
         }
     }
+    
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    if (!speechRecognitionRef.current || !isBrowserSupported) {
+    if (!SpeechRecognitionAPI || !isBrowserSupported) {
       toast({ title: 'ভয়েস রিকগনিশন প্রস্তুত নয়', description: 'অনুগ্রহ করে পৃষ্ঠাটি রিফ্রেশ করুন অথবা একটি সাপোর্টেড ব্রাউজার ব্যবহার করুন।', variant: 'destructive' });
       return;
     }
@@ -109,7 +104,7 @@ export const FloatingVoiceInput: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) {
       setIsBrowserSupported(false);
       // Avoid repeated toasts if already shown
@@ -136,7 +131,7 @@ export const FloatingVoiceInput: React.FC = () => {
       // State update is handled by startRecognition
     };
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let interimTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const transcriptPart = event.results[i][0].transcript;
@@ -148,7 +143,7 @@ export const FloatingVoiceInput: React.FC = () => {
       }
     };
     
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       let errorMessage = 'একটি অজানা ভয়েস টাইপিং ত্রুটি হয়েছে।';
       switch (event.error) {
         case 'no-speech': errorMessage = 'কোনো কথা শোনা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'; break;
