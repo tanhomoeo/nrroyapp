@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useEffect, useState, useRef } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -149,7 +148,7 @@ export default function ClinicInformationPage() {
                 name="doctorName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Doctor's Name</FormLabel>
+                    <FormLabel>Doctor&apos;s Name</FormLabel>
                     <div className={inputWrapperClass}>
                       <FormControl className="flex-1">
                         <Input placeholder="e.g., Dr. John Doe" {...field} className={inputFieldClass} id="doctorNameInfo" />
