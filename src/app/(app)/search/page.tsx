@@ -20,7 +20,6 @@ import {
   ClipboardList, 
   BriefcaseMedical,
   CalendarPlus,
-  PlayCircle 
 } from 'lucide-react';
 import { CreatePaymentSlipModal } from '@/components/slip/CreatePaymentSlipModal';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -33,10 +32,12 @@ import { useToast } from '@/hooks/use-toast';
 const PatientDetailsModal = dynamic(() => 
   import('@/components/patient/PatientDetailsModal').then(mod => mod.PatientDetailsModal),
   { 
+ isLoading: () => <div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Details...</span></div>,
     ssr: false,
-    loading: () => <div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Details...</span></div> 
   }
 );
+
+const CreatePaymentSlipModal = dynamic(() => import('@/components/slip/CreatePaymentSlipModal').then(mod => mod.CreatePaymentSlipModal), { ssr: false });
 
 export default function SearchPatientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -271,7 +272,7 @@ export default function SearchPatientsPage() {
         </div>
       )}
 
-      <Suspense fallback={<div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Details...</span></div>}>
+      <Suspense fallback={<div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <span className="ml-2">Loading Modal...</span></div>}>
         {selectedPatientForModal && isDetailsModalOpen && ( 
           <PatientDetailsModal
             patient={selectedPatientForModal}
