@@ -19,7 +19,7 @@ import { appendFinalTranscript } from '@/lib/utils';
 
 const clinicInfoFormSchema = z.object({
   clinicName: z.string().min(1, "Clinic name is required."),
-  doctorName: z.string().min(1, "Doctor's name is required."),
+ doctorName: z.string().min(1, "Doctor's name is required."),
   clinicAddress: z.string().min(1, "Clinic address is required."),
   clinicContact: z.string().min(1, "Clinic contact is required."),
   bmRegNo: z.string().optional(),
