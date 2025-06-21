@@ -134,7 +134,7 @@ export const FloatingVoiceInput: React.FC = () => {
       // State update is handled by startRecognition
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const transcriptPart = event.results[i][0].transcript;
@@ -144,11 +144,9 @@ export const FloatingVoiceInput: React.FC = () => {
           interimTranscript += transcriptPart;
         }
       }
-      // Optionally, display interimTranscript somewhere for user feedback
-      // console.log("Interim:", interimTranscript);
     };
     
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       let errorMessage = 'একটি অজানা ভয়েস টাইপিং ত্রুটি হয়েছে।';
       switch (event.error) {
         case 'no-speech': errorMessage = 'কোনো কথা শোনা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'; break;
@@ -188,7 +186,7 @@ export const FloatingVoiceInput: React.FC = () => {
         speechRecognitionRef.current = null;
       }
     };
-  }, [toast, insertTextIntoActiveElement]); // insertTextIntoActiveElement is stable due to useCallback
+  }, [toast, insertTextIntoActiveElement]);
 
   const handleButtonClick = () => {
     if (!isBrowserSupported) return;
@@ -261,4 +259,3 @@ export const FloatingVoiceInput: React.FC = () => {
     </Button>
   );
 };
-    

@@ -55,6 +55,7 @@ const prepareDataForFirestore = (data: any): any => {
         result[key] = Timestamp.fromDate(dateObj);
       } else {
         console.warn(`Invalid date string for field ${key}: ${result[key]}`);
+        delete result[key]; // Remove invalid date to avoid Firestore errors
       }
     } else if (result[key] instanceof Date) { // Handle if Date object is passed
         result[key] = Timestamp.fromDate(result[key]);
@@ -483,22 +484,26 @@ export const migrateLocalStorageToFirestore = async () => {
   console.warn("Starting migration from localStorage to Firestore.");
   alert("Migration started. This may take a few moments. You'll be notified upon completion or if an error occurs. Please do not close this window.");
 
-  const batch = writeBatch(db);
+  let batch = writeBatch(db);
   let operationsCount = 0;
 
+  const commitBatchIfNeeded = async () => {
+    if (operationsCount >= 490) {
+      await batch.commit();
+      console.log(`${operationsCount} operations committed. Starting new batch.`);
+      batch = writeBatch(db); // Re-initialize the batch
+      operationsCount = 0;
+      alert("A batch of data has been committed. If you have a very large dataset, you might need to re-run the migration if it times out or shows errors for subsequent data types. This is a simplified client-side migration.");
+    }
+  };
+
+  const addToBatch = async (ref: any, data: any) => {
+    batch.set(ref, data);
+    operationsCount++;
+    await commitBatchIfNeeded();
+  };
+
   try {
-    const addToBatch = async (ref: any, data: any) => {
-      batch.set(ref, data);
-      operationsCount++;
-      if (operationsCount >= 490) { 
-        await batch.commit();
-        console.log(`${operationsCount} operations committed. Starting new batch.`);
-        operationsCount = 0;
-         alert("A batch of data has been committed. If you have a very large dataset, you might need to re-run the migration if it times out or shows errors for subsequent data types. This is a simplified client-side migration.");
-      }
-    };
-
-
     const localPatientsRaw = localStorage.getItem('triful_arogya_niketan_patients');
     if (localPatientsRaw) {
       const localPatients: Patient[] = JSON.parse(localPatientsRaw);
@@ -561,7 +566,6 @@ export const migrateLocalStorageToFirestore = async () => {
         const localSettings: ClinicSettings = JSON.parse(localSettingsRaw);
         console.log("Migrating clinic settings...");
         const settingsRef = doc(db, 'settings', 'clinic');
-        // Ensure nextDiaryNumber is not migrated from old settings
         const { ...settingsToMigrate } = localSettings;
         if ('nextDiaryNumber' in settingsToMigrate) {
             delete (settingsToMigrate as any).nextDiaryNumber;
@@ -593,4 +597,3 @@ export const clearAllLocalStorageData = () => {
     window.location.reload();
   }
 };
-

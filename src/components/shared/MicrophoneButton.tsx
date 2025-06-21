@@ -85,7 +85,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       finalTranscriptBuffer.current = "";
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const transcriptPart = event.results[i][0].transcript;
@@ -96,7 +96,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         }
       }
       
-      // Use current props directly here as they are the latest from parent re-render
       if (interimTranscript.trim() && isListeningGlobal && currentListeningField === fieldKey) {
         try {
           onTranscriptRef.current(interimTranscript);
@@ -107,7 +106,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     };
 
     recognition.onend = () => {
-      // Use current props directly
       if (isListeningGlobal && currentListeningField === fieldKey) {
         if (finalTranscriptBuffer.current.trim()) {
           try {
@@ -122,7 +120,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       finalTranscriptBuffer.current = "";
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       let errorMessage = 'একটি অজানা ভয়েস টাইপিং ত্রুটি হয়েছে।';
        switch (event.error) {
         case 'no-speech': errorMessage = 'কোনো কথা শোনা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'; break;
@@ -133,7 +131,6 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
       }
       setError(errorMessage);
       
-      // Use current props directly
       if (isListeningGlobal && currentListeningField === fieldKey) {
         toast({
             title: 'ভয়েস টাইপিং ত্রুটি',
@@ -151,8 +148,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
 
     return () => {
       if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.abort(); // Ensure any active session is stopped
-        // Detach handlers to prevent memory leaks or calls on unmounted component
+        speechRecognitionRef.current.abort();
         speechRecognitionRef.current.onstart = null;
         speechRecognitionRef.current.onresult = null;
         speechRecognitionRef.current.onerror = null;
@@ -160,10 +156,7 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
         speechRecognitionRef.current = null;
       }
     };
-  // Dependency array refined: remove isListeningGlobal and currentListeningField (values)
-  // as their changes shouldn't re-initialize the SpeechRecognition object itself.
-  // The handlers will use the most current prop values due to closure or re-render.
-  }, [toast, fieldKey, setIsListeningGlobal, setCurrentListeningField]);
+  }, [toast, fieldKey, isListeningGlobal, currentListeningField, setIsListeningGlobal, setCurrentListeningField]);
 
 
   const toggleListening = async () => {
@@ -251,4 +244,3 @@ export const MicrophoneButton: React.FC<MicrophoneButtonProps> = ({
     </Button>
   );
 };
-    

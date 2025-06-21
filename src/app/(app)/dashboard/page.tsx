@@ -132,7 +132,7 @@ export default function DashboardPage() {
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPatientForPaymentModal, setSelectedPatientForPaymentModal] = useState<Patient | null>(null);
-  const [currentVisitIdForPaymentModal, setCurrentVisitIdForPaymentModal] = useState<string | null>(null);
+  const [currentVisitIdForPaymentModal, setCurrentVisitIdForPaymentModal] = useState<string | undefined>();
 
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
@@ -183,7 +183,7 @@ export default function DashboardPage() {
       })
       .filter((item): item is AppointmentDisplayItem => item !== null);
 
-    setTodaysAppointments(appointmentsData.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+    setTodaysAppointments(appointmentsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   }, []);
 
 
@@ -281,7 +281,7 @@ export default function DashboardPage() {
   const handlePaymentModalClose = async (slipCreated: boolean = false) => {
     setIsPaymentModalOpen(false);
     setSelectedPatientForPaymentModal(null);
-    setCurrentVisitIdForPaymentModal(null);
+    setCurrentVisitIdForPaymentModal(undefined);
     if (slipCreated) {
         // Instead of just loading appointments, reload all dashboard data
         await loadDashboardData();
@@ -529,7 +529,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
       
-      {selectedPatientForPaymentModal && currentVisitIdForPaymentModal && (
+      {isPaymentModalOpen && selectedPatientForPaymentModal && (
         <CreatePaymentSlipModal
           patient={selectedPatientForPaymentModal}
           visitId={currentVisitIdForPaymentModal}
@@ -542,5 +542,3 @@ export default function DashboardPage() {
     </TooltipProvider>
   );
 }
-    
-    

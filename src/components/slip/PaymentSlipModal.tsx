@@ -34,8 +34,7 @@ export function PaymentSlipModal({ slip, isOpen, onClose }: PaymentSlipModalProp
       const printArea = document.getElementById('slip-print-area-content');
       if (printArea && clinicSettings) {
         const paymentMethodDisplay = getPaymentMethodLabel(slip.paymentMethod);
-        // const contentToPrint = printArea.innerHTML; // Not needed directly with iframe method
-
+        
         const iframe = document.createElement('iframe');
         iframe.style.visibility = 'hidden';
         iframe.style.position = 'absolute';
@@ -91,9 +90,9 @@ export function PaymentSlipModal({ slip, isOpen, onClose }: PaymentSlipModalProp
             <body>
               <div class="slip-container">
                 <div class="slip-header">
-                  <h1>${clinicSettings.clinicName || APP_NAME}</h1>
-                  ${clinicSettings.clinicAddress ? `<p>${clinicSettings.clinicAddress}</p>` : ''}
-                  ${clinicSettings.clinicContact ? `<p>Contact: ${clinicSettings.clinicContact}</p>` : ''}
+                  <h1>${clinicSettings?.clinicName || APP_NAME}</h1>
+                  ${clinicSettings?.clinicAddress ? `<p>${clinicSettings.clinicAddress}</p>` : ''}
+                  ${clinicSettings?.clinicContact ? `<p>Contact: ${clinicSettings.clinicContact}</p>` : ''}
                 </div>
                 <div class="slip-title">MONEY RECEIPT</div>
                 <div class="slip-details">
@@ -108,7 +107,7 @@ export function PaymentSlipModal({ slip, isOpen, onClose }: PaymentSlipModalProp
                 <div class="slip-footer">
                   <div class="received-by">
                     <span class="signature-line"></span><br/>
-                    Received By: ${slip.receivedBy || clinicSettings.doctorName || ''}
+                    Received By: ${slip.receivedBy || clinicSettings?.doctorName || ''}
                   </div>
                   <div class="footer-note">
                     Thank you! This is a computer-generated receipt.

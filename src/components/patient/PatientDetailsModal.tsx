@@ -151,9 +151,11 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
       setCurrentTab(defaultTab);
       // Reset forms and set default values when modal opens
       patientInfoForm.reset({
-        ...patient,
-        diaryNumber: patient.diaryNumber || '',
+        name: patient.name,
+        phone: patient.phone,
         villageUnion: patient.villageUnion || '',
+        district: patient.district || '',
+        diaryNumber: patient.diaryNumber || '',
         age: patient.age || '',
         gender: patient.gender || '',
         occupation: patient.occupation || '',
@@ -194,11 +196,12 @@ export function PatientDetailsModal({ patient, isOpen, onClose, defaultTab = 'in
         guardianName: data.guardianName,
         thanaUpazila: data.thanaUpazila,
         registrationDate: data.registrationDate ? new Date(data.registrationDate).toISOString() : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       const success = await updatePatient(patient.id, updatedPatientData);
       if (success) {
-        onPatientUpdate({ ...patient, ...updatedPatientData, updatedAt: new Date().toISOString() });
+        onPatientUpdate({ ...patient, ...updatedPatientData });
         toast({ title: "রোগীর তথ্য আপডেট হয়েছে", description: `${data.name}-এর বিবরণ সংরক্ষণ করা হয়েছে।` });
         setIsEditingInfo(false);
          window.dispatchEvent(new CustomEvent('firestoreDataChange'));

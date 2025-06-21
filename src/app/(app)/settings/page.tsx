@@ -11,7 +11,7 @@ import { PageHeaderCard } from '@/components/shared/PageHeaderCard';
 import { Settings as SettingsIcon, Download, Upload, AlertTriangle, Info, DatabaseZap, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { getPatients, getVisits, getPrescriptions, getPaymentSlips, getClinicSettings, saveClinicSettings, migrateLocalStorageToFirestore, clearAllLocalStorageData } from '@/lib/firestoreService'; // UPDATED IMPORT
+import { getPatients, getVisits, getPrescriptions, getPaymentSlips, getClinicSettings, migrateLocalStorageToFirestore, clearAllLocalStorageData } from '@/lib/firestoreService';
 import { APP_NAME, APP_VERSION } from '@/lib/constants';
 import type { Patient, Visit, Prescription, PaymentSlip, ClinicSettings } from '@/lib/types';
 
@@ -86,34 +86,8 @@ export default function AppSettingsPage() {
       return;
     }
 
-    // This function would need significant rework to import into Firestore.
-    // It involves potentially clearing existing Firestore collections (dangerous)
-    // or carefully merging/updating documents.
-    // For now, this part is highly complex and risky to automate without specific user intent
-    // on how to handle existing Firestore data.
-    // We will keep the structure but acknowledge this is a placeholder for a more complex operation.
     toast({ title: "ইম্পোর্ট (Firestore)", description: "Firestore-এ ডেটা ইম্পোর্ট করার প্রক্রিয়া জটিল এবং বর্তমানে এই ডেমো অ্যাপে স্বয়ংক্রিয়ভাবে সমর্থিত নয়। ডেটা মাইগ্রেশনের জন্য বিশেষ স্ক্রিপ্ট প্রয়োজন।", variant: "default" });
 
-    // Placeholder for actual Firestore import logic (highly complex)
-    // const reader = new FileReader();
-    // reader.onload = async (e) => {
-    //   try {
-    //     const text = e.target?.result as string;
-    //     const importedData = JSON.parse(text) as AllData;
-    //     // TODO: Implement Firestore batch writes for each collection
-    //     // This would involve:
-    //     // 1. Clearing existing collections (DANGEROUS) or merging.
-    //     // 2. Iterating through importedData.patients and adding them.
-    //     // 3. Same for visits, prescriptions, paymentSlips, clinicSettings.
-    //     // This is a complex operation and needs careful implementation.
-    //     await saveClinicSettings(importedData.clinicSettings); // Example
-    //     // ... and so on for other collections
-    //     toast({ title: "ইম্পোর্ট সফল (ধারণা)", description: "ডেটা সফলভাবে Firestore-এ ইম্পোর্ট করার ধারণা।" });
-    //   } catch (error: any) {
-    //     toast({ title: "ইম্পোর্ট ব্যর্থ হয়েছে", description: `ডেটা ইম্পোর্ট করার সময় ত্রুটি: ${error.message || 'অবৈধ JSON ফাইল.'}`, variant: "destructive" });
-    //   }
-    // };
-    // reader.readAsText(fileToImport);
     setSelectedFileName(null);
     setFileToImport(null);
     if (fileInputRef.current) fileInputRef.current.value = ""; 
