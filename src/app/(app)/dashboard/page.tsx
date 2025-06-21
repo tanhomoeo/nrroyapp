@@ -146,7 +146,7 @@ export default function DashboardPage() {
   const processAppointments = useCallback((todayVisits: Visit[], todaySlips: PaymentSlip[], allPatients: Patient[]): AppointmentDisplayItem[] => {
     const patientsDataMap = new Map(allPatients.map(p => [p.id, p]));
 
-    const appointmentsData = todayVisits
+    return todayVisits
       .map(visit => {
         const patient = patientsDataMap.get(visit.patientId);
         if (!patient) return null;
@@ -173,9 +173,8 @@ export default function DashboardPage() {
           createdAt: visit.createdAt,
         };
       })
-      .filter((item): item is AppointmentDisplayItem => item !== null);
-      
-    return appointmentsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .filter((item): item is AppointmentDisplayItem => item !== null)
+      .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, []);
 
 
