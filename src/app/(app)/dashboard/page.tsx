@@ -143,15 +143,7 @@ export default function DashboardPage() {
   }, []);
 
 
-  const loadAppointments = useCallback(async (allPatients: Patient[]) => {
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
-
-    const [todayVisits, todaySlips] = await Promise.all([
-      getVisitsWithinDateRange(todayStart, todayEnd),
-      getPaymentSlipsWithinDateRange(todayStart, todayEnd),
-    ]);
-
+  const processAppointments = useCallback((todayVisits: Visit[], todaySlips: PaymentSlip[], allPatients: Patient[]): AppointmentDisplayItem[] => {
     const patientsDataMap = new Map(allPatients.map(p => [p.id, p]));
 
     const appointmentsData = todayVisits
@@ -176,14 +168,14 @@ export default function DashboardPage() {
           time: timeString,
           reason: visit.symptoms || 'N/A',
           status: currentStatus,
-          paymentMethod: paymentSlipForVisit ? getPaymentMethodLabel(paymentSlipForVisit.paymentMethod) : 'N/A',
+          paymentMethod: paymentSlipForVisit ? getPaymentMethodLabel(paymentSlipForVisit.paymentMethod as PaymentMethod) : 'N/A',
           paymentAmount: paymentSlipForVisit ? formatCurrency(paymentSlipForVisit.amount) : 'N/A',
           createdAt: visit.createdAt,
         };
       })
       .filter((item): item is AppointmentDisplayItem => item !== null);
-
-    setTodaysAppointments(appointmentsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      
+    return appointmentsData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, []);
 
 
@@ -235,14 +227,16 @@ export default function DashboardPage() {
           monthlyNewPatients: patientsCreatedThisMonth.length,
           monthlyTotalRegistered: allPatients.length,
         });
-    
-        await loadAppointments(allPatients);
+
+        const processedAppointments = processAppointments(todayVisits, todaySlips, allPatients);
+        setTodaysAppointments(processedAppointments);
+
     } catch(error) {
         console.error("Failed to load dashboard data", error);
     } finally {
         setLoading(false);
     }
-  }, [loadAppointments]);
+  }, [processAppointments]);
 
   useEffect(() => {
     loadDashboardData();

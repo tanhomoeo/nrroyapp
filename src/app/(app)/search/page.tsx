@@ -55,25 +55,55 @@ export default function SearchPatientsPage() {
   const [isListeningGlobal, setIsListeningGlobal] = useState(false);
   const [currentListeningField, setCurrentListeningField] = useState<string | null>(null);
 
-  const fetchPatients = useCallback(async () => {
-    setIsLoading(true);
-    const patientsData = await getPatients();
-    setAllPatients(patientsData);
-    setIsLoading(false);
-    return patientsData;
-  }, []);
+  // Effect for fetching data on mount and on global data changes
+  useEffect(() => {
+    const doFetchPatients = async () => {
+      setIsLoading(true);
+      try {
+        const patientsData = await getPatients();
+        setAllPatients(patientsData);
+      } catch (error) {
+        console.error("Failed to fetch patients", error);
+        toast({ title: "ত্রুটি", description: "রোগীর তালিকা আনতে সমস্যা হয়েছে।", variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    doFetchPatients();
 
-  const filterPatients = useCallback((term: string, patients: Patient[]) => {
-    if (!term.trim()) {
+    const handleDataChange = () => {
+      doFetchPatients();
+    };
+    window.addEventListener('firestoreDataChange', handleDataChange);
+
+    return () => {
+      window.removeEventListener('firestoreDataChange', handleDataChange);
+    };
+  }, [toast]);
+
+  // Effect to handle initial search term from URL query params
+  useEffect(() => {
+    const querySearchTerm = searchParams.get('q');
+    const queryPhone = searchParams.get('phone');
+    const term = querySearchTerm || queryPhone || '';
+    if (term) {
+      setSearchTerm(term);
+    }
+  }, [searchParams]);
+
+  // Effect for filtering patients whenever the search term or the full patient list changes
+  useEffect(() => {
+    if (!searchTerm.trim()) {
       setFilteredPatients([]);
       return;
     }
-    const lowerSearchTerm = term.toLowerCase();
-    const results = patients.filter(patient => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    const results = allPatients.filter(patient => {
       const diaryNumString = (patient.diaryNumber || '').toString().toLowerCase();
       return (
         patient.name.toLowerCase().includes(lowerSearchTerm) ||
-        patient.id.toLowerCase().includes(lowerSearchTerm) ||
+        (patient.id && patient.id.toLowerCase().includes(lowerSearchTerm)) ||
         patient.phone.toLowerCase().includes(lowerSearchTerm) ||
         diaryNumString.includes(lowerSearchTerm) ||
         (patient.villageUnion || '').toLowerCase().includes(lowerSearchTerm) ||
@@ -82,34 +112,8 @@ export default function SearchPatientsPage() {
       );
     });
     setFilteredPatients(results);
-  }, []);
+  }, [searchTerm, allPatients]);
 
-  useEffect(() => {
-    fetchPatients().then(patientsData => {
-      const querySearchTerm = searchParams.get('q');
-      const queryPhone = searchParams.get('phone');
-      const term = querySearchTerm || queryPhone || '';
-      if (term) {
-        setSearchTerm(term);
-        filterPatients(term, patientsData);
-      }
-    });
-
-    const handleDataChange = () => {
-      fetchPatients().then(patientsData => {
-         filterPatients(searchTerm, patientsData);
-      });
-    };
-    window.addEventListener('firestoreDataChange', handleDataChange);
-    return () => {
-      window.removeEventListener('firestoreDataChange', handleDataChange);
-    };
-
-  }, [searchParams, fetchPatients, searchTerm, filterPatients]); 
-  
-  useEffect(() => {
-    filterPatients(searchTerm, allPatients);
-  }, [searchTerm, allPatients, filterPatients]);
 
   const handleOpenDetailsModal = (patient: Patient, tab: 'info' | 'history' | 'addVisitAndPayment') => {
     setSelectedPatientForModal(patient);
@@ -129,7 +133,7 @@ export default function SearchPatientsPage() {
   const handlePatientUpdatedInModal = (updatedPatient: Patient) => {
     const newAllPatients = allPatients.map(p => p.id === updatedPatient.id ? updatedPatient : p);
     setAllPatients(newAllPatients);
-    filterPatients(searchTerm, newAllPatients);
+    // The filter effect will automatically update the filtered list
     window.dispatchEvent(new CustomEvent('firestoreDataChange'));
   };
 

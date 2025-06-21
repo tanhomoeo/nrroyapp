@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,13 +23,14 @@ export default function DictionaryPage() {
   const [selectedLetter, setSelectedLetter] = useState<string | null>(BENGALI_VOWELS_FOR_FILTER[0]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchPatients = useCallback(async () => {
+    setIsLoading(true);
+    const patientsData = await getPatients();
+    setAllPatients(patientsData.sort((a, b) => a.name.localeCompare(b.name, 'bn')));
+    setIsLoading(false);
+  }, []);
+
   useEffect(() => {
-    const fetchPatients = async () => {
-      setIsLoading(true);
-      const patientsData = await getPatients();
-      setAllPatients(patientsData.sort((a, b) => a.name.localeCompare(b.name, 'bn')));
-      setIsLoading(false);
-    };
     fetchPatients();
     
     const handleDataChange = () => {
@@ -40,7 +41,7 @@ export default function DictionaryPage() {
       window.removeEventListener('firestoreDataChange', handleDataChange);
     };
 
-  }, []);
+  }, [fetchPatients]);
 
   const filteredPatients = useMemo(() => {
     if (!selectedLetter || selectedLetter === 'সব') return allPatients;
@@ -162,4 +163,3 @@ export default function DictionaryPage() {
     </div>
   );
 }
-
