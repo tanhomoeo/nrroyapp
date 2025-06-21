@@ -1,9 +1,8 @@
-
 'use client';
-import React from 'react';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'; // Added SidebarTrigger
+import React, { Suspense } from 'react';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/shared/AppSidebar';
-// AppHeader import removed
+import { Loader2 } from 'lucide-react';
 
 export default function AppLayout({
   children,
@@ -20,11 +19,11 @@ export default function AppLayout({
           <SidebarTrigger />
         </div>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
+          <Suspense fallback={<div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            {children}
+          </Suspense>
         </main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
-
-    
