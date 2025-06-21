@@ -146,7 +146,7 @@ export default function DashboardPage() {
   const processAppointments = useCallback((todayVisits: Visit[], todaySlips: PaymentSlip[], allPatients: Patient[]): AppointmentDisplayItem[] => {
     const patientsDataMap = new Map(allPatients.map(p => [p.id, p]));
 
-    return todayVisits
+    const appointmentsData = todayVisits
       .map(visit => {
         const patient = patientsDataMap.get(visit.patientId);
         if (!patient) return null;
@@ -175,6 +175,7 @@ export default function DashboardPage() {
       })
       .filter((item): item is AppointmentDisplayItem => item !== null)
       .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return appointmentsData;
   }, []);
 
 
@@ -276,7 +277,7 @@ export default function DashboardPage() {
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentModalClose = (slipCreated: boolean) => {
+  const handlePaymentModalClose = (slipCreated?: boolean) => {
     setIsPaymentModalOpen(false);
     setSelectedPatientForPaymentModal(null);
     setCurrentVisitIdForPaymentModal(undefined);
